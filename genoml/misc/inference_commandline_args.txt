@@ -1,0 +1,24 @@
+genoml-inference
+
+Usage:
+  genoml-inference (--model-file=model_file) (--valid-dir=valid_dir) (--valid-geno-prefix=valid_geno_prefix) (--valid-pheno-file=<valid_pheno_file>) [--valid-cov-file=<valid_cov_file>] [--valid-addit-file=<valid_addit_file>] [--n-cores=<n_cores>]
+  genoml-inference -h | --help
+  genoml-inference --version
+
+Options:
+  --model-file=model_file                 Path to the model file.
+  --valid-dir=valid_dir                   Folder to save output.
+  --n-cores=<n_cores>                     Number of cores to be allocated for computation [default: 1].
+  --valid-geno-prefix=valid_geno_prefix   Prefix with path to the validation genotype files in PLINK format, *.bed, *.bim and *.fam.
+  --valid-pheno-file=<valid_pheno_file>   Path to the validation phenotype file in PLINK format, *.pheno.
+  --valid-cov-file=<valid_cov_file>       Path to the validation covariance file, if available.
+  --valid-addit-file=<valid_addit_file>   Path to the the validation additional file, if avialable.
+  -h --help                               Show this screen.
+  --version                               Show version.
+
+Examples:
+  genoml-inference --model-file=./model.genoml_model --valid-geno-prefix=./exampleData/validation --valid-pheno-file=./exampleData/validation.pheno
+
+Help:
+  For help using this tool, please open an issue on the Github repository:
+  https://github.com/GenoML/genoml-core/issues
