@@ -14,7 +14,7 @@ from genoml.steps.model_train import ModelTrainStep
 from genoml.steps.model_tune import ModelTuneStep
 from genoml.steps.model_validate import ModelValidateStep
 
-sys.tracebacklimit = 0
+# sys.tracebacklimit = 0
 
 def cli():
     options = Options("commandline_args.txt")

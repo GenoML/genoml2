@@ -48,75 +48,75 @@ class Options:
 
     @property
     def geno_prefix(self):
-        return self._options['--geno-prefix']
+        return self._options.get('--geno-prefix', None)
 
     @property
     def pheno_file(self):
-        return self._options['--pheno-file']
+        return self._options.get('--pheno-file', None)
 
     @property
     def cov_file(self):
-        return self._options['--cov-file']
+        return self._options.get('--cov-file', None)
 
     @property
     def gwas_file(self):
-        return self._options['--gwas-file']
+        return self._options.get('--gwas-file', None)
 
     @property
     def herit(self):
-        return self._options['--herit']
+        return self._options.get('--herit', None)
 
     @property
     def addit_file(self):
-        return self._options['--addit-file']
+        return self._options.get('--addit-file', None)
 
     @property
     def temp_dir(self):
-        return self._options['--temp-dir']
+        return self._options.get('--temp-dir', None)
 
     @property
     def n_cores(self):
-        return self._options['--n-cores']
+        return self._options.get('--n-cores', None)
 
     @property
     def train_speed(self):
-        return self._options['--train-speed']
+        return self._options.get('--train-speed', None)
 
     @property
     def cv_reps(self):
-        return self._options['--cv-reps']
+        return self._options.get('--cv-reps', None)
 
     @property
     def impute_data(self):
-        return self._options['--impute-data']
+        return self._options.get('--impute-data', None)
 
     @property
     def grid_search(self):
-        return self._options['--grid-search']
+        return self._options.get('--grid-search', None)
 
     @property
     def prune_prefix(self):
-        return self._options['--prune-prefix']
+        return self._options.get('--prune-prefix', None)
 
     @property
     def best_model_name(self):
-        return self._options['--best-model-name']
+        return self._options.get('--best-model-name', None)
 
     @property
     def valid_geno_dir(self):
-        return self._options['--valid-geno-prefix']
+        return self._options.get('--valid-geno-prefix', None)
 
     @property
     def valid_pheno_file(self):
-        return self._options['--valid-pheno-file']
+        return self._options.get('--valid-pheno-file', None)
 
     @property
     def valid_cov_file(self):
-        return self._options['--valid-cov-file']
+        return self._options.get('--valid-cov-file', None)
 
     @property
     def valid_addit_file(self):
-        return self._options['--valid-addit-file']
+        return self._options.get('--valid-addit-file', None)
 
     @property
     def run_id(self):
@@ -124,7 +124,7 @@ class Options:
 
     @property
     def prefix(self):
-        if '--prune-prefix' not in self._options or self._options['--prune-prefix'] is None:
+        if '--prune-prefix' not in self._options or self._options.get('--prune-prefix', None) is None:
             return os.path.join(self.temp_dir, self.run_id)
         else:
             return self.prune_prefix
@@ -215,21 +215,25 @@ class Options:
         return os.path.join(self.other_packages, "prepSblupToScale.R")
 
     def is_data_prune(self):
-        return self._options['data-prune']
+        return self._options.get('data-prune', None)
 
     def is_model_train(self):
-        return self._options['model-train']
+        return self._options.get('model-train', None)
 
     def is_model_tune(self):
-        return self._options['model-tune']
+        return self._options.get('model-tune', None)
 
     def is_model_validate(self):
-        return self._options['model-validate']
+        return self._options.get('model-validate', None)
 
     @property
     def model_file(self):
-        return self._options['--model-file']
+        return self._options.get('--model-file', None)
 
     @property
     def valid_dir(self):
-        return self._options['--valid-dir']
+        return self._options.get('--valid-dir', None)
+
+    @property
+    def verbose(self):
+        return self._options.get('-v', 0)

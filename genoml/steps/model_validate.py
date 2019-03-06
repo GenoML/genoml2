@@ -1,9 +1,9 @@
 #! /usr/bin/env python -u
 # coding=utf-8
-import subprocess
 from shutil import copyfile
 
 from genoml.steps import PhenoScale, StepBase
+from genoml.utils import DescriptionLoader
 
 __author__ = 'Sayed Hadi Hashemi'
 
@@ -38,6 +38,7 @@ class ModelValidateStep(StepBase):
             ], name="VALIDATE_CONT, please make sure you have included .cov and .addit validation files, if used for "
                     "training.")
 
+    @DescriptionLoader.function_description("validation_step")
     def process(self):
         self._valid_prefix = f"{self._opt.prune_prefix}_validation"
         self.model_validate()
@@ -60,8 +61,6 @@ class ModelValidateStep(StepBase):
     # todo: new
     def model_validate(self):
         """this function performs validation with existing data"""
-        print("validate")
-
         # check if GWAS is present (meaning it was also present in training), otherwise the Prune option has been used
         # TODO: find a way to ensure user is providing GWAS for validation, in case it was used during training
         if self._opt.gwas_file is None:

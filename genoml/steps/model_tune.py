@@ -2,6 +2,7 @@
 # coding=utf-8
 
 from genoml.steps import StepBase, PhenoScale
+from genoml.utils import DescriptionLoader
 
 __author__ = 'Sayed Hadi Hashemi'
 
@@ -9,6 +10,7 @@ __author__ = 'Sayed Hadi Hashemi'
 class ModelTuneStep(StepBase):
     """Performs secondary tunning for the ML model"""
 
+    @DescriptionLoader.function_description("tune_step")
     def process(self):
         script_file = self._opt.TUNE_DISC if self._opt.pheno_scale == PhenoScale.DISCRETE else self._opt.TUNE_CONT
         self.execute_command([

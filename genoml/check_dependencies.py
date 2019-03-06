@@ -13,6 +13,8 @@ from io import BytesIO
 from pathlib import Path
 import requests
 
+from genoml.utils import DescriptionLoader
+
 __author__ = 'Sayed Hadi Hashemi'
 
 # __executable_folder = os.path.join(os.path.dirname(__file__), "misc", "executables")
@@ -100,6 +102,7 @@ def check_R():
     return r_path
 
 
+@DescriptionLoader.function_description("check_dependencies")
 def check_dependencies():
     global __DEPENDENCIES
     ret = {}

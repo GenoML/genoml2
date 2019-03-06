@@ -9,6 +9,7 @@ import sys
 from pandas_plink import read_plink
 
 from genoml.steps import StepBase, PhenoScale
+from genoml.utils import DescriptionLoader
 
 __author__ = 'Sayed Hadi Hashemi'
 
@@ -18,12 +19,12 @@ class DataPruneStep(StepBase):
     num_snps = None
     num_samples = None
 
+    @DescriptionLoader.function_description("prune_step")
     def process(self):
         self.check_inputs()
         self.check_geno()
         self.reduce()
         self.merge_reduced()
-        # print("Pruning stage prefix (use if for the next stage): " + self._opt.prefix)
 
     def reduce(self):
         # main for prune()
@@ -49,6 +50,7 @@ class DataPruneStep(StepBase):
             self._opt.geno_prefix
         ], name="scaleVariantDoses")
 
+    @DescriptionLoader.function_description("reduce_prune")
     def reduce_prune(self):
         self.execute_command([
             self._dependecies["Plink"],
@@ -69,9 +71,8 @@ class DataPruneStep(StepBase):
         with open(self._opt.prefix + ".reduced_genos_snpList", "w") as fp:
             subprocess.check_call(["cut", "-f", "1", self._opt.prefix + ".temp.prune.in"], stdout=fp)
 
+    @DescriptionLoader.function_description("reduce_prsice")
     def reduce_prsice(self):
-        print("prsice;")
-
         if self._opt.pheno_scale == PhenoScale.DISCRETE and not self._opt.cov_file:
             print("prsice, disc, cov=na")
             self.execute_command([
@@ -243,6 +244,7 @@ class DataPruneStep(StepBase):
             self._opt.CHECK_PRS, self._opt.prefix, self._opt.pheno_file
         ], name="prune checkPrs")
 
+    @DescriptionLoader.function_description("reduce_sblup")
     def reduce_sblup(self):
         sblup_lambda = self.num_snps * ((1 / self.herit) - 1)
 
@@ -335,6 +337,7 @@ class DataPruneStep(StepBase):
         self.num_snps = bim.shape[0]
         self.num_samples = fam.iid.unique().size
 
+    @DescriptionLoader.function_description("merge_reduced")
     def merge_reduced(self):
         self.execute_command([
             self._dependecies["R"],

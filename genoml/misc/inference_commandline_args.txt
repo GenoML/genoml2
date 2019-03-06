@@ -1,7 +1,7 @@
 genoml-inference
 
 Usage:
-  genoml-inference (--model-file=model_file) (--valid-dir=valid_dir) (--valid-geno-prefix=valid_geno_prefix) (--valid-pheno-file=<valid_pheno_file>) [--valid-cov-file=<valid_cov_file>] [--valid-addit-file=<valid_addit_file>] [--n-cores=<n_cores>]
+  genoml-inference (--model-file=model_file) (--valid-dir=valid_dir) (--valid-geno-prefix=valid_geno_prefix) (--valid-pheno-file=<valid_pheno_file>) [--valid-cov-file=<valid_cov_file>] [--valid-addit-file=<valid_addit_file>] [--n-cores=<n_cores>] [-v | -vv | -vvv]
   genoml-inference -h | --help
   genoml-inference --version
 
@@ -14,6 +14,7 @@ Options:
   --valid-cov-file=<valid_cov_file>       Path to the validation covariance file, if available.
   --valid-addit-file=<valid_addit_file>   Path to the the validation additional file, if avialable.
   -h --help                               Show this screen.
+  -v -vv -vvv                             Verbose output.
   --version                               Show version.
 
 Examples:

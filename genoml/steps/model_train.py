@@ -2,6 +2,7 @@
 # coding=utf-8
 
 from genoml.steps import StepBase, PhenoScale
+from genoml.utils import DescriptionLoader
 
 __author__ = 'Sayed Hadi Hashemi'
 
@@ -11,6 +12,7 @@ class ModelTrainStep(StepBase):
     Trains a machine learning model. Works based on DISC and CONT phenotypes.
     """
 
+    @DescriptionLoader.function_description("train_step")
     def process(self):
         script_file = self._opt.TRAIN_DISC if self._opt.pheno_scale == PhenoScale.DISCRETE else self._opt.TRAIN_CONT
         self.execute_command([
