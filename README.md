@@ -1,6 +1,6 @@
 # GenoML-core
 GenoML is an Automated Machine Learning (AutoML) for Genomic. This is the core package of GenoML. 
-this repo is under development, please report any issues (bug, performance, documentaion) on the [GenoML issues page](https://github.com/GenoML/genoml/issues). 
+this repo is under development, please report any issues (bug, performance, documentation) on the [GenoML issues page](https://github.com/GenoML/genoml/issues). 
 
 ## Install
 Run `pip install genoml`.
