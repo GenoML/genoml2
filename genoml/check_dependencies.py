@@ -159,5 +159,5 @@ __DEPENDENCIES = {
 }
 
 __R_PACKAGES = [
-    "caret", "lattice", "ggplot2", "rBayesianOptimization", "plotROC", "doParallel", "randomForest", "xgboost", "e1071",
+    "caret", "lattice", "ggplot2", "rBayesianOptimization", "plotROC", "pROC", "doParallel", "randomForest", "xgboost", "e1071",
 ]
