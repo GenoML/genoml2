@@ -1,24 +1,32 @@
 #! /usr/bin/env python -u
 # coding=utf-8
+import logging
 import os
 import platform
 import stat
 import subprocess
 import zipfile
-import logging
-
-from rpy2.robjects.packages import importr
-import rpy2.robjects.packages as rpackages
 from io import BytesIO
 from pathlib import Path
+
 import requests
+import rpy2.robjects.packages as rpackages
+from rpy2.robjects.packages import importr
 
 from genoml.utils import DescriptionLoader
 
 __author__ = 'Sayed Hadi Hashemi'
 
-# __executable_folder = os.path.join(os.path.dirname(__file__), "misc", "executables")
-__executable_folder = os.path.join(str(Path.home()), ".genoml", "misc", "executables")
+
+def __get_executable_folder():
+    key = "GENOML_DEP_DIR"
+    if key in os.environ:
+        return os.path.abspath(os.environ.get(key))
+    else:
+        return os.path.join(str(Path.home()), ".genoml", "misc", "executables")
+
+
+__executable_folder = __get_executable_folder()
 
 
 def check_r_packages():
@@ -92,13 +100,6 @@ def check_R():
         raise EnvironmentError("R is not installed")
 
     check_r_packages()
-    # args = [
-    #     r_path,
-    #     os.path.abspath(os.path.join(__executable_folder, "..", "R", "dependencies.R"))
-    # ]
-    #
-    # subprocess.check_call(args, stdout=subprocess.PIPE)
-
     return r_path
 
 
@@ -159,5 +160,6 @@ __DEPENDENCIES = {
 }
 
 __R_PACKAGES = [
-    "caret", "lattice", "ggplot2", "rBayesianOptimization", "plotROC", "pROC", "doParallel", "randomForest", "xgboost", "e1071",
+    "caret", "lattice", "ggplot2", "rBayesianOptimization", "plotROC", "pROC", "doParallel", "randomForest", "xgboost",
+    "e1071",
 ]
