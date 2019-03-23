@@ -1,7 +1,7 @@
 genoml-train
 
 Usage:
-  genoml-train (--geno-prefix=geno_prefix) (--pheno-file=<pheno_file>) (--model-file=model_file) [--addit-file=<addit_file>] [--cov-file=<cov_file>] [--cv-reps=<cv_reps>] [--grid-search=<grid_search>] [--gwas-file=<gwas_file>] [--herit=<herit>] [--impute-data=<impute_data>] [--n-cores=<n_cores>] [--train-speed=<train_speed>] [-v | -vv | -vvv]
+  genoml-train (--geno-prefix=geno_prefix) (--pheno-file=<pheno_file>) (--model-file=model_file) [--addit-file=<addit_file>] [--cov-file=<cov_file>] [--cv-reps=<cv_reps>] [--grid-search=<grid_search>] [--gwas-file=<gwas_file>] [--herit=<herit>] [--impute-data=<impute_data>] [--n-cores=<n_cores>] [--train-speed=<train_speed>] [--no-tune] [-v | -vv | -vvv]
   genoml-train -h | --help
   genoml-train --version
 
@@ -18,6 +18,7 @@ Options:
   --cv-reps=<cv_reps>                     Number of cross-validation. An integer greater than 5. Effects the speed [default: 5].
   --impute-data=<impute_data>             Imputation: (knn, median). Governs secondary imputation and data transformation [default: median].
   --grid-search=<grid_search>             Grid search length for parameters, integer greater than 10, 30 or greater recommended, effects speed of initial tune [default: 10].
+  --no-tune                               Disable Tuning. This reduces the accuracy of the trained model but significately increases the training time.
   -v -vv -vvv                             Verbose output.
   -h --help                               Show this screen.
   --version                               Show version.

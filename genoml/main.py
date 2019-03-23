@@ -14,6 +14,7 @@ from genoml.steps.model_train import ModelTrainStep
 from genoml.steps.model_tune import ModelTuneStep
 from genoml.steps.model_validate import ModelValidateStep
 
+
 # sys.tracebacklimit = 0
 
 def cli():
@@ -43,7 +44,11 @@ def train():
     options._options['--best-model-name'] = "best_model"
     print(tmp_dir)
 
-    for process in [DataPruneStep(), ModelTrainStep(), ModelTuneStep()]:
+    processes = [DataPruneStep(), ModelTrainStep()]
+    if not options.no_tune:
+        processes += [ModelTuneStep()]
+
+    for process in processes:
         process.set_environment(options, dependencies)
         process.process()
 

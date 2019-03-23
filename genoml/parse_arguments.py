@@ -237,3 +237,7 @@ class Options:
     @property
     def verbose(self):
         return self._options.get('-v', 0)
+
+    @property
+    def no_tune(self):
+        return self._options.get('--no-tune', False)
