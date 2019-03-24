@@ -15,7 +15,7 @@ from genoml.steps.model_tune import ModelTuneStep
 from genoml.steps.model_validate import ModelValidateStep
 
 
-# sys.tracebacklimit = 0
+sys.tracebacklimit = 0
 
 def cli():
     options = Options("commandline_args.txt")
@@ -36,8 +36,18 @@ def cli():
     process.process()
 
 
+def error_on_exists(name):
+    if os.path.exists(name):
+        raise FileExistsError("File exists: '{}'".format(name))
+
+
 def train():
     options = Options("train_commandline_args.txt")
+    if options.model_file:
+        error_on_exists(options.model_file)
+    elif options.model_dir:
+        error_on_exists(options.model_dir)
+
     dependencies = check_dependencies()
     tmp_dir = tempfile.mkdtemp()
     options._options['--prune-prefix'] = os.path.join(tmp_dir, "model")
@@ -54,19 +64,30 @@ def train():
 
     model_name = os.path.join(tmp_dir, "model.genoml_model")
     copy_originals(options, tmp_dir)
-    shutil.make_archive(model_name, 'bztar', os.path.dirname(options.prefix))
-    shutil.move(model_name + ".tar.bz2", options.model_file)
-    shutil.rmtree(tmp_dir, True)
+
+    if options.model_file:
+        shutil.make_archive(model_name, 'bztar', os.path.dirname(options.prefix))
+        shutil.move(model_name + ".tar.bz2", options.model_file)
+        shutil.rmtree(tmp_dir, True)
+    elif options.model_dir:
+        shutil.move(tmp_dir, options.model_dir)
 
 
 def inference():
     options = Options("inference_commandline_args.txt")
+    error_on_exists(options.valid_dir)
+
     dependencies = check_dependencies()
 
     os.makedirs(options.valid_dir)
     tmp_dir = tempfile.mkdtemp()
     print(tmp_dir)
-    shutil.unpack_archive(options.model_file, tmp_dir, format="bztar")
+    if options.model_file:
+        shutil.unpack_archive(options.model_file, tmp_dir, format="bztar")
+    elif options.model_dir:
+        shutil.rmtree(tmp_dir)
+        shutil.copytree(options.model_dir, tmp_dir)
+
     load_originals(options, tmp_dir)
     options._options['--prune-prefix'] = os.path.join(tmp_dir, "model")
     print(options._options)

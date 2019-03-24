@@ -231,6 +231,10 @@ class Options:
         return self._options.get('--model-file', None)
 
     @property
+    def model_dir(self):
+        return self._options.get('--model-dir', None)
+
+    @property
     def valid_dir(self):
         return self._options.get('--valid-dir', None)
 
