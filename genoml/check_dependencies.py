@@ -29,6 +29,7 @@ def __get_executable_folder():
 __executable_folder = __get_executable_folder()
 
 
+@DescriptionLoader.function_description("check_dependencies_R_Packages")
 def check_r_packages():
     for name in __R_PACKAGES:
         try:
@@ -94,6 +95,7 @@ def check_package(name):
         return os.path.join(__executable_folder, binary_name)
 
 
+@DescriptionLoader.function_description("check_dependencies_R")
 def check_R():
     r_path = subprocess.check_output("which Rscript", shell=True).decode().strip()
     if not check_exec(r_path, "--version", absolute_path=True):
@@ -114,9 +116,24 @@ def check_dependencies():
     return ret
 
 
+@DescriptionLoader.function_description("check_dependencies_PRSice")
+def check_prsice():
+    return check_package("PRSice")
+
+
+@DescriptionLoader.function_description("check_dependencies_GCTA")
+def check_gcta():
+    return check_package("GCTA")
+
+
+@DescriptionLoader.function_description("check_dependencies_Plink")
+def check_plink():
+    return check_package("Plink")
+
+
 __DEPENDENCIES = {
     "PRSice": {
-        "checker": lambda: check_package("PRSice"),
+        "checker": check_prsice,
         "Darwin": {
             "binary": "PRSice_mac",
             "version_args": ["-v"],
@@ -129,7 +146,7 @@ __DEPENDENCIES = {
         }
     },
     "GCTA": {
-        "checker": lambda: check_package("GCTA"),
+        "checker": check_gcta,
         "Darwin": {
             "binary": "gcta_1.91.7beta_mac/bin/gcta64",
             "version_args": ["-v"],
@@ -142,7 +159,7 @@ __DEPENDENCIES = {
         }
     },
     "Plink": {
-        "checker": lambda: check_package("Plink"),
+        "checker": check_plink,
         "Darwin": {
             "binary": "plink",
             "version_args": ["--version"],

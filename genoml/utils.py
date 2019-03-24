@@ -47,6 +47,7 @@ class ContextScope:
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type is None and exc_val is None and exc_tb is None:
             print(f"{self.get_prefix(ColoredBox.GREEN)}{self._title}: {ColoredBox.wrap('[Done]', ColoredBox.GREEN)}")
+            print()
             self.remove_indent()
         else:
             print(f"{self.get_prefix(ColoredBox.RED)}{self._title}: {ColoredBox.wrap('[Failed]', ColoredBox.RED)}")
@@ -61,7 +62,8 @@ class ContextScope:
         self.add_indent()
         print(f"{self.get_prefix(ColoredBox.BLUE)}{self._title}")
         if self._verbose:
-            print(f"{self.indent_text(self._description)}\n")
+            # print(f"{self.indent_text(self._description)}\n")
+            print(f"{self._description}\n")
 
     @classmethod
     def add_indent(cls):
@@ -73,7 +75,7 @@ class ContextScope:
 
     @classmethod
     def get_prefix(cls, color=None):
-        text = "=" * ((cls.indent * 4) + 2) + "> "
+        text = "=" * (cls.indent * 4) + "> "
         if color:
             text = ColoredBox.wrap(text, color)
         return text
@@ -114,10 +116,21 @@ class DescriptionLoader:
 
     @classmethod
     def function_description(cls, key):
+        title, description, error = cls.get(key)
+        return function_description(title, description, error)
+
+    @classmethod
+    def get(cls, key):
         if cls._descriptions is None:
             cls._load()
         title = cls._descriptions[key]["title"]
         description = cls._descriptions[key]["description"]
         error = cls._descriptions[key]["error"]
-        return function_description(title, description, error)
+        return title, description, error
+
+    @classmethod
+    def context(cls, key):
+        title, description, error = cls.get(key)
+        return ContextScope(title, description, error)
+
 

@@ -13,10 +13,12 @@ from genoml.steps.data_prune import DataPruneStep
 from genoml.steps.model_train import ModelTrainStep
 from genoml.steps.model_tune import ModelTuneStep
 from genoml.steps.model_validate import ModelValidateStep
-
+from genoml.utils import DescriptionLoader
 
 sys.tracebacklimit = 0
 
+
+@DescriptionLoader.function_description("genoml")
 def cli():
     options = Options("commandline_args.txt")
     dependencies = check_dependencies()
@@ -41,6 +43,7 @@ def error_on_exists(name):
         raise FileExistsError("File exists: '{}'".format(name))
 
 
+@DescriptionLoader.function_description("genoml")
 def train():
     options = Options("train_commandline_args.txt")
     if options.model_file:
@@ -52,7 +55,9 @@ def train():
     tmp_dir = tempfile.mkdtemp()
     options._options['--prune-prefix'] = os.path.join(tmp_dir, "model")
     options._options['--best-model-name'] = "best_model"
-    print(tmp_dir)
+    if options.verbose > 0:
+        print(tmp_dir)
+        print(options._options)
 
     processes = [DataPruneStep(), ModelTrainStep()]
     if not options.no_tune:
@@ -73,6 +78,7 @@ def train():
         shutil.move(tmp_dir, options.model_dir)
 
 
+@DescriptionLoader.function_description("genoml")
 def inference():
     options = Options("inference_commandline_args.txt")
     error_on_exists(options.valid_dir)
@@ -90,7 +96,9 @@ def inference():
 
     load_originals(options, tmp_dir)
     options._options['--prune-prefix'] = os.path.join(tmp_dir, "model")
-    print(options._options)
+    if options.verbose > 0:
+        print(tmp_dir)
+        print(options._options)
 
     for process in [ModelValidateStep()]:
         process.set_environment(options, dependencies)

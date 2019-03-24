@@ -195,54 +195,56 @@ class DataPruneStep(StepBase):
         else:
             raise RuntimeError("ISSUE: reduce_prsice not a possible condition present.")
 
-        self.cut_column(self._opt.prefix + '.temp.snp',
-                        "2",
-                        self._opt.prefix + ".temp.snpsToPull")
 
-        # checking threshold from summary: thresh=$(awk 'NR == 2 {print $3}' $prefix.temp.summary)
-        with open(self._opt.prefix + ".temp.summary", 'r') as infile:
-            column3 = [cols[2] for cols in csv.reader(infile, delimiter="\t")]
-            thresh = column3[1]
+        with DescriptionLoader.context("reduce_prsice2"):
+            self.cut_column(self._opt.prefix + '.temp.snp',
+                            "2",
+                            self._opt.prefix + ".temp.snpsToPull")
 
-        # plink
-        self.execute_command([
-            self._dependecies["Plink"],
-            "--bfile", self._opt.geno_prefix,
-            "--extract", self._opt.prefix + '.temp.snpsToPull',
-            "--clump", self._opt.gwas_file,
-            "--clump-p1", thresh,
-            "--clump-p2", thresh,
-            "--clump-snp-field", "SNP",
-            "--clump-field", "p",
-            "--clump-r2", "0.1",
-            "--clump-kb", "250",
-            "--out", self._opt.prefix + '.tempClumps'
-        ], name="Prune")
+            # checking threshold from summary: thresh=$(awk 'NR == 2 {print $3}' $prefix.temp.summary)
+            with open(self._opt.prefix + ".temp.summary", 'r') as infile:
+                column3 = [cols[2] for cols in csv.reader(infile, delimiter="\t")]
+                thresh = column3[1]
 
-        # TODO: refarctor to a Python code
-        self.cut_column(self._opt.prefix + '.tempClumps.clumped',
-                        "2",
-                        self._opt.prefix + ".temp.snpsToPull2")
+            # plink
+            self.execute_command([
+                self._dependecies["Plink"],
+                "--bfile", self._opt.geno_prefix,
+                "--extract", self._opt.prefix + '.temp.snpsToPull',
+                "--clump", self._opt.gwas_file,
+                "--clump-p1", thresh,
+                "--clump-p2", thresh,
+                "--clump-snp-field", "SNP",
+                "--clump-field", "p",
+                "--clump-r2", "0.1",
+                "--clump-kb", "250",
+                "--out", self._opt.prefix + '.tempClumps'
+            ], name="Prune")
 
-        # plink
-        self.execute_command([
-            self._dependecies["Plink"],
-            "--bfile", self._opt.geno_prefix,
-            "--extract", self._opt.prefix + '.temp.snpsToPull2',
-            "--recode", "A",
-            "--out", self._opt.prefix + '.reduced_genos'
-        ], name="Prune")
+            # TODO: refarctor to a Python code
+            self.cut_column(self._opt.prefix + '.tempClumps.clumped',
+                            "2",
+                            self._opt.prefix + ".temp.snpsToPull2")
 
-        # TODO: refarctor to a Python code
-        self.cut_column(self._opt.prefix + '.temp.snpsToPull2',
-                        "1",
-                        self._opt.prefix + ".reduced_genos_snpList")
+            # plink
+            self.execute_command([
+                self._dependecies["Plink"],
+                "--bfile", self._opt.geno_prefix,
+                "--extract", self._opt.prefix + '.temp.snpsToPull2',
+                "--recode", "A",
+                "--out", self._opt.prefix + '.reduced_genos'
+            ], name="Prune")
 
-        # checkPrs: only with PRSice, generating more files after the prune
-        self.execute_command([
-            self._dependecies["R"],
-            self._opt.CHECK_PRS, self._opt.prefix, self._opt.pheno_file
-        ], name="prune checkPrs")
+            # TODO: refarctor to a Python code
+            self.cut_column(self._opt.prefix + '.temp.snpsToPull2',
+                            "1",
+                            self._opt.prefix + ".reduced_genos_snpList")
+
+            # checkPrs: only with PRSice, generating more files after the prune
+            self.execute_command([
+                self._dependecies["R"],
+                self._opt.CHECK_PRS, self._opt.prefix, self._opt.pheno_file
+            ], name="prune checkPrs")
 
     @DescriptionLoader.function_description("reduce_sblup")
     def reduce_sblup(self):
@@ -301,6 +303,7 @@ class DataPruneStep(StepBase):
         for filename in sblup_temp_files:
             os.remove(filename)
 
+    @DescriptionLoader.function_description("prune_check_geno")
     def check_inputs(self):
         for ext in ["bed", "bim", "fam"]:
             filename = f"{self._opt.geno_prefix}.{ext}"
@@ -331,6 +334,7 @@ class DataPruneStep(StepBase):
         if not os.path.exists(os.path.dirname(self._opt.prefix)):
             os.makedirs(os.path.dirname(self._opt.prefix))
 
+    @DescriptionLoader.function_description("prune_check_inputs")
     def check_geno(self):
         """this function checks genotype input, determining the format."""
         (bim, fam, bed) = read_plink(self._opt.geno_prefix)
