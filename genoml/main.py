@@ -18,24 +18,24 @@ from genoml.utils import DescriptionLoader
 sys.tracebacklimit = 0
 
 
-@DescriptionLoader.function_description("genoml")
 def cli():
     options = Options("commandline_args.txt")
-    dependencies = check_dependencies()
+    with DescriptionLoader.context("genoml"):
+        dependencies = check_dependencies()
 
-    if options.is_data_prune():
-        process = DataPruneStep()
-    elif options.is_model_train():
-        process = ModelTrainStep()
-    elif options.is_model_tune():
-        process = ModelTuneStep()
-    elif options.is_model_validate():
-        process = ModelValidateStep()
-    else:
-        raise Exception("ISSUE: received unrecognizable option.")
+        if options.is_data_prune():
+            process = DataPruneStep()
+        elif options.is_model_train():
+            process = ModelTrainStep()
+        elif options.is_model_tune():
+            process = ModelTuneStep()
+        elif options.is_model_validate():
+            process = ModelValidateStep()
+        else:
+            raise Exception("ISSUE: received unrecognizable option.")
 
-    process.set_environment(options, dependencies)
-    process.process()
+        process.set_environment(options, dependencies)
+        process.process()
 
 
 def error_on_exists(name):
@@ -43,70 +43,70 @@ def error_on_exists(name):
         raise FileExistsError("File exists: '{}'".format(name))
 
 
-@DescriptionLoader.function_description("genoml")
 def train():
     options = Options("train_commandline_args.txt")
-    if options.model_file:
-        error_on_exists(options.model_file)
-    elif options.model_dir:
-        error_on_exists(options.model_dir)
+    with DescriptionLoader.context("genoml"):
+        if options.model_file:
+            error_on_exists(options.model_file)
+        elif options.model_dir:
+            error_on_exists(options.model_dir)
 
-    dependencies = check_dependencies()
-    tmp_dir = tempfile.mkdtemp()
-    options._options['--prune-prefix'] = os.path.join(tmp_dir, "model")
-    options._options['--best-model-name'] = "best_model"
-    if options.verbose > 0:
-        print(tmp_dir)
-        print(options._options)
+        dependencies = check_dependencies()
+        tmp_dir = tempfile.mkdtemp()
+        options._options['--prune-prefix'] = os.path.join(tmp_dir, "model")
+        options._options['--best-model-name'] = "best_model"
+        if options.verbose > 0:
+            print(tmp_dir)
+            print(options._options)
 
-    processes = [DataPruneStep(), ModelTrainStep()]
-    if not options.no_tune:
-        processes += [ModelTuneStep()]
+        processes = [DataPruneStep(), ModelTrainStep()]
+        if not options.no_tune:
+            processes += [ModelTuneStep()]
 
-    for process in processes:
-        process.set_environment(options, dependencies)
-        process.process()
+        for process in processes:
+            process.set_environment(options, dependencies)
+            process.process()
 
-    model_name = os.path.join(tmp_dir, "model.genoml_model")
-    copy_originals(options, tmp_dir)
+        model_name = os.path.join(tmp_dir, "model.genoml_model")
+        copy_originals(options, tmp_dir)
 
-    if options.model_file:
-        shutil.make_archive(model_name, 'bztar', os.path.dirname(options.prefix))
-        shutil.move(model_name + ".tar.bz2", options.model_file)
-        shutil.rmtree(tmp_dir, True)
-    elif options.model_dir:
-        shutil.move(tmp_dir, options.model_dir)
+        if options.model_file:
+            shutil.make_archive(model_name, 'bztar', os.path.dirname(options.prefix))
+            shutil.move(model_name + ".tar.bz2", options.model_file)
+            shutil.rmtree(tmp_dir, True)
+        elif options.model_dir:
+            shutil.move(tmp_dir, options.model_dir)
 
 
-@DescriptionLoader.function_description("genoml")
 def inference():
     options = Options("inference_commandline_args.txt")
-    error_on_exists(options.valid_dir)
+    with DescriptionLoader.context("genoml"):
+        error_on_exists(options.valid_dir)
 
-    dependencies = check_dependencies()
+        dependencies = check_dependencies()
 
-    os.makedirs(options.valid_dir)
-    tmp_dir = tempfile.mkdtemp()
-    print(tmp_dir)
-    if options.model_file:
-        shutil.unpack_archive(options.model_file, tmp_dir, format="bztar")
-    elif options.model_dir:
-        shutil.rmtree(tmp_dir)
-        shutil.copytree(options.model_dir, tmp_dir)
-
-    load_originals(options, tmp_dir)
-    options._options['--prune-prefix'] = os.path.join(tmp_dir, "model")
-    if options.verbose > 0:
+        os.makedirs(options.valid_dir)
+        tmp_dir = tempfile.mkdtemp()
         print(tmp_dir)
-        print(options._options)
+        if options.model_file:
+            shutil.unpack_archive(options.model_file, tmp_dir, format="bztar")
+        elif options.model_dir:
+            shutil.rmtree(tmp_dir)
+            shutil.copytree(options.model_dir, tmp_dir)
 
-    for process in [ModelValidateStep()]:
-        process.set_environment(options, dependencies)
-        process.process()
+        load_originals(options, tmp_dir)
+        options._options['--prune-prefix'] = os.path.join(tmp_dir, "model")
+        if options.verbose > 0:
+            print(tmp_dir)
+            print(options._options)
 
-    for file in glob.glob(tmp_dir + "/model_validation*"):
-        shutil.copy(file, options.valid_dir)
-    shutil.rmtree(tmp_dir, True)
+        for process in [ModelValidateStep()]:
+            process.set_environment(options, dependencies)
+            process.process()
+
+        for file in glob.glob(tmp_dir + "/model_validation*"):
+            shutil.copy(file, options.valid_dir)
+        shutil.rmtree(tmp_dir, True)
 
 
 def copy_originals(options, base_name):
