@@ -40,7 +40,7 @@ def check_r_packages():
                 utils.chooseCRANmirror(ind=1)
                 utils.install_packages(name, repos="https://cloud.r-project.org")
             except Exception:
-                raise EnvironmentError(f"Missing R Package: {name}")
+                raise EnvironmentError("Missing R Package: {}".format(name))
 
 
 def check_exec(exec_path, *args, absolute_path=False):
@@ -71,10 +71,10 @@ def check_package(name):
     platform_system = platform.system()
 
     if name not in __DEPENDENCIES:
-        raise EnvironmentError(f"Unknown package: {name}")
+        raise EnvironmentError("Unknown package: {}".format(name))
 
     if platform_system not in __DEPENDENCIES[name]:
-        raise EnvironmentError(f"Unknown supported OK: {platform_system}")
+        raise EnvironmentError("Unknown supported OK: {}".format(platform_system))
 
     entry = __DEPENDENCIES[name][platform_system]
 
@@ -83,14 +83,14 @@ def check_package(name):
     url = entry["url"]
 
     if check_exec(binary_name, *args):
-        logging.debug(f"{name} is found")
+        logging.debug("{} is found".format(name))
         return os.path.join(__executable_folder, binary_name)
 
-    logging.warning(f"Installing {name}")
+    logging.warning("Installing {}".format(name))
     install_exec(url, binary_name)
     if not check_exec(binary_name, *args):
-        logging.warning(f"Failed to run {name} after installation")
-        raise EnvironmentError(f"Can not install {name}")
+        logging.warning("Failed to run {} after installation".format(name))
+        raise EnvironmentError("Can not install {}".format(name))
     else:
         return os.path.join(__executable_folder, binary_name)
 

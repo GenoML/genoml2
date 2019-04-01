@@ -46,24 +46,23 @@ class ContextScope:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type is None and exc_val is None and exc_tb is None:
-            print(f"{self.get_prefix(ColoredBox.GREEN)}{self._title}: {ColoredBox.wrap('[Done]', ColoredBox.GREEN)}")
+            print("{}{}: {}".format(self.get_prefix(ColoredBox.GREEN), self._title,
+                                    ColoredBox.wrap('[Done]', ColoredBox.GREEN)))
             print()
             self.remove_indent()
         else:
-            print(f"{self.get_prefix(ColoredBox.RED)}{self._title}: {ColoredBox.wrap('[Failed]', ColoredBox.RED)}")
-            print(f"{self.indent_text(self._error)}\n")
+            print("{}{}: {}".format(self.get_prefix(ColoredBox.RED), self._title,
+                                    ColoredBox.wrap('[Failed]', ColoredBox.RED)))
+            print("{}\n".format(self.indent_text(self._error)))
             self.remove_indent()
-            # print(f"{exc_val} {exc_tb}\n")
             traceback.print_exception(exc_type, exc_val, exc_tb)
-            # raise exc_val
             exit(1)
 
     def __enter__(self):
         self.add_indent()
-        print(f"{self.get_prefix(ColoredBox.BLUE)}{self._title}")
+        print("{}{}".format(self.get_prefix(ColoredBox.BLUE), self._title))
         if self._verbose:
-            # print(f"{self.indent_text(self._description)}\n")
-            print(f"{self._description}\n")
+            print("{}\n".format(self._description))
 
     @classmethod
     def add_indent(cls):
@@ -132,5 +131,3 @@ class DescriptionLoader:
     def context(cls, key):
         title, description, error = cls.get(key)
         return ContextScope(title, description, error)
-
-

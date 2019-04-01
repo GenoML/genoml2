@@ -306,9 +306,9 @@ class DataPruneStep(StepBase):
     @DescriptionLoader.function_description("prune_check_geno")
     def check_inputs(self):
         for ext in ["bed", "bim", "fam"]:
-            filename = f"{self._opt.geno_prefix}.{ext}"
+            filename = "{}.{}".format(self._opt.geno_prefix,ext)
             if not os.path.isfile(filename):
-                raise RuntimeError(f"{filename} is not found. Exiting program.")
+                raise RuntimeError("{} is not found. Exiting program.".format(filename))
 
         if not os.path.isfile(self._opt.pheno_file) or not self._opt.pheno_file.endswith('.pheno'):
             raise RuntimeError("No .pheno file found. Exiting program.")

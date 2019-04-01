@@ -16,9 +16,9 @@ class ModelValidateStep(StepBase):
         self.execute_command([
             self._dependecies["Plink"],
             "--bfile", self._opt.valid_geno_dir,
-            "--extract", f"{self._opt.prune_prefix}.reduced_genos_snpList",
+            "--extract", "{}.reduced_genos_snpList".format(self._opt.prune_prefix),
             "--recode", "A",
-            "--out", f"{self._valid_prefix}.reduced_genos"
+            "--out", "{}.reduced_genos".format(self._valid_prefix)
         ], name="Plink")
 
     def _merge(self):
@@ -40,7 +40,7 @@ class ModelValidateStep(StepBase):
 
     @DescriptionLoader.function_description("validation_step")
     def process(self):
-        self._valid_prefix = f"{self._opt.prune_prefix}_validation"
+        self._valid_prefix = "{}_validation".format(self._opt.prune_prefix)
         self.model_validate()
 
     def merge_reduced(self):

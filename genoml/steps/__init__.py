@@ -34,7 +34,7 @@ class StepBase:
                 )
             except subprocess.CalledProcessError:
                 print("Running: ", args)
-                raise EnvironmentError(f"{name} fail")
+                raise EnvironmentError("{} fail".format(name))
 
     def cut_column(self, input_file, columns, output_file):
         with open(output_file, "w") as fp:
