@@ -6,7 +6,7 @@ this repo is under development, please report any issues (bug, performance, docu
 Run `pip install genoml`.
 
 ## Run
-Please refer to the following quick examples for running GonML (for full `usage`, please refer to [Usage](#usage)):
+Please refer to the following quick examples for running GenoML (for full `usage`, please refer to [Usage](#usage)):
 
 ### Machine learning model train:
 This step performs data pruning as well as model training and tunning.
