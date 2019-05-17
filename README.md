@@ -2,38 +2,43 @@
 GenoML is an Automated Machine Learning (AutoML) for Genomic. This is the core package of GenoML. 
 this repo is under development, please report any issues (bug, performance, documentation) on the [GenoML issues page](https://github.com/GenoML/genoml/issues). 
 
-## Install
-Run `pip install genoml`.
+Here are some quick "get started" exmaples, please checkout the additional options and details in the [Usage][] and [CLI][].
+In general, use linux or mac with python > 3.5 for best results.
 
-## Run
-Please refer to the following quick examples for running GenoML (for full `usage`, please refer to [Usage](#usage)):
+## Install 
+Run:
+~~~~
+pip install genoml
+~~~~
 
-### Machine learning model train:
-This step performs data pruning as well as model training and tunning.
-Using `genotype` and `phenotype` data, run:
+## Train the ML model 
+You can use the IPDGC (International Parkinson's Disease Genomics Consortium) test data. This data is a simulation of the genetic and clinical data used for Parkinson's diagnosis in previous publications. You can find it at [IPDGC example data][].
 
-    genoml-train --geno-prefix=./exampleData/training --pheno-file=./exampleData/training.pheno --model-file=./model
+Download and unzip data:
+~~~
+wget https://github.com/ipdgc/GenoML-Brief-Intro/raw/master/exampleData.zip
+unzip exampleData.zip 
+~~~
 
-Using `genotype`, `phenotype` , and `GWAS` data, run:
- 
-    genoml-train --geno-prefix=./exampleData/training --pheno-file=./exampleData/training.pheno  --gwas-file=./exampleData/example_GWAS.txt --model-file=./model
+To train, run:
+~~~~
+genoml-train --geno-prefix=./exampleData/training --pheno-file=./exampleData/training.pheno --model-dir=./exampleModel
+~~~~
 
-Using `genotype`, `phenotype` , `GWAS`, `covariance`, and `additional` data, run:
+Final tuned model and performance metrics are stored in the ```--model-dir``` directory. 
 
-    genoml-train --geno-prefix=./exampleData/training --pheno-file=./exampleData/training.pheno --cov-file=./exampleData/training.cov --gwas-file=./exampleData/example_GWAS.txt --addit-file=./exampleData/training.addit --model-file=./model 
+## Using the trained ML model for inference
+~~~~
+genoml-inference --model-dir=./exampleModel --valid-dir=./exampleData --valid-geno-prefix=./exampleData/validation --valid-pheno-file=./exampleData/validation.pheno
+~~~~
 
-Using `genotype`, `phenotype` , `GWAS`, and `additional` data, as well as `Heritability estimate`, run:
+Valdiation results and model performance metrics are stored in the ```--valid-dir``` directory. 
 
-    genoml-train --geno-prefix=./exampleData/training --pheno-file=./exampleData/training.pheno  --gwas-file=./exampleData/example_GWAS.txt --addit-file=./exampleData/training.addit --herit=0.2 --model-file=./model 
+> For debugging purposes, include the ```-v``` or ```-vvv``` flags at the end of a command.
 
-Using `genotype`, `phenotype` , `GWAS`, `covariance`, and `additional` data, as well as `Heritability estimate`:
-
-    genoml-train --geno-prefix=./exampleData/training --pheno-file=./exampleData/example.pheno --cov-file=./exampleData/training.cov --gwas-file=./exampleData/example_GWAS.txt --addit-file=./exampleData/training.addit --herit=0.5 --model-file=./model
-
-### Using the machine learning model for inference:
-To perform external `model-validate` only when `genotype` and `phenotype` data present:
-
-    genoml-inference --model-file=./model --valid-geno-prefix=./exampleData/validation --valid-pheno-file=./exampleData/validation.pheno
+[usage]: https://genoml.github.io/docs/usage
+[CLI]: https://genoml.github.io/docs/cli
+[IPDGC example data]: https://github.com/ipdgc/GenoML-Brief-Intro/raw/master/exampleData.zip
 
      
 ## Report issues 
