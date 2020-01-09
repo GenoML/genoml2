@@ -7,6 +7,7 @@ Usage:
   genoml-cli model-validate (--prune-prefix=prune_prefix) (--pheno-file=<pheno_file>) (--geno-prefix=geno_prefix) (--valid-geno-prefix=valid_geno_prefix) (--valid-pheno-file=<valid_pheno_file>) [--valid-cov-file=<valid_cov_file>] [--gwas-file=<gwas_file>] [--valid-addit-file=<valid_addit_file>] [--n-cores=<n_cores>] [--impute-data=<impute_data>]  [--best-model-name=<best_model_name>]
   genoml-cli -h | --help
   genoml-cli --version
+  genoml-cli experimental
 
 Options:
   --geno-prefix=geno_prefix               Prefix with path to genotype files in PLINK format, *.bed, *.bim and *.fam.

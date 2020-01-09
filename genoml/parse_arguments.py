@@ -139,6 +139,10 @@ class Options:
     #     return "/Users/faraz/Downloads/plink_mac_20181202:" + genoml_env["PATH"]  # plink
 
     @property
+    def experimental_path(self):
+        return os.path.join(os.path.dirname(__file__), "experimental")
+
+    @property
     def other_packages(self):
         return os.path.join(os.path.dirname(__file__), "misc", "R")
 
@@ -225,6 +229,9 @@ class Options:
 
     def is_model_validate(self):
         return self._options.get('model-validate', None)
+
+    def is_experimental(self):
+        return self._options.get('experimental', None)
 
     @property
     def model_file(self):

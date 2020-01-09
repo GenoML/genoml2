@@ -148,14 +148,14 @@ __DEPENDENCIES = {
     "GCTA": {
         "checker": check_gcta,
         "Darwin": {
-            "binary": "gcta_1.91.7beta_mac/bin/gcta64",
+            "binary": "gcta_1.93.0beta_mac/bin/gcta64",
             "version_args": ["-v"],
-            "url": "https://cnsgenomics.com/software/gcta/gcta_1.91.7beta_mac.zip"
+            "url": "https://cnsgenomics.com/software/gcta/bin/gcta_1.93.0beta_mac.zip"
         },
         "Linux": {
-            "binary": "gcta_1.91.7beta/gcta64",
+            "binary": "gcta_1.93.0beta/gcta64",
             "version_args": ["-v"],
-            "url": "https://cnsgenomics.com/software/gcta/gcta_1.91.7beta.zip"
+            "url": "https://cnsgenomics.com/software/gcta/bin/gcta_1.93.0beta.zip"
         }
     },
     "Plink": {

@@ -8,6 +8,7 @@ import sys
 import tempfile
 
 from genoml.check_dependencies import check_dependencies
+from genoml.experimental import Experimental
 from genoml.parse_arguments import Options
 from genoml.steps.data_prune import DataPruneStep
 from genoml.steps.model_train import ModelTrainStep
@@ -31,6 +32,8 @@ def cli():
             process = ModelTuneStep()
         elif options.is_model_validate():
             process = ModelValidateStep()
+        elif options.is_experimental():
+            process = Experimental()
         else:
             raise Exception("ISSUE: received unrecognizable option.")
 

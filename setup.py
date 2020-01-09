@@ -37,5 +37,5 @@ setup(
         ],
     },
     install_requires=requirements,
-    package_data={'genoml': ['misc/*', 'misc/*/*']},
+    package_data={'genoml': ['misc/*', 'misc/*/*', 'experimental/*', 'experimental/*/*']},
 )
