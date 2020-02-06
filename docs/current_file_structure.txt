@@ -1,0 +1,44 @@
+.
+├── docs
+│   └── current_file_structure.txt
+├── examples
+│   ├── training_addit.csv
+│   ├── training_pheno.csv
+│   ├── training.bed
+│   ├── training.bim
+│   └── training.fam
+├── genoml
+│   ├── cli
+│   │   ├── __init__.py
+│   │   ├── DiscreteSupervisedTrain.py
+│   │   └── DiscreteSupervisedTune.py
+│   ├── continous
+│   │   ├── supervised
+│   │   └── __init__.py
+│   ├── discrete
+│   │   ├── supervised
+│   │   │   ├── __init__.py
+│   │   │   ├── training.py
+│   │   │   └── tuning.py
+│   │   └── __init__.py
+│   ├── preprocessing
+│   │   ├── __init__.py
+│   │   ├── munging.py
+│   │   ├── utils.py
+│   │   └── vif.py
+│   ├── __init__.py
+│   ├── GenoML.py
+│   └── GenoMLMunging.py
+├── outputs
+├── plink
+│   ├── linux
+│   │   ├── LICENSE
+│   │   └── plink
+│   └── mac
+│       ├── LICENSE
+│       └── plink
+├── GettingStarted.sh
+├── py_GenoML.code-workspace
+├── setup.py
+├── README.md
+└── requirements.txt
