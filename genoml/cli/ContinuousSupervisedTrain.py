@@ -68,3 +68,4 @@ def cstrain(prefix, rank_features, export_predictions):
     # Save out the proper algorithm
     model.save_results(prefix, algorithmResults = True, bestAlgorithm = True, featureRankings = True)
 
+    print("Thank you for training with GenoML!")

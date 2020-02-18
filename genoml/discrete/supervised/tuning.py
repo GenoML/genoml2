@@ -5,15 +5,15 @@ import h5py
 import pandas as pd
 import numpy as np
 from time import time
+import matplotlib.pyplot as plt
+import seaborn as sns
+from joblib import dump, load
 
-# Import the necessary packages for the ML, plotting 
+# Import the necessary packages for the ML
 import xgboost
 import sklearn
 from scipy.stats import randint as sp_randint
 from scipy.stats import uniform as sp_randfloat
-import matplotlib.pyplot as plt
-import seaborn as sns
-from joblib import dump, load
 from sklearn.metrics import accuracy_score, balanced_accuracy_score, log_loss, roc_auc_score, confusion_matrix, roc_curve, auc, make_scorer
 from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, GradientBoostingClassifier, BaggingClassifier

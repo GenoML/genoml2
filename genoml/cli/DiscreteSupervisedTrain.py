@@ -73,3 +73,5 @@ def dstrain(prefix, rank_features, prob_hist, auc):
 
     # Save out the proper algorithm
     model.save_results(prefix, algorithmResults = True, bestAlgorithm = True, featureRankings = True)
+
+    print("Thank you for training with GenoML!")

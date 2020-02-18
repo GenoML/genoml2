@@ -135,22 +135,22 @@ class train:
         if best_algo == 'LinearRegression':
             algo = getattr(sklearn.linear_model, best_algo)()
 
-        if  best_algo == 'SGDRegressor':
+        elif  best_algo == 'SGDRegressor':
             algo = getattr(sklearn.linear_model, best_algo)()
 
-        if (best_algo == 'RandomForestRegressor') or (best_algo == 'AdaBoostRegressor') or (best_algo == 'GradientBoostingRegressor') or  (best_algo == 'BaggingRegressor'):
+        elif (best_algo == 'RandomForestRegressor') or (best_algo == 'AdaBoostRegressor') or (best_algo == 'GradientBoostingRegressor') or  (best_algo == 'BaggingRegressor'):
             algo = getattr(sklearn.ensemble, best_algo)()
 
-        if best_algo == 'SVR':
+        elif best_algo == 'SVR':
             algo = getattr(sklearn.svm, best_algo)()
 
-        if best_algo == 'MLPRegressor':
+        elif best_algo == 'MLPRegressor':
             algo = getattr(sklearn.neural_network, best_algo)()
 
-        if best_algo == 'XGBRegressor':
+        elif best_algo == 'XGBRegressor':
             algo = getattr(xgboost, best_algo)()
 
-        if best_algo == 'KNeighborsRegressor':
+        elif best_algo == 'KNeighborsRegressor':
             algo = getattr(sklearn.neighbors, best_algo)()
 
         algo.fit(self.X_train, self.y_train)
