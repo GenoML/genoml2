@@ -7,9 +7,13 @@ Look at `GettingStarted.sh` to see how a virtual environment is set up
 - Discrete
   - Supervised
     - Train
+    - Tune (?)
+- Continuous 
+  - Supervised 
+    - Train
 
 ### CURRENTLY WORKING ON
-- Continous Supervised Train 
+- Continous Supervised Tune
 
 ### NOT DONE
 - Discrete
