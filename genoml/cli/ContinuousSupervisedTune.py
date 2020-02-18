@@ -43,3 +43,14 @@ def cstune(run_prefix, max_iter, cv_count):
     # Tuning 
     ## This calls on the functions made in the tune class (tuning.py) at the genoml.continuous.supervised
     model_tune = tune(df, run_prefix, max_iter, cv_count)
+    model_tune.select_tuning_parameters() # Returns algo, hyperparameters, and scoring_metric
+    model_tune.apply_tuning_parameters() # Randomized search with CV to tune
+    model_tune.report_tune() #  Summary of the top 10 iterations of the hyperparameter tune
+    model_tune.summarize_tune() # Summary of the cross-validation 
+    model_tune.compare_performance() # Compares tuned performance to baseline to 
+    model_tune.export_tuned_data() # Export the newly tuned predictions 
+    model_tune.export_tune_regression() # Export the tuned and fitted regression model 
+
+    print("")
+    print("End of tuning stage with GenoML.")
+    print("")

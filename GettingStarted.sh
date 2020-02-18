@@ -32,15 +32,27 @@ GenoML
             #  {discrete,continuous} {supervised,unsupervised} {train,tune}
 #GenoML: error: the following arguments are required: data, method, mode
 
-# Running the munging script
+# Running the munging script [discrete]
 GenoMLMunging --prefix outputs/test_discrete_geno \
---geno examples/training \
---pheno examples/training_pheno.csv 
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv 
 
-# Running the munging script with VIF
+# Running the munging script with VIF [discrete]
 GenoMLMunging --prefix outputs/test_discrete_geno \
---geno examples/training \
---pheno examples/training_pheno.csv \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv \
+--vif 5 \
+--iter 1
+
+# Running the munging script [continuous]
+GenoMLMunging --prefix outputs/test_continuous_geno \
+--geno examples/continuous/training \
+--pheno examples/continuous/training_pheno.csv 
+
+# Running the munging script with VIF [continuous]
+GenoMLMunging --prefix outputs/test_continuous_geno \
+--geno examples/continuous/training \
+--pheno examples/continuous/training_pheno.csv \
 --vif 5 \
 --iter 1
 
@@ -50,12 +62,16 @@ GenoML discrete supervised train \
 --rank_features run
 
 # Running the discrete supervised tuning script
-
+GenoML discrete supervised tune \
+--prefix outputs/test_discrete_geno \
+--max_tune 10 --n_cv 3
 
 # Running the continuous supervised training script
 GenoML continuous supervised train \
---prefix outputs/test_discrete_geno \
+--prefix outputs/test_continuous_geno \
 --rank_features run
 
 # Running the continuous supervised tuning script 
-
+GenoML continuous supervised tune \
+--prefix outputs/test_continuous_geno \
+--max_tune 10 --n_cv 3

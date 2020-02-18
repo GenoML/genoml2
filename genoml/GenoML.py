@@ -6,6 +6,7 @@ from functools import partial
 from genoml.cli import dstrain
 from genoml.cli import dstune
 from genoml.cli import cstrain
+from genoml.cli import cstune
    
 def main():
     parser = argparse.ArgumentParser()
@@ -37,7 +38,8 @@ def main():
     clis = {
     "discretesupervisedtrain": partial(dstrain, args.prefix, args.rank_features, args.prob_hist, args.auc),
     "discretesupervisedtune": partial(dstune, args.prefix, args.max_tune, args.n_cv),
-    "continuoussupervisedtrain": partial(cstrain, args.prefix, args.rank_features, args.export_predictions)
+    "continuoussupervisedtrain": partial(cstrain, args.prefix, args.rank_features, args.export_predictions),
+    "continuoussupervisedtune": partial(cstune, args.prefix, args.max_tune, args.n_cv)
     }
 
     # Process the arguments 

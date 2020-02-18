@@ -75,7 +75,7 @@ class tune():
 
     def select_tuning_parameters(self):
         best_algo = self.best_algo
-                
+        
         if best_algo == 'LogisticRegression':
             algo = getattr(sklearn.linear_model, best_algo)()
 
@@ -167,8 +167,8 @@ class tune():
         for i in range(1, n_top + 1):
             candidates = np.flatnonzero(results['rank_test_score'] == i)
             for candidate in candidates:
-                print("Model with rank: {0}".format(i))
-                print("Mean validation score: {0:.3f} (std: {1:.3f})".format(
+                print("Model with Rank: {0}".format(i))
+                print("Mean Validation Score: {0:.3f} (std: {1:.3f})".format(
                 results['mean_test_score'][candidate],
                 results['std_test_score'][candidate]))
                 print("Parameters: {0}".format(results['params'][candidate]))
@@ -196,21 +196,23 @@ class tune():
         print("Standard deviation of the cross-validation score:")
         print(cv_baseline.std())
         
-        print()
+        print("")
         print("Just a note, if you have a relatively small variance among the cross-validation iterations, there is a higher chance of your model being more generalizable to similar datasets.")
 
         self.cv_baseline = cv_baseline
         self.cv_tuned = cv_tuned
+
         return cv_baseline, cv_tuned
 
     def compare_performance(self):
         cv_tuned = self.cv_tuned
         cv_baseline = self.cv_baseline
-        print()
+        
+        print("")
         if cv_baseline.mean() > cv_tuned.mean():
             print("Based on comparisons of the default parameters to your hyperparameter tuned model, the baseline model actually performed better.")
             print("Looks like the tune wasn't worth it, we suggest either extending the tune time or just using the baseline model for maximum performance.")
-            print()
+            print("")
             print("Let's shut everything down, thanks for trying to tune your model with GenoML.")
 
             return self.algo
@@ -252,7 +254,7 @@ class tune():
         plt.savefig(plot_out, dpi = 600)
 
         print()
-        print("We are also exporting a ROC curve for you here", plot_out, "this is a graphical representation of AUC in all samples for the best performing algorithm.")
+        print(f"We are also exporting a ROC curve for you here {plot_out} this is a graphical representation of AUC in all samples for the best performing algorithm.")
     
     def export_tuned_data(self):
         tune_predicteds_probs = self.algo_tuned.predict_proba(self.X_tune)
@@ -274,7 +276,7 @@ class tune():
         tune_out.to_csv(tune_outfile, index=False)
 
         print("")
-        print("Preview of the exported predictions for the tuning samples which is naturally overfit and exported as", tune_outfile, "in the similar format as in the initial training phase of GenoML.")
+        print(f"Preview of the exported predictions for the tuning samples which is naturally overfit and exported as {tune_outfile} in the similar format as in the initial training phase of GenoML.")
         print("#"*70)
         print(tune_out.head())
         print("#"*70)
@@ -282,12 +284,12 @@ class tune():
     def export_tune_hist_prob(self):
         genoML_colors = ["cyan","purple"]
 
-        g = sns.FacetGrid(self.tune_out, hue="CASE_REPORTED", palette=genoML_colors, legend_out=True,)
-        g = (g.map(sns.distplot, "CASE_PROBABILITY", hist=False, rug=True))
-        g.add_legend()
+        sns_plot = sns.FacetGrid(self.tune_out, hue="CASE_REPORTED", palette=genoML_colors, legend_out=True)
+        sns_plot = (sns_plot.map(sns.distplot, "CASE_PROBABILITY", hist=False, rug=True))
+        sns_plot.add_legend()
 
         plot_out = self.run_prefix + '.tunedModel_allSample_probabilities.png'
-        g.savefig(plot_out, dpi=600)
+        sns_plot.savefig(plot_out, dpi=600)
 
         print("")
         print(f"We are also exporting probability density plots to the file {plot_out} this is a plot of the probability distributions of being a case, stratified by case and control status for all samples.")

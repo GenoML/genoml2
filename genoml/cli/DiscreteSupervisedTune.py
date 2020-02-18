@@ -49,9 +49,9 @@ def dstune(run_prefix, max_iter, cv_count):
     model_tune.summarize_tune() # Summary of the cross-validation 
     model_tune.compare_performance() # Compares tuned performance to baseline to 
     model_tune.ROC()  # Export the ROC curve 
-    model_tune.export_tuned_data() # Export the exported predictions 
-    model_tune.export_tune_hist_prob()
+    model_tune.export_tuned_data() # Export the newly tuned predictions 
+    model_tune.export_tune_hist_prob() # Export the probabilites 
 
-    print()
+    print("")
     print("End of tuning stage with GenoML.")
-    print()
+    print("")
