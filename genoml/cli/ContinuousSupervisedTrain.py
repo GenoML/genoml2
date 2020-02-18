@@ -8,7 +8,7 @@ import numpy as np
 import time
 
 # Import the necessary internal GenoML packages 
-from genoml.continuos.supervised import train
+from genoml.continuous.supervised import train
 
 def cstrain(prefix, rank_features, export_predictions):
     # Print out simple info for users 
