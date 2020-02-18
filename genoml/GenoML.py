@@ -1,9 +1,11 @@
 # Import the necessary packages 
 import argparse
+from functools import partial
 
 # Import the necessary internal GenoML packages 
 from genoml.cli import dstrain
 from genoml.cli import dstune
+from genoml.cli import cstrain
    
 def main():
     parser = argparse.ArgumentParser()
@@ -14,18 +16,16 @@ def main():
     #Global
     parser.add_argument("--prefix", type=str, default="GenoML_data", help="Prefix for your training data build.")
 
-    #Mung
-    parser.add_argument("--geno", type=str, default="nope", help="Genotype: (string file path). Path to PLINK format genotype file, everything before the *.bed/bim/fam [default: nope].")
-    parser.add_argument("--addit", type=str, default="nope", help="Additional: (string file path). Path to CSV format feature file [default: nope].")
-    parser.add_argument("--pheno", type=str, default="lost", help="Phenotype: (string file path). Path to CSV phenotype file [default: lost].")
-    parser.add_argument("--gwas", type=str, default="nope", help="GWAS summary stats: (string file path). Path to CSV format external GWAS summary statistics containing at least the columns SNP and P in the header [default: nope].")
-    parser.add_argument("--p", type=float, default=0.001, help="P threshold for GWAS: (some value between 0-1). P value to filter your SNP data on [default: 0.001].")
-    parser.add_argument("--vif", type=int, default=0, help="Variance Inflation Factor (VIF): (integer). This is the VIF threshold for pruning non-genotype features. We recommend a value of 5-10. The default of 0 means no VIF filtering will be done. [default: 0].")
-    parser.add_argument("--iter", type=int, default=0, help="Iterator: (integer). How many iterations of VIF pruning of features do you want to run. To save time VIF is run in randomly assorted chunks of 1000 features per iteration. The default of 1 means only one pass through the data. [default: 1].")
-    parser.add_argument("--impute", type=str, default="median", help="Imputation: (mean, median). Governs secondary imputation and data transformation [default: median].")
 
-    # TRAINING
+    # TRAINING 
     parser.add_argument('--rank_features', type=str, default='skip', choices=['skip','run'], help='Export feature rankings: (skip, run). Exports feature rankings but can be quite slow with huge numbers of features [default: skip].')
+        
+        # Discrete 
+    parser.add_argument('--prob_hist', type=bool, default=False)
+    parser.add_argument('--auc', type=bool, default=False)
+
+        # Continuos 
+    parser.add_argument('--export_predictions', type=bool, default=False)
 
     # TUNING
     parser.add_argument('--max_tune', type=int, default=50, help='Max number of tuning iterations: (integer likely greater than 10). This governs the length of tuning process, run speed and the maximum number of possible combinations of tuning parameters [default: 50].')
@@ -35,11 +35,13 @@ def main():
 
     # DICTIONARY OF CLI 
     clis = {
-    "discretesupervisedtrain": dstrain(args.prefix, args.rank_features),
-    "discretesupervisedtune": dstune(args.prefix, args.max_tune, args.n_cv)
+    "discretesupervisedtrain": partial(dstrain, args.prefix, args.rank_features, args.prob_hist, args.auc),
+    "discretesupervisedtune": partial(dstune, args.prefix, args.max_tune, args.n_cv),
+    "continuoussupervisedtrain": partial(cstrain, args.prefix, args.rank_features, args.export_predictions)
     }
 
-    clis[args.data + args.method + args.mode]
+    # Process the arguments 
+    clis[args.data + args.method + args.mode]()
 
 
     

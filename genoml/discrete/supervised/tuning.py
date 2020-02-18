@@ -31,14 +31,21 @@ from genoml.discrete.supervised import train
 
 # Define the tune class 
 class tune():
-    def __init__(self, run_prefix, X_tune, y_tune, IDs_tune, max_iter, cv_count, winner):
+    def __init__(self, df, run_prefix, max_iter, cv_count):
         self.run_prefix = run_prefix
-        self.X_tune = X_tune
-        self.IDs_tune = IDs_tune
-        self.y_tune = y_tune
         self.max_iter = max_iter
         self.cv_count = cv_count
-        self.best_algo = winner
+       
+        self.y_tune = df.PHENO
+        self.X_tune = df.drop(columns=['PHENO'])
+        self.IDs_tune = self.X_tune.ID
+        self.X_tune = self.X_tune.drop(columns=['ID'])
+
+        best_algo_name_in = run_prefix + '.best_algorithm.txt'
+        best_algo_df = pd.read_csv(best_algo_name_in, header=None, index_col=False)
+        self.best_algo = str(best_algo_df.iloc[0,0])
+
+
         self.algorithms = [
         LogisticRegression(),
         RandomForestClassifier(),

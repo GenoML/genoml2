@@ -1,5 +1,12 @@
 # Importing the necessary packages 
 import pandas as pd
+import sklearn
+import time
+from joblib import dump, load
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, balanced_accuracy_score, log_loss, roc_auc_score, confusion_matrix, roc_curve, auc
 from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, GradientBoostingClassifier, BaggingClassifier
@@ -9,29 +16,25 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis
 from xgboost import XGBClassifier
-import sklearn
-import time
-from joblib import dump, load
-import matplotlib.pyplot as plt
-import seaborn as sns
 from sklearn.feature_selection import RFE
-from sklearn.model_selection import train_test_split
 
 # Define the train class 
 class train:
-    def __init__(self, df):
+    def __init__(self, df, run_prefix):
         #code that will prepare the data
-       
         y = df.PHENO
         X = df.drop(columns=['PHENO'])
+        
+        # Split the data 
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42) # 70:30
         IDs_train = X_train.ID
         IDs_test = X_test.ID
         X_train = X_train.drop(columns=['ID'])
         X_test = X_test.drop(columns=['ID'])
 
-        #saving the preped data the other classes will need
+        # Saving the prepped data the other classes will need
         self.df = df
+        self.run_prefix = run_prefix
         self.X_train = X_train
         self.X_test = X_test
         self.y_train = y_train
@@ -39,7 +42,7 @@ class train:
         self.IDs_train = IDs_train
         self.IDs_test = IDs_test
 
-        #Where the results will be stored 
+        # Where the results will be stored 
         self.log_table = None
         self.best_algo = None
         self.algo = None
@@ -61,14 +64,14 @@ class train:
         XGBClassifier()
         ]
     
-    #report and data summary you want 
+    # Report and data summary you want 
     def summary(self):
         print("Your data looks like this (showing the first few lines of the left-most and right-most columns)...")
         print("#"*70)
         print(self.df.describe())
         print("#"*70)
 
-    def compete(self, verbose= False):
+    def compete(self, verbose=False):
         log_cols=["Algorithm", "AUC_Percent", "Accuracy_Percent", "Balanced_Accuracy_Percent", "Log_Loss", "Sensitivity", "Specificity", "PPV", "NPV", "Runtime_Seconds"]
         log_table = pd.DataFrame(columns=log_cols)
 
@@ -120,19 +123,7 @@ class train:
             log_table = log_table.append(log_entry)
 
         print("#"*70)
-
         print("")
-
-        """
-        log_outfile = self.run_prefix + '.training_withheldSamples_performanceMetrics.csv'
-
-        print(f"This table below is also logged as {log_outfile} and is in your current working directory...")
-        print("#"*70)
-        print(log_table)
-        print("#"*70)
-
-        log_table.to_csv(log_outfile, index=False)
-        """
 
         self.log_table = log_table
 
@@ -142,13 +133,6 @@ class train:
         best_performing_summary = self.log_table[self.log_table.AUC_Percent == self.log_table.AUC_Percent.max()]
         best_algo = best_performing_summary.at[0,'Algorithm']
     
-        """
-        best_algo_name_out = self.run_prefix + ".best_algorithm.txt"
-        file = open(best_algo_name_out,'w')
-        file.write(best_algo)
-        file.close() 
-        """
-
         self.best_algo = best_algo
 
         return best_algo
@@ -220,7 +204,7 @@ class train:
         test_out.to_csv(test_outfile, index=False)
 
         print("")
-        print("Preview of the exported predictions for the withheld test data that has been exported as", test_outfile, "these are pretty straight forward.")
+        print(f"Preview of the exported predictions for the withheld test data that has been exported as {test_outfile} these are pretty straight forward.")
         print("They generally include the sample ID, the previously reported case status (1 = case), the case probability from the best performing algorithm and the predicted label from that algorithm")
         print("")
         print("#"*70)
@@ -228,7 +212,7 @@ class train:
         print("#"*70)
 
 
-        # Exporting training data, which is by nature overfit.
+        # Exporting training data, which is by nature overfit
         train_predicteds_probs = self.algo.predict_proba(self.X_train)
         train_case_probs = train_predicteds_probs[:, 1]
         train_predicted_cases = self.algo.predict(self.X_train)
@@ -246,7 +230,7 @@ class train:
         train_out.to_csv(train_outfile, index=False)
 
         print("")
-        print("Preview of the exported predictions for the training samples which is naturally overfit and exported as", train_outfile, "in the similar format as in the withheld test dataset that was just exported.")
+        print(f"Preview of the exported predictions for the training samples which is naturally overfit and exported as {train_outfile} in the similar format as in the withheld test dataset that was just exported.")
         print("#"*70)
         print(train_out.head())
         print("#"*70)
@@ -298,9 +282,7 @@ class train:
         name = algo.__class__.__name__
 
         print("...remember, there are occasionally slight fluctuations in model performance on the same withheld samples...")
-
         print("#"*70)
-
         print(name)
 
         test_predictions = algo.predict_proba(self.X_test)
@@ -321,12 +303,10 @@ class train:
         print("Log Loss: {:.4}".format(ll))
 
         ### Save it using joblib
-       
         algo_out = self.run_prefix + '.trainedModel.joblib'
         dump(algo, algo_out)
 
         print("#"*70)
-
         print(f"... this model has been saved as {algo_out} for later use and can be found in your working directory.")
 
         self.algo = algo
@@ -346,12 +326,19 @@ class train:
             log_table.to_csv(log_outfile, index=False)
 
         if(bestAlgorithm):
+            best_algo = self.best_algo
+            print(f"Based on your withheld samples, the algorithm with the best AUC is the {best_algo}... let's save that model for you.")
             best_algo_name_out = path + ".best_algorithm.txt"
             file = open(best_algo_name_out,'w')
             file.write(self.best_algo)
             file.close() 
 
         if(featureRankings):
-            table_outfile = path + '.trainedModel_trainingSample_featureImportance.csv'
-            self.rfe_df.to_csv(table_outfile, index=False)   
+            try:
+                table_outfile = path + '.trainedModel_trainingSample_featureImportance.csv'
+                self.rfe_df.to_csv(table_outfile, index=False)  
+                print(f"Feature ranks exported as {table_outfile} if you want to be very picky and make a more parsimonious model with a minimal feature set, extract all features ranked 1 and rebuild your dataset. This analysis also gives you a concept of the relative importance of your features in the model.")
+
+            except:
+                print("No feature rankings to save.")
         
