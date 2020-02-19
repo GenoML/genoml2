@@ -7,7 +7,7 @@ from genoml.preprocessing import utils
 
 # Define the munging class
 class munging:
-    def __init__(self, pheno_path, addit_path, gwas_path, geno_path, pheno_df, addit_df, gwas_df, run_prefix, impute_type, args):
+    def __init__(self, pheno_path, addit_path, gwas_path, geno_path, pheno_df, addit_df, gwas_df, run_prefix, impute_type, p_gwas, args):
         self.pheno_path = pheno_path
         self.addit_path = addit_path
         self.gwas_path = gwas_path
@@ -17,6 +17,7 @@ class munging:
         self.gwas_df = gwas_df
         self.run_prefix = run_prefix
         self.impute_type = impute_type
+        self.p_gwas = p_gwas
         self.args = args
 
     def plink_inputs(self):
@@ -45,7 +46,7 @@ class munging:
         cmds_b = [bash1b, bash2, bash3, bash4, bash5, bash7, bash8, bash9]
 
         if (self.gwas_path != "nope") & (self.geno_path != "nope"):
-            p_thresh = self.args.p
+            p_thresh = self.p_gwas
             gwas_df_reduced = self.gwas_df[['SNP','p']]
             snps_to_keep = gwas_df_reduced.loc[(gwas_df_reduced['p'] <= p_thresh)]
             outfile = self.run_prefix + ".p_threshold_variants.tab"

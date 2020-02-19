@@ -32,17 +32,27 @@ GenoML
             #  {discrete,continuous} {supervised,unsupervised} {train,tune}
 #GenoML: error: the following arguments are required: data, method, mode
 
+##### TESTED 
+
 # Running the munging script [discrete]
 GenoMLMunging --prefix outputs/test_discrete_geno \
 --geno examples/discrete/training \
 --pheno examples/discrete/training_pheno.csv 
 
-# Running the munging script with VIF [discrete]
+# Running the munging script with VIF and iterations [discrete]
 GenoMLMunging --prefix outputs/test_discrete_geno \
 --geno examples/discrete/training \
 --pheno examples/discrete/training_pheno.csv \
 --vif 5 \
 --iter 1
+
+# Running the munging script with everything [discrete]
+GenoMLMunging --prefix outputs/test_discrete_geno \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv \
+--gwas examples/discrete/example_GWAS.csv \
+--vif 5 --iter 1
+
 
 # Running the munging script [continuous]
 GenoMLMunging --prefix outputs/test_continuous_geno \
@@ -54,24 +64,34 @@ GenoMLMunging --prefix outputs/test_continuous_geno \
 --geno examples/continuous/training \
 --pheno examples/continuous/training_pheno.csv \
 --vif 5 \
---iter 1
+--iter 2
 
-# Running the discrete supervised training script
+# Running the supervised training script [discrete]
 GenoML discrete supervised train \
 --prefix outputs/test_discrete_geno \
 --rank_features run
 
-# Running the discrete supervised tuning script
+# Running the supervised tuning script [discrete]
 GenoML discrete supervised tune \
 --prefix outputs/test_discrete_geno \
 --max_tune 10 --n_cv 3
 
-# Running the continuous supervised training script
+# Running the supervised training script [continuous]
 GenoML continuous supervised train \
 --prefix outputs/test_continuous_geno \
 --rank_features run
 
-# Running the continuous supervised tuning script 
+# Running the supervised tuning script [continuous]
 GenoML continuous supervised tune \
 --prefix outputs/test_continuous_geno \
 --max_tune 10 --n_cv 3
+
+
+##### EXPERIMENTAL
+
+# Running the munging script with everything [discrete]
+GenoMLMunging --prefix outputs/test_discrete_geno \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv \
+--gwas examples/discrete/example_GWAS.csv \
+--p 0.01

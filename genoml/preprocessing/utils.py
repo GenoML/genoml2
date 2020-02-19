@@ -37,7 +37,8 @@ def parse_args(args):
     # Other argument initializations 
     impute_type = args.impute
     vif_threshold = args.vif 
-    iteration = args.iter 
+    iteration = args.iter
+    p_gwas = args.p
 
     # Dataframe loading based on arguments
     if (pheno_path == "lost"):
@@ -61,4 +62,4 @@ def parse_args(args):
         print("Pruning your data and exporting a reduced set of genotypes.")
 
     # Return populated variables
-    return pheno_path, addit_path, gwas_path, geno_path, pheno_df, addit_df, gwas_df, impute_type, vif_threshold, iteration
+    return pheno_path, addit_path, gwas_path, geno_path, pheno_df, addit_df, gwas_df, impute_type, vif_threshold, iteration, p_gwas

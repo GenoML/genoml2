@@ -72,10 +72,9 @@ def main():
     args = parser.parse_args()
     run_prefix = args.prefix
     utils.print_config(args)
-    pheno_path, addit_path, gwas_path, geno_path, pheno_df, addit_df, gwas_df, impute_type, vif_threshold, iteration = utils.parse_args(args)
-    print(impute_type)
+    pheno_path, addit_path, gwas_path, geno_path, pheno_df, addit_df, gwas_df, impute_type, vif_threshold, iteration, p_gwas = utils.parse_args(args)
     # Run the munging script in genoml.preprocessing 
-    munger = munging(pheno_path, addit_path, gwas_path, geno_path, pheno_df, addit_df, gwas_df, run_prefix, impute_type, args)
+    munger = munging(pheno_path, addit_path, gwas_path, geno_path, pheno_df, addit_df, gwas_df, run_prefix, impute_type, p_gwas, args)
 
     # Process the PLINK inputs (for pruning)
     df = munger.plink_inputs()
