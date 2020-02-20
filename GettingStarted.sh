@@ -13,6 +13,10 @@ conda activate GenoML
 
 # Installing from a requirements file using pip
 pip install -r requirements.txt
+    # If issues installing xgboost from requirements - use Homebrew to 
+        # xcode-select --install
+        # brew install gcc@7
+        # conda install -c conda-forge xgboost
 
 # Install the package at this path
 pip install .
@@ -46,13 +50,26 @@ GenoMLMunging --prefix outputs/test_discrete_geno \
 --vif 5 \
 --iter 1
 
-# Running the munging script with everything [discrete]
+# Running the munging script with GWAS [discrete]
+GenoMLMunging --prefix outputs/test_discrete_geno \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv \
+--gwas examples/discrete/example_GWAS.csv 
+
+# Running the munging script with VIF and GWAS [discrete]
 GenoMLMunging --prefix outputs/test_discrete_geno \
 --geno examples/discrete/training \
 --pheno examples/discrete/training_pheno.csv \
 --gwas examples/discrete/example_GWAS.csv \
 --vif 5 --iter 1
 
+# Running the munging script with everything [discrete]
+GenoMLMunging --prefix outputs/test_discrete_geno \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv \
+--gwas examples/discrete/example_GWAS.csv \
+--p 0.01 \
+--vif 5 --iter 1
 
 # Running the munging script [continuous]
 GenoMLMunging --prefix outputs/test_continuous_geno \
@@ -65,6 +82,27 @@ GenoMLMunging --prefix outputs/test_continuous_geno \
 --pheno examples/continuous/training_pheno.csv \
 --vif 5 \
 --iter 2
+
+# Running the munging script with GWAS [continuous]
+GenoMLMunging --prefix outputs/test_continuous_geno \
+--geno examples/continuous/training \
+--pheno examples/continuous/training_pheno.csv \
+--gwas examples/continuous/example_GWAS.csv 
+
+# Running the munging script with VIF and GWAS [continuous]
+GenoMLMunging --prefix outputs/test_continuous_geno \
+--geno examples/continuous/training \
+--pheno examples/continuous/training_pheno.csv \
+--gwas examples/continuous/example_GWAS.csv \
+--vif 5 --iter 1
+
+# Running the munging script with everything [continuous]
+GenoMLMunging --prefix outputs/test_continuous_geno \
+--geno examples/continuous/training \
+--pheno examples/continuous/training_pheno.csv \
+--gwas examples/continuous/example_GWAS.csv \
+--p 0.01 \
+--vif 5 --iter 1
 
 # Running the supervised training script [discrete]
 GenoML discrete supervised train \
@@ -89,9 +127,4 @@ GenoML continuous supervised tune \
 
 ##### EXPERIMENTAL
 
-# Running the munging script with everything [discrete]
-GenoMLMunging --prefix outputs/test_discrete_geno \
---geno examples/discrete/training \
---pheno examples/discrete/training_pheno.csv \
---gwas examples/discrete/example_GWAS.csv \
---p 0.01
+

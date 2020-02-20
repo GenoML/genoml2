@@ -2,18 +2,43 @@
 ├── docs
 │   └── current_file_structure.txt
 ├── examples
-│   ├── training_addit.csv
-│   ├── training_pheno.csv
-│   ├── training.bed
-│   ├── training.bim
-│   └── training.fam
+│   ├── continuous
+│   │   ├── example_GWAS.csv
+│   │   ├── training_addit.csv
+│   │   ├── training_pheno.csv
+│   │   ├── training.bed
+│   │   ├── training.bim
+│   │   ├── training.fam
+│   │   ├── validation_addit.csv
+│   │   ├── validation_pheno.csv
+│   │   ├── validation.bed
+│   │   ├── validation.bim
+│   │   └── validation.fam
+│   ├── discrete
+│   │   ├── example_GWAS.csv
+│   │   ├── training_addit.csv
+│   │   ├── training_pheno.csv
+│   │   ├── training.bed
+│   │   ├── training.bim
+│   │   ├── training.fam
+│   │   ├── validation_addit.csv
+│   │   ├── validation_pheno.csv
+│   │   ├── validation.bed
+│   │   ├── validation.bim
+│   │   └── validation.fam
+│   └── .DS_Store
 ├── genoml
 │   ├── cli
 │   │   ├── __init__.py
+│   │   ├── ContinuousSupervisedTrain.py
+│   │   ├── ContinuousSupervisedTune.py
 │   │   ├── DiscreteSupervisedTrain.py
 │   │   └── DiscreteSupervisedTune.py
-│   ├── continous
+│   ├── continuous
 │   │   ├── supervised
+│   │   │   ├── __init__.py
+│   │   │   ├── training.py
+│   │   │   └── tuning.py
 │   │   └── __init__.py
 │   ├── discrete
 │   │   ├── supervised
@@ -30,15 +55,34 @@
 │   ├── GenoML.py
 │   └── GenoMLMunging.py
 ├── outputs
+│   ├── test_continuous_geno.best_algorithm.txt
+│   ├── test_continuous_geno.dataForML.h5
+│   ├── test_continuous_geno.p_threshold_variants.tab
+│   ├── test_continuous_geno.trainedModel.joblib
+│   ├── test_continuous_geno.training_withheldSamples_performanceMetrics.csv
+│   ├── test_continuous_geno.tunedModel_allSample_Predictions.csv
+│   ├── test_continuous_geno.tunedModel_allSample_regression.png
+│   ├── test_continuous_geno.tunedModel.joblib
+│   ├── test_continuous_geno.variants_and_alleles.tab
+│   ├── test_discrete_geno.best_algorithm.txt
+│   ├── test_discrete_geno.dataForML.h5
+│   ├── test_discrete_geno.p_threshold_variants.tab
+│   ├── test_discrete_geno.trainedModel_trainingSample_featureImportance.csv
+│   ├── test_discrete_geno.trainedModel.joblib
+│   ├── test_discrete_geno.training_withheldSamples_performanceMetrics.csv
+│   ├── test_discrete_geno.tunedModel_allSample_Predictions.csv
+│   ├── test_discrete_geno.tunedModel_allSample_probabilities.png
+│   ├── test_discrete_geno.tunedModel_allSample_ROC.png
+│   ├── test_discrete_geno.tunedModel.joblib
+│   └── test_discrete_geno.variants_and_alleles.tab
 ├── plink
 │   ├── linux
 │   │   ├── LICENSE
 │   │   └── plink
 │   └── mac
-│       ├── LICENSE
-│       └── plink
+│   │   ├── LICENSE
+│   │   └── plink
 ├── GettingStarted.sh
-├── py_GenoML.code-workspace
-├── setup.py
 ├── README.md
-└── requirements.txt
+├── requirements.txt
+└── setup.py
