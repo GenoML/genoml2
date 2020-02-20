@@ -1,1 +1,1 @@
-RandomForestClassifier
+BaggingClassifier
