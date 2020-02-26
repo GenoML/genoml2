@@ -74,6 +74,7 @@ class tune():
         self.tune_out = None
 
     def select_tuning_parameters(self):
+        
         best_algo = self.best_algo
         
         if best_algo == 'LogisticRegression':

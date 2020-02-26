@@ -38,6 +38,7 @@ GenoML
 
 ##### TESTED 
 
+## MUNGING 
 # Running the munging script [discrete]
 GenoMLMunging --prefix outputs/test_discrete_geno \
 --geno examples/discrete/training \
@@ -63,11 +64,20 @@ GenoMLMunging --prefix outputs/test_discrete_geno \
 --gwas examples/discrete/example_GWAS.csv \
 --vif 5 --iter 1
 
+# Running the munging script with addit, VIF, and GWAS [discrete]
+GenoMLMunging --prefix outputs/test_discrete_geno \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv \
+--gwas examples/discrete/example_GWAS.csv \
+--addit examples/discrete/training_addit.csv \
+--vif 5 --iter 1
+
 # Running the munging script with everything [discrete]
 GenoMLMunging --prefix outputs/test_discrete_geno \
 --geno examples/discrete/training \
 --pheno examples/discrete/training_pheno.csv \
 --gwas examples/discrete/example_GWAS.csv \
+--addit examples/discrete/training_addit.csv \
 --p 0.01 \
 --vif 5 --iter 1
 
@@ -96,34 +106,46 @@ GenoMLMunging --prefix outputs/test_continuous_geno \
 --gwas examples/continuous/example_GWAS.csv \
 --vif 5 --iter 1
 
+# Running the munging script with addit, VIF, and GWAS [continuous]
+GenoMLMunging --prefix outputs/test_continuous_geno \
+--geno examples/continuous/training \
+--pheno examples/continuous/training_pheno.csv \
+--gwas examples/continuous/example_GWAS.csv \
+--addit examples/continuous/training_addit.csv \
+--vif 5 --iter 1
+
 # Running the munging script with everything [continuous]
 GenoMLMunging --prefix outputs/test_continuous_geno \
 --geno examples/continuous/training \
 --pheno examples/continuous/training_pheno.csv \
 --gwas examples/continuous/example_GWAS.csv \
+--addit examples/continuous/training_addit.csv \
 --p 0.01 \
 --vif 5 --iter 1
 
+## TRAIN 
 # Running the supervised training script [discrete]
 GenoML discrete supervised train \
 --prefix outputs/test_discrete_geno \
 --rank_features run
-
-# Running the supervised tuning script [discrete]
-GenoML discrete supervised tune \
---prefix outputs/test_discrete_geno \
---max_tune 10 --n_cv 3
 
 # Running the supervised training script [continuous]
 GenoML continuous supervised train \
 --prefix outputs/test_continuous_geno \
 --rank_features run
 
+## TUNE 
+# Running the supervised tuning script [discrete]
+GenoML discrete supervised tune \
+--prefix outputs/test_discrete_geno \
+--max_tune 10 --n_cv 3
+
 # Running the supervised tuning script [continuous]
 GenoML continuous supervised tune \
 --prefix outputs/test_continuous_geno \
 --max_tune 10 --n_cv 3
 
+## TEST 
 
 ##### EXPERIMENTAL
 

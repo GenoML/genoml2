@@ -74,7 +74,7 @@ def main():
     utils.print_config(args)
     pheno_path, addit_path, gwas_path, geno_path, pheno_df, addit_df, gwas_df, impute_type, vif_threshold, iteration, p_gwas = utils.parse_args(args)
     # Run the munging script in genoml.preprocessing 
-    munger = munging(pheno_path, addit_path, gwas_path, geno_path, pheno_df, addit_df, gwas_df, run_prefix, impute_type, p_gwas, args)
+    munger = munging(pheno_df, addit_df, gwas_df, impute_type, pheno_path, addit_path, gwas_path, geno_path, p_gwas, run_prefix, args)
 
     # Process the PLINK inputs (for pruning)
     df = munger.plink_inputs()
@@ -85,3 +85,6 @@ def main():
     if(args.iter > 0):
         vif_calc = vif(args.iter, args.vif, df, 100, run_prefix)
         vif_calc.vif_calculations()
+    
+    # Thank the user
+    print("Thank you for munging with GenoML!")
