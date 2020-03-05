@@ -16,7 +16,8 @@ Look at `GettingStarted.sh` to see how a virtual environment is set up
 - Update file structure 
 
 ### CURRENTLY WORKING ON
-- Adding appropriate function 
+- Adding appropriate function descriptions
+- Removing preproccesing.utils to the main munging class to limit the number of input arguments
 
 ### NOT DONE
 - Discrete Supervised Test
