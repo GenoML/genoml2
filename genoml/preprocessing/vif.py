@@ -50,6 +50,9 @@ class vif:
         int_cols = df.select_dtypes(include=["int", "int16", "int32", "int64", "float",
                                              "float16", "float32", "float64"]).shape[1]
 
+        original_df = df
+        self.original_df = original_df
+        
         print("Sampling 100 rows at random to reduce memory overhead...")
         cleaned_df = df.sample(n=100).copy().reset_index()
         cleaned_df.drop(columns=["index"], inplace=True)
@@ -181,5 +184,9 @@ class vif:
 
         complete_vif['ID'] = self.id
         complete_vif['PHENO'] = self.pheno
-        complete_vif.to_hdf(outfile_h5, key='dataForML')
-        return complete_vif
+        
+        # Return the original dataframe with the features to keep 
+        complete_vif_original_df = self.original_df[features]
+        complete_vif_original_df.to_hdf(outfile_h5, key='dataForML')
+
+        return complete_vif_original_df

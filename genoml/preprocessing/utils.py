@@ -17,7 +17,7 @@ def print_config(args):
     print(f"How strong is your VIF filter? {args.vif}")
     print(f"How many iterations of VIF filtering are you doing? {args.iter}")
     print(f"The imputation method you picked is using the column {args.impute} to fill in any remaining NAs.")
-    print("Give credit where credit is due, for this stage of analysis we use code from the great contributors to python packages: os, sys, argparse, numpy, pandas, joblib, math and time. We also use PLINKv1.9 from https://www.cog-genomics.org/plink/1.9/.")
+    print("Give credit where credit is due, for this stage of analysis we use code from the great contributors to python packages: os, sys, argparse, numpy, pandas, joblib, math and time. We also use PLINK v1.9 from https://www.cog-genomics.org/plink/1.9/.")
     print("")
 
 

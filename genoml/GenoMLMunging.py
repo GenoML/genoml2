@@ -79,8 +79,6 @@ def main():
     # Process the PLINK inputs (for pruning)
     df = munger.plink_inputs()
 
-    # If the imputation flags are set, run to impute based on user input 
-
     # Run the VIF calculation 
     if(args.iter > 0):
         vif_calc = vif(args.iter, args.vif, df, 100, run_prefix)
