@@ -2,45 +2,40 @@
 import subprocess
 import pandas as pd
 
-# Import the necessary internal GenoML packages
-from genoml.preprocessing import utils
-
 # Define the munging class
 
 class munging:
-    def __init__(self, pheno_df, addit_df, gwas_df, impute_type, pheno_path, addit_path, gwas_path, geno_path, p_gwas, run_prefix, args):
+    def __init__(self, pheno_path, run_prefix="GenoML_data", impute_type="median", p_gwas=0.001, addit_path=None, gwas_path=None, geno_path=None):
         self.pheno_path = pheno_path
+        self.run_prefix = run_prefix
+        
+        self.impute_type = impute_type
+        self.p_gwas = p_gwas
+        
         self.addit_path = addit_path
         self.gwas_path = gwas_path
         self.geno_path = geno_path
-        self.pheno_df = pheno_df
-        self.addit_df = addit_df
-        self.gwas_df = gwas_df
-        self.run_prefix = run_prefix
-        self.impute_type = impute_type
-        self.p_gwas = p_gwas
-        self.args = args
+        
+        self.pheno_df = pd.read_csv(pheno_path, engine='c')
+
+        if (addit_path==None):
+            print("No additional features as predictors? No problem, we'll stick to genotypes.")
+            self.addit_df = None
+        else:
+            self.addit_df = pd.read_csv(addit_path, engine='c')
+
+        if (gwas_path==None):
+            print("So you don't want to filter on P values from external GWAS? No worries, we don't usually either (if the dataset is large enough).")
+            self.gwas_df = None
+        else:
+            self.gwas_df = pd.read_csv(gwas_path, engine='c')
+            
+        if (geno_path==None):
+            print("So no genotypes? Okay, we'll just use additional features provided for the predictions.")
+        else:
+            print("Pruning your data and exporting a reduced set of genotypes.")
 
     def plink_inputs(self):
-        """
-        Mode -- munging
-        > Function -- plink_inputs
-
-        This function takes in the arguments passed by the user. Arguments that are allowed are 
-            - run_prefix : Prefix for your training data build             
-            - pheno_path : Phenotype: (string file path). Path to CSV phenotype file
-            - addit_path : 
-            - gwas_path :
-            - geno_path : 
-            - pheno_df :
-            - addit_df :
-            - gwas_df :
-            - impute_type :
-            - p_gwas :
-
-        Returns:
-            [print (str)] -- Returns a print statement whether PLINK has been successfully loaded to path or not.
-        """
         # Initializing some variables
         impute_type = self.impute_type
         addit_df = self.addit_df
@@ -68,7 +63,7 @@ class munging:
         cmds_a = [bash1a, bash2, bash3, bash4, bash5, bash7, bash8, bash9]
         cmds_b = [bash1b, bash2, bash3, bash4, bash5, bash7, bash8, bash9]
 
-        if (self.gwas_path != "nope") & (self.geno_path != "nope"):
+        if (self.gwas_path != None) & (self.geno_path != None):
             p_thresh = self.p_gwas
             gwas_df_reduced = self.gwas_df[['SNP', 'p']]
             snps_to_keep = gwas_df_reduced.loc[(
@@ -78,19 +73,19 @@ class munging:
             print(
                 f"Your candidate variant list prior to pruning is right here: {outfile}.")
 
-        if (self.gwas_path == "nope") & (self.geno_path != "nope"):
+        if (self.gwas_path == None) & (self.geno_path != None):
             print(
                 f"A list of pruned variants and the allele being counted in the dosages (usually the minor allele) can be found here: {self.run_prefix}.variants_and_alleles.tab")
             for cmd in cmds_a:
                 subprocess.run(cmd, shell=True)
 
-        if (self.gwas_path != "nope") & (self.geno_path != "nope"):
+        if (self.gwas_path != None) & (self.geno_path != None):
             print(
                 f"A list of pruned variants and the allele being counted in the dosages (usually the minor allele) can be found here: {self.run_prefix}.variants_and_alleles.tab")
             for cmd in cmds_b:
                 subprocess.run(cmd, shell=True)
 
-        if (self.geno_path != "nope"):
+        if (self.geno_path != None):
             raw_path = self.run_prefix + ".raw"
             raw_df = pd.read_csv(raw_path, engine='c', sep=" ")
             raw_df.drop(columns=['FID', 'MAT', 'PAT',
@@ -120,7 +115,7 @@ class munging:
 
     # Checking the imputation of non-genotype features
 
-        if (self.addit_path != "nope"):
+        if (self.addit_path != None):
             if impute_type not in impute_list:
                 return "The 2 types of imputation currently supported are 'mean' and 'median'"
             elif impute_type.lower() == "mean":
@@ -155,25 +150,25 @@ class munging:
             print("#"*70)
 
     # Saving out the proper HDF5 file
-        if (self.geno_path != "nope"):
+        if (self.geno_path != None):
             merged = raw_df.to_hdf(outfile_h5, key='geno')
 
-        if (self.addit_path != "nope"):
+        if (self.addit_path != None):
             merged = addit_df.to_hdf(outfile_h5, key='addit')
 
-        if (self.geno_path != "nope") & (self.addit_path != "nope"):
+        if (self.geno_path != None) & (self.addit_path != None):
             pheno = pd.read_hdf(outfile_h5, key="pheno")
             geno = pd.read_hdf(outfile_h5, key="geno")
             addit = pd.read_hdf(outfile_h5, key="addit")
             temp = pd.merge(pheno, addit, on='ID', how='inner')
             merged = pd.merge(temp, geno, on='ID', how='inner')
 
-        if (self.geno_path != "nope") & (self.addit_path == "nope"):
+        if (self.geno_path != None) & (self.addit_path == None):
             pheno = pd.read_hdf(outfile_h5, key="pheno")
             geno = pd.read_hdf(outfile_h5, key="geno")
             merged = pd.merge(pheno, geno, on='ID', how='inner')
 
-        if (self.geno_path == "nope") & (self.addit_path != "nope"):
+        if (self.geno_path == None) & (self.addit_path != None):
             pheno = pd.read_hdf(outfile_h5, key="pheno")
             addit = pd.read_hdf(outfile_h5, key="addit")
             merged = pd.merge(pheno, addit, on='ID', how='inner')
