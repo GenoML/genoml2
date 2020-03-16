@@ -18,7 +18,7 @@ from statsmodels.tools.tools import add_constant
 from joblib import Parallel, delayed
 
 # Import the necessary internal GenoML packages 
-from genoml.preprocessing import utils, munging, vif
+from genoml.preprocessing import munging, vif
 
 # Check the platform to load the right PLINK to path
     # This will load a PLINK v1.9 

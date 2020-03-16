@@ -182,11 +182,10 @@ class vif:
         checked = self.check_df()
         features, complete_vif = self.iterate(checked)
 
-        complete_vif['ID'] = self.id
-        complete_vif['PHENO'] = self.pheno
-        
         # Return the original dataframe with the features to keep 
         complete_vif_original_df = self.original_df[features]
+        complete_vif_original_df['ID'] = self.id
+        complete_vif_original_df['PHENO'] = self.pheno
         complete_vif_original_df.to_hdf(outfile_h5, key='dataForML')
 
         return complete_vif_original_df

@@ -1,1 +1,1 @@
-BaggingClassifier
+KNeighborsClassifier
