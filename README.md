@@ -14,10 +14,12 @@ Look at `GettingStarted.sh` to see how a virtual environment is set up
     - Train
     - Tune
 - Update file structure 
+- Removing preproccesing.utils to the main munging class to limit the number of input arguments
+  - Overhaul of munging.py
 
 ### CURRENTLY WORKING ON
 - Adding appropriate function descriptions
-- Removing preproccesing.utils to the main munging class to limit the number of input arguments
+
 
 ### NOT DONE
 - Discrete Supervised Test
