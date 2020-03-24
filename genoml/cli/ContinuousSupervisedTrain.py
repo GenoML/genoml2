@@ -51,19 +51,18 @@ def cstrain(prefix, rank_features, export_predictions):
     print("")
 
     # Compete the algorithms 
-    log = model.compete()
+    model.compete()
 
     # Output the results of the log
-    best = model.results()
+    model.results()
 
-    # Export the results 
+    # Export the results
     model.export_model()
 
     if(rank_features == "run"):
         model.feature_ranking()
     
-    if(export_predictions):
-        model.export_predictions()
+    model.export_predictions()
     
     # Save out the proper algorithm
     model.save_results(prefix, algorithmResults = True, bestAlgorithm = True, featureRankings = True)

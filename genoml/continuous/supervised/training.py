@@ -192,7 +192,7 @@ class train:
         return algo 
 
     def export_predictions(self):
-        test_predicted_values = algo.predict(self.X_test)
+        test_predicted_values = self.algo.predict(self.X_test)
         test_predicted_values_df = pd.DataFrame(test_predicted_values)
         y_test_df = pd.DataFrame(self.y_test)
         IDs_test_df = pd.DataFrame(self.IDs_test)
@@ -212,7 +212,7 @@ class train:
         print("#"*70)
 
         # Exporting training data, which is by nature overfit 
-        train_predicted_values = algo.predict(self.X_train)
+        train_predicted_values = self.algo.predict(self.X_train)
         train_predicted_values_df = pd.DataFrame(train_predicted_values)
         y_train_df = pd.DataFrame(self.y_train)
         IDs_train_df = pd.DataFrame(self.IDs_train)
