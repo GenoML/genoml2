@@ -239,7 +239,7 @@ class train:
         genoML_colors = ["cyan","purple"]
 
         g = sns.FacetGrid(train_out, hue="CASE_REPORTED", palette=genoML_colors, legend_out=True,)
-        g = (g.map(sns.distplot, "CASE_PROBABILITY", hist=False, rug=True))
+        g = (g.map(sns.distplot, "CASE_PROBABILITY", hist=True, rug=False))
         g.add_legend()
 
         plot_out = self.run_prefix + '.trainedModel_withheldSample_probabilities.png'

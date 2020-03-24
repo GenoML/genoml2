@@ -286,7 +286,7 @@ class tune():
         genoML_colors = ["cyan","purple"]
 
         sns_plot = sns.FacetGrid(self.tune_out, hue="CASE_REPORTED", palette=genoML_colors, legend_out=True)
-        sns_plot = (sns_plot.map(sns.distplot, "CASE_PROBABILITY", hist=False, rug=True))
+        sns_plot = (sns_plot.map(sns.distplot, "CASE_PROBABILITY", hist=True, rug=False))
         sns_plot.add_legend()
 
         plot_out = self.run_prefix + '.tunedModel_allSample_probabilities.png'

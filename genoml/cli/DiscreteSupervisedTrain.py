@@ -54,22 +54,22 @@ def dstrain(prefix, rank_features, prob_hist, auc):
     print("")
 
     # Compete the algorithms 
-    log = model.compete()
+    model.compete()
     
     # Output the results of the log
-    best = model.results()
+    model.results()
 
     # Export the results 
     model.export_model()
 
     if(rank_features == "run"):
         model.feature_ranking()
-        
-    if(auc):
-        model.AUC(save=True)
 
-    if(prob_hist):
-        model.export_prob_hist()
+    # Export the AUC     
+    model.AUC(save=True)
+
+    # Export the probability histograms
+    model.export_prob_hist()
 
     # Save out the proper algorithm
     model.save_results(prefix, algorithmResults = True, bestAlgorithm = True, featureRankings = True)
