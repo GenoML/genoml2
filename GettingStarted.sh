@@ -150,3 +150,11 @@ GenoML continuous supervised tune \
 ##### EXPERIMENTAL
 
 
+# Running the munging script with everything [discrete]
+GenoMLMunging --prefix outputs/test_discrete_geno \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv \
+--gwas examples/discrete/example_GWAS.csv \
+--addit examples/discrete/training_addit.csv \
+--p 0.01 \
+--featureSelection 50
