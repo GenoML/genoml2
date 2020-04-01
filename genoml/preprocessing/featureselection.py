@@ -30,16 +30,18 @@ class featureselection:
         self.X = X.drop(columns=['ID'])
 
     def rank(self):
+        print(f"""
+            Beginning featureSelection using {self.n_est} estimators...""")
 
         if (self.dataType == "d"):
             print(f"""
-            Beginning featureSelection using extraTrees Classifier for your discrete dataset using {self.n_est} estimators...
+            using extraTrees Classifier for your discrete dataset 
             """)
             clf = ExtraTreesClassifier(n_estimators=self.n_est)
         
         if (self.dataType == "c"):
             print(f"""
-            Beginning featureSelection using extraTrees Regressor for your continuous dataset using {self.n_est} estimators...
+            using extraTrees Regressor for your continuous dataset
             """)
             clf = ExtraTreesRegressor(n_estimators=self.n_est)
         

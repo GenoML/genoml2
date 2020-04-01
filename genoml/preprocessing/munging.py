@@ -44,24 +44,24 @@ class munging:
         outfile_h5 = self.run_prefix + ".dataForML.h5"
         pheno_df.to_hdf(outfile_h5, key='pheno', mode='w')
 
+        if (self.geno_path != None):
         # Set the bashes
-        bash1a = "plink --bfile " + self.geno_path + " --indep-pairwise 1000 50 0.05"
-        bash1b = "plink --bfile " + self.geno_path + " --extract " + self.run_prefix + \
-            ".p_threshold_variants.tab" + " --indep-pairwise 1000 50 0.05"
-        bash2 = "plink --bfile " + self.geno_path + \
-            " --extract plink.prune.in --make-bed --out temp_genos"
-        bash3 = "plink --bfile temp_genos --recode A --out " + self.run_prefix
-        bash4 = "cut -f 2,5 temp_genos.bim > " + \
-            self.run_prefix + ".variants_and_alleles.tab"
-        bash5 = "rm temp_genos.*"
-        bash6 = "rm " + self.run_prefix + ".raw"
-        bash7 = "rm plink.log"
-        bash8 = "rm plink.prune.*"
-        bash9 = "rm " + self.run_prefix + ".log"
-
+            bash1a = "plink --bfile " + self.geno_path + " --indep-pairwise 1000 50 0.05"
+            bash1b = "plink --bfile " + self.geno_path + " --extract " + self.run_prefix + \
+                ".p_threshold_variants.tab" + " --indep-pairwise 1000 50 0.05"
+            bash2 = "plink --bfile " + self.geno_path + \
+                " --extract plink.prune.in --make-bed --out temp_genos"
+            bash3 = "plink --bfile temp_genos --recode A --out " + self.run_prefix
+            bash4 = "cut -f 2,5 temp_genos.bim > " + \
+                self.run_prefix + ".variants_and_alleles.tab"
+            bash5 = "rm temp_genos.*"
+            bash6 = "rm " + self.run_prefix + ".raw"
+            bash7 = "rm plink.log"
+            bash8 = "rm plink.prune.*"
+            bash9 = "rm " + self.run_prefix + ".log"
         # Set the bash command groups
-        cmds_a = [bash1a, bash2, bash3, bash4, bash5, bash7, bash8, bash9]
-        cmds_b = [bash1b, bash2, bash3, bash4, bash5, bash7, bash8, bash9]
+            cmds_a = [bash1a, bash2, bash3, bash4, bash5, bash7, bash8, bash9]
+            cmds_b = [bash1b, bash2, bash3, bash4, bash5, bash7, bash8, bash9]
 
         if (self.gwas_path != None) & (self.geno_path != None):
             p_thresh = self.p_gwas
@@ -95,23 +95,24 @@ class munging:
 
     # Checking the impute flag and execute
         # Currently only supports mean and median
-
         impute_list = ["mean", "median"]
+        
+        if (self.geno_path != None):
 
-        if impute_type not in impute_list:
-            return "The 2 types of imputation currently supported are 'mean' and 'median'"
-        elif impute_type.lower() == "mean":
-            raw_df = raw_df.fillna(raw_df.mean())
-        elif impute_type.lower() == "median":
-            raw_df = raw_df.fillna(raw_df.median())
-        print("")
-        print(
-            f"You have just imputed your genotype features, covering up NAs with the column {impute_type} so that analyses don't crash due to missing data.")
-        print("Now your genotype features might look a little better (showing the first few lines of the left-most and right-most columns)...")
-        print("#"*70)
-        print(raw_df.describe())
-        print("#"*70)
-        print("")
+            if impute_type not in impute_list:
+                return "The 2 types of imputation currently supported are 'mean' and 'median'"
+            elif impute_type.lower() == "mean":
+                raw_df = raw_df.fillna(raw_df.mean())
+            elif impute_type.lower() == "median":
+                raw_df = raw_df.fillna(raw_df.median())
+            print("")
+            print(
+                f"You have just imputed your genotype features, covering up NAs with the column {impute_type} so that analyses don't crash due to missing data.")
+            print("Now your genotype features might look a little better (showing the first few lines of the left-most and right-most columns)...")
+            print("#"*70)
+            print(raw_df.describe())
+            print("#"*70)
+            print("")
 
     # Checking the imputation of non-genotype features
 

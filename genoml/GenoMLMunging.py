@@ -58,9 +58,9 @@ def main():
     parser.add_argument("--pheno", type=str, default="lost",
                         help="Phenotype: (string file path). Path to CSV phenotype file [default: lost].", required=True)
     parser.add_argument("--geno", type=str, default=None,
-                        help="Genotype: (string file path). Path to PLINK format genotype file, everything before the *.bed/bim/fam [default: nope].")
+                        help="Genotype: (string file path). Path to PLINK format genotype file, everything before the *.bed/bim/fam [default: None].")
     parser.add_argument("--addit", type=str, default=None,
-                        help="Additional: (string file path). Path to CSV format feature file [default: nope].")
+                        help="Additional: (string file path). Path to CSV format feature file [default: None].")
     parser.add_argument("--gwas", type=str, default=None,
                         help="GWAS summary stats: (string file path). Path to CSV format external GWAS summary statistics containing at least the columns SNP and P in the header [default: nope].")
     parser.add_argument("--p", type=float, default=0.001,
