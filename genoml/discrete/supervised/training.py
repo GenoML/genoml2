@@ -5,6 +5,8 @@ import time
 from joblib import dump, load
 import matplotlib.pyplot as plt
 import seaborn as sns
+import xgboost
+import sklearn
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, balanced_accuracy_score, log_loss, roc_auc_score, confusion_matrix, roc_curve, auc
@@ -50,12 +52,12 @@ class train:
 
         #The methods we will use
         self.algorithms = [
-        LogisticRegression(),
-        RandomForestClassifier(),
+        LogisticRegression(solver='lbfgs'),
+        RandomForestClassifier(n_estimators=100),
         AdaBoostClassifier(),
         GradientBoostingClassifier(),
         SGDClassifier(loss='modified_huber'),
-        SVC(probability=True),
+        SVC(probability=True, gamma='scale'),
         MLPClassifier(),
         KNeighborsClassifier(),
         LinearDiscriminantAnalysis(),
