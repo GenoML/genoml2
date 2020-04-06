@@ -18,45 +18,23 @@ from statsmodels.tools.tools import add_constant
 from joblib import Parallel, delayed
 
 # Import the necessary internal GenoML packages
+import genoml.dependencies
 from genoml.preprocessing import munging, vif, featureselection
-
-# Check the platform to load the right PLINK to path
-# This will load a PLINK v1.9
-
-
-def get_platform():
-    platforms = {
-        "linux": "linux",
-        "linux1": "linux",
-        "linux2": "linux",
-        "darwin": "mac"
-    }
-    if sys.platform not in platforms:
-        return "GenoML is not supported on this platform. Please try Mac or Linux"
-    elif platforms[sys.platform] == "mac":
-        filename_mac = "plink/mac/"
-        directory_mac = os.getcwd() + "/" + filename_mac
-        os.environ["PATH"] = os.environ["PATH"] + os.pathsep + directory_mac
-    else:
-        filename_linux = "plink/linux/"
-        directory_linux = os.getcwd() + "/" + filename_linux
-        os.environ["PATH"] = os.environ["PATH"] + os.pathsep + directory_linux
-    return print("PLINK has successfully been loaded to your path!")
 
 
 def main():
-    # Run and get the proper PLINK to path
-    get_platform()
+    genoml.dependencies.check_dependencies()
 
     # Create the arguments
     parser = argparse.ArgumentParser(
         description="Arguments for building a training dataset for GenoML.")
     parser.add_argument("--prefix", type=str, default="GenoML_data",
                         help="Prefix for your training data build.", required=True)
-    parser.add_argument("--datatype", type=str, default="d", choices=['d','c'],
+    parser.add_argument("--datatype", type=str, default="d", choices=['d', 'c'],
                         help="Type of data. Choices are d for discrete, c for continuous", required=True)
     parser.add_argument("--pheno", type=str, default="lost",
-                        help="Phenotype: (string file path). Path to CSV phenotype file [default: lost].", required=True)
+                        help="Phenotype: (string file path). Path to CSV phenotype file [default: lost].",
+                        required=True)
     parser.add_argument("--geno", type=str, default=None,
                         help="Genotype: (string file path). Path to PLINK format genotype file, everything before the *.bed/bim/fam [default: None].")
     parser.add_argument("--addit", type=str, default=None,
@@ -70,10 +48,11 @@ def main():
     parser.add_argument("--iter", type=int, default=0,
                         help="Iterator: (integer). How many iterations of VIF pruning of features do you want to run. To save time VIF is run in randomly assorted chunks of 1000 features per iteration. The default of 1 means only one pass through the data. [default: 1].")
     parser.add_argument("--impute", type=str, default="median",
-                        help="Imputation: (mean, median). Governs secondary imputation and data transformation [default: median].", choices=["median", "mean"])
-    parser.add_argument('--featureSelection', type=int, default=0, 
+                        help="Imputation: (mean, median). Governs secondary imputation and data transformation [default: median].",
+                        choices=["median", "mean"])
+    parser.add_argument('--featureSelection', type=int, default=0,
                         help='Run a quick tree-based feature selection routine prior to anything else, here you input the integer number of estimators needed, we suggest >= 50. The default of 0 will skip this functionality. This will also output a reduced dataset for analyses in addition to feature ranks. [default: 0]')
-    
+
     args = parser.parse_args()
 
     # Print configurations
@@ -94,7 +73,8 @@ def main():
     print(f"How many iterations of VIF filtering are you doing? {args.iter}")
     print(
         f"The imputation method you picked is using the column {args.impute} to fill in any remaining NAs.")
-    print("Give credit where credit is due, for this stage of analysis we use code from the great contributors to python packages: os, sys, argparse, numpy, pandas, joblib, math and time. We also use PLINK v1.9 from https://www.cog-genomics.org/plink/1.9/.")
+    print(
+        "Give credit where credit is due, for this stage of analysis we use code from the great contributors to python packages: os, sys, argparse, numpy, pandas, joblib, math and time. We also use PLINK v1.9 from https://www.cog-genomics.org/plink/1.9/.")
     print("")
 
     # Process the arguments
@@ -114,9 +94,9 @@ def main():
         featureSelection_df = featureselection(run_prefix, df, dataType, n_est)
         df = featureSelection_df.rank()
         featureSelection_df.export_data()
-    
+
     # Run the VIF calculation
-    if(args.iter > 0):
+    if (args.iter > 0):
         vif_calc = vif(args.iter, args.vif, df, 100, run_prefix)
         vif_calc.vif_calculations()
 

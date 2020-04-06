@@ -3,6 +3,8 @@ import subprocess
 import pandas as pd
 
 # Define the munging class
+import genoml.dependencies
+
 
 class munging:
     def __init__(self, pheno_path, run_prefix="GenoML_data", impute_type="median", p_gwas=0.001, addit_path=None, gwas_path=None, geno_path=None):
@@ -37,6 +39,7 @@ class munging:
 
     def plink_inputs(self):
         # Initializing some variables
+        plink_exec = genoml.dependencies.check_plink()
         impute_type = self.impute_type
         addit_df = self.addit_df
         pheno_df = self.pheno_df
@@ -46,12 +49,12 @@ class munging:
 
         if (self.geno_path != None):
         # Set the bashes
-            bash1a = "plink --bfile " + self.geno_path + " --indep-pairwise 1000 50 0.05"
-            bash1b = "plink --bfile " + self.geno_path + " --extract " + self.run_prefix + \
+            bash1a = f"{plink_exec} --bfile " + self.geno_path + " --indep-pairwise 1000 50 0.05"
+            bash1b = f"{plink_exec} --bfile " + self.geno_path + " --extract " + self.run_prefix + \
                 ".p_threshold_variants.tab" + " --indep-pairwise 1000 50 0.05"
-            bash2 = "plink --bfile " + self.geno_path + \
+            bash2 = f"{plink_exec} --bfile " + self.geno_path + \
                 " --extract plink.prune.in --make-bed --out temp_genos"
-            bash3 = "plink --bfile temp_genos --recode A --out " + self.run_prefix
+            bash3 = f"{plink_exec} --bfile temp_genos --recode A --out " + self.run_prefix
             bash4 = "cut -f 2,5 temp_genos.bim > " + \
                 self.run_prefix + ".variants_and_alleles.tab"
             bash5 = "rm temp_genos.*"

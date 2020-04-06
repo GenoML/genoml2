@@ -1,0 +1,12 @@
+{
+  "check_dependencies_Plink": {
+    "title": "Checking plink",
+    "description": "",
+    "error": ""
+  },
+  "check_dependencies": {
+    "title": "Dependency Check",
+    "description": "",
+    "error": ""
+  }
+}
