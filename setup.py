@@ -9,7 +9,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="genoml", 
-    version="0.0.1",
+    version="2.0.0",
     author="Mike A. Nalls",
     author_email="mike@datatecnica.com",
     description="GenoML is an automated machine learning tool that optimizes basic machine learning pipelines for genomic data.",

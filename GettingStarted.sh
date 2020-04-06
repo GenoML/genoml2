@@ -125,6 +125,7 @@ GenoMLMunging --prefix outputs/test_continuous_geno \
 
 # Running the munging script with addit, VIF, and GWAS [continuous]
 GenoMLMunging --prefix outputs/test_continuous_geno \
+--datatype c \
 --geno examples/continuous/training \
 --pheno examples/continuous/training_pheno.csv \
 --gwas examples/continuous/example_GWAS.csv \
@@ -163,10 +164,4 @@ GenoML continuous supervised tune \
 --prefix outputs/test_continuous_geno \
 --max_tune 10 --n_cv 3
 
-## TEST 
-
-##### EXPERIMENTAL
-
-
-
-
+## TEST

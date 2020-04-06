@@ -131,37 +131,36 @@ class train:
 
         return log_table
 
-    def results(self):
-        best_performing_summary = self.log_table[self.log_table.AUC_Percent == self.log_table.AUC_Percent.max()]
-        best_algo = best_performing_summary.at[0,'Algorithm']
-    
-        self.best_algo = best_algo
+    def results(self, metric_max):
+        self.metric_max = metric_max 
+
+        if(metric_max == "AUC"):
+            best_performing_summary = self.log_table[self.log_table.AUC_Percent == self.log_table.AUC_Percent.max()]
+            best_algo = best_performing_summary.at[0,'Algorithm']
+        
+            self.best_algo = best_algo
+        
+        if(metric_max == "Balanced_Accuracy"):
+            best_performing_summary = self.log_table[self.log_table.Balanced_Accuracy_Percent == self.log_table.Balanced_Accuracy_Percent.max()]
+            best_algo = best_performing_summary.at[0,'Algorithm']
+        
+            self.best_algo = best_algo
+        
+        if(metric_max == "Sensitivity"):
+            best_performing_summary = self.log_table[self.log_table.Sensitivity == self.log_table.Sensitivity.max()]
+            best_algo = best_performing_summary.at[0,'Algorithm']
+        
+            self.best_algo = best_algo            
+        
+        if(metric_max == "Specificity"):
+            best_performing_summary = self.log_table[self.log_table.Specificity == self.log_table.Specificity.max()]
+            best_algo = best_performing_summary.at[0,'Algorithm']
+        
+            self.best_algo = best_algo
 
         return best_algo
 
-    def feature_ranking(self):
-        best_algo = self.best_algo
-        X_train = self.X_train
-        y_train = self.y_train
-        if (best_algo == 'SVC') or (best_algo == 'ComplementNB') or (best_algo == 'KNeighborsClassifier') or (best_algo == 'QuadraticDiscriminantAnalysis') or (best_algo == 'BaggingClassifier'):
-        
-            print("Even if you selected to run feature ranking, you can't generate feature ranks using SVC, ComplementNB, KNeighborsClassifier, QuadraticDiscriminantAnalysis, or BaggingClassifier... it just isn't possible.")
-        
-        else:
 
-            top_ten_percent = (len(X_train)//10)
-            # core_count = args.n_cores
-            names = list(X_train.columns)
-            rfe = RFE(estimator=self.algo)
-            rfe.fit(X_train, y_train)
-            rfe_out = zip(rfe.ranking_, names)
-            rfe_df = pd.DataFrame(rfe_out, columns = ["RANK","FEATURE"])
-            #table_outfile = self.run_prefix + '.trainedModel_trainingSample_featureImportance.csv'
-            #rfe_df.to_csv(table_outfile, index=False)
-
-            self.rfe_df = rfe_df
-
-            return rfe_df
 
     def AUC(self, save = False):
         plot_out = self.run_prefix + '.trainedModel_withheldSample_ROC.png'
@@ -329,7 +328,7 @@ class train:
 
         if(bestAlgorithm):
             best_algo = self.best_algo
-            print(f"Based on your withheld samples, the algorithm with the best AUC is the {best_algo}... let's save that model for you.")
+            print(f"Based on your withheld samples, the algorithm with the best {self.metric_max} is the {best_algo}... let's save that model for you.")
             best_algo_name_out = path + ".best_algorithm.txt"
             file = open(best_algo_name_out,'w')
             file.write(self.best_algo)

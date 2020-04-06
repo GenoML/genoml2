@@ -1,1 +1,1 @@
-XGBClassifier
+QuadraticDiscriminantAnalysis

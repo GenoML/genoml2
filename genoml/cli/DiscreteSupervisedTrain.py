@@ -10,7 +10,7 @@ import time
 # Import the necessary internal GenoML packages 
 from genoml.discrete.supervised import train
 
-def dstrain(prefix, rank_features, prob_hist, auc):
+def dstrain(prefix, metric_max, prob_hist, auc):
     print("")
     print("Here is some basic info on the command you are about to run.")
     print("Python Version info...")
@@ -18,8 +18,8 @@ def dstrain(prefix, rank_features, prob_hist, auc):
 
     # Print out chosen CLI arguments 
     print("CLI argument info...")
-    print(f"Are you ranking features, even though it is pretty slow? Right now, GenoML runs general recursive feature ranking. You chose to {rank_features} this part.")
     print(f"Working with dataset {prefix} from previous data munging efforts.")
+    print(f"You have chosen to compete the algorithms based on {metric_max}.")
     print("Give credit where credit is due, for this stage of analysis we use code from the great contributors to Python packages: argparse, xgboost, sklearn, pandas, numpy, time, matplotlib and seaborn.")
     print("As a note, in all exported probabilities and other graphics, case status is treated as a 0 or 1, with 1 representing a positive case.")
     print("")
@@ -57,13 +57,10 @@ def dstrain(prefix, rank_features, prob_hist, auc):
     model.compete()
     
     # Output the results of the log
-    model.results()
+    model.results(metric_max)
 
     # Export the results 
     model.export_model()
-
-    if(rank_features == "run"):
-        model.feature_ranking()
 
     # Export the AUC     
     model.AUC(save=True)
@@ -72,6 +69,6 @@ def dstrain(prefix, rank_features, prob_hist, auc):
     model.export_prob_hist()
 
     # Save out the proper algorithm
-    model.save_results(prefix, algorithmResults = True, bestAlgorithm = True, featureRankings = True)
+    model.save_results(prefix, algorithmResults = True, bestAlgorithm = True)
 
     print("Thank you for training with GenoML!")

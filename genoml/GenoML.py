@@ -10,17 +10,17 @@ from genoml.cli import cstune
    
 def main():
     parser = argparse.ArgumentParser()
+    # These are mandatory 
     parser.add_argument("data", choices=["discrete", "continuous"])
     parser.add_argument("method", choices=["supervised", "unsupervised"])
     parser.add_argument("mode", choices=["train", "tune"])
 
     #Global
     parser.add_argument("--prefix", type=str, default="GenoML_data", help="Prefix for your training data build.")
-
+    parser.add_argument('--metric_max', type=str, default='AUC', choices=['AUC',"Balanced_Accuracy","Specificity","Sensitivity"], help='How do you want to determine which algorithm performed the best? [default: AUC].')
 
     # TRAINING 
-    parser.add_argument('--rank_features', type=str, default='skip', choices=['skip','run'], help='Export feature rankings: (skip, run). Exports feature rankings but can be quite slow with huge numbers of features [default: skip].')
-        
+   
         # Discrete 
     parser.add_argument('--prob_hist', type=bool, default=False)
     parser.add_argument('--auc', type=bool, default=False)
@@ -36,9 +36,9 @@ def main():
 
     # DICTIONARY OF CLI 
     clis = {
-    "discretesupervisedtrain": partial(dstrain, args.prefix, args.rank_features, args.prob_hist, args.auc),
+    "discretesupervisedtrain": partial(dstrain, args.prefix, args.metric_max, args.prob_hist, args.auc),
     "discretesupervisedtune": partial(dstune, args.prefix, args.max_tune, args.n_cv),
-    "continuoussupervisedtrain": partial(cstrain, args.prefix, args.rank_features, args.export_predictions),
+    "continuoussupervisedtrain": partial(cstrain, args.prefix, args.export_predictions),
     "continuoussupervisedtune": partial(cstune, args.prefix, args.max_tune, args.n_cv)
     }
 

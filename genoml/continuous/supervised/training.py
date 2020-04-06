@@ -254,28 +254,7 @@ class train:
         print("")
         print(f"We are also exporting a regression plot for you here {plot_out} this is a graphical representation of the difference between the reported and predicted phenotypes in the withheld test data for the best performing algorithm.")
 
-    def feature_ranking(self):
-        best_algo = self.best_algo
-        X_train = self.X_train
-        y_train = self.y_train
-
-        if (best_algo == 'SVR') or (best_algo == 'KNeighborsRegressor'):
-            print("Even if you selected to run feature ranking, you can't generate feature ranks using SVR or KNeighborsRegressor... it just isn't possible.")
-        else:
-            print("Processing feature ranks, this can take a while. But you will get a relative rank for every feature in the model.")
-
-            top_ten_percent = (len(X_train)//10)
-            # core_count = args.n_cores
-            names = list(X_train.columns)
-            rfe = RFE(estimator=self.algo)
-            rfe.fit(X_train, y_train)
-            rfe_out = zip(rfe.ranking_, names)
-            rfe_df = pd.DataFrame(rfe_out, columns = ["RANK","FEATURE"])
-            
-            self.rfe_df = rfe_df
-            return rfe_df
-
-    def save_results(self, path, algorithmResults = False, bestAlgorithm = False, featureRankings = False):
+    def save_results(self, path, algorithmResults = False, bestAlgorithm = False):
         path = self.run_prefix 
 
         if(algorithmResults):
@@ -297,11 +276,3 @@ class train:
             file.write(self.best_algo)
             file.close()
         
-        if(featureRankings):
-            try:
-                table_outfile = path + '.trainedModel_trainingSample_featureImportance.csv'
-                self.rfe_df.to_csv(table_outfile, index=False)  
-                print(f"Feature ranks exported as {table_outfile} if you want to be very picky and make a more parsimonious model with a minimal feature set, extract all features ranked 1 and rebuild your dataset. This analysis also gives you a concept of the relative importance of your features in the model.")
-
-            except:
-                print("No feature rankings to save.")
