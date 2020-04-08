@@ -1,63 +1,190 @@
-## README
+# How to Get Started with GenoML
 
-Look at `GettingStarted.sh` to see how a virtual environment is set up 
-
-### DONE
-- Munging
-  - Added --gwas and --p flags
-- Discrete
-  - Supervised
-    - Train
-    - Tune
-- Continuous 
-  - Supervised 
-    - Train
-    - Tune
-- Update file structure 
-- Removing preproccesing.utils to the main munging class to limit the number of input arguments
-  - Overhaul of munging.py
-- Adding extraTrees feature selection for discrete and continuous data
-- Splitting up munging so it only takes in --pheno and --addit files (no --geno necessary; right now it's programmed in such a way that they can't be separated)
-- Dynamically load in PLINK and check dependencies   
-- Adding argparse option and switch to training.py (d+c) to specify which metric to maximize by (`AUC_Percent`, `Balanced_Accuracy_Percent`, `Sensitivity`, or `Specificity`)
-- Modifying tuning.py to specify which metric to maximize by `AUC_Percent` or `Balanced_Accuracy_Percent`
-
-### CURRENTLY WORKING ON
-- Modifying GenoMLMunging to include validation munge? Or make a separate validation munge?
-- Discrete Supervised Test
-- Continuous Supervised Test
-- Adding minor fixes 
-- Adding appropriate function descriptions
-
-
-### NOT DONE
-- Unsupervised?
-- UKBB?
-- Add experimental folder?
   
-### NEED TO IMPLEMENT 
-- feature_rank only works... some of the time? why? 
-- Verbose option for Python package mimicking the CLI interface 
-- Default error message for when users do not put proper inputs for GenoMLMunging
-- Add error catching 
-- Clean up munging 
-- Add default parameters for the classes (to be run as a Python package and not CLI)
 
-### CURRENT PAIN POINTS AND LIMITATIONS 
-- Right after the .raw file post-pruning is generated after `plink_inputs()`. To reconstruct those files to impute, z-score, etc to them is a big bottleneck
-- Using RFE for feature ranking at the end of tune, but now when we use extraTrees an approx list of features get spit out a lot faster 
-- Larger biobank scale, merging dataframes in general has been quite painful 
+This document is a brief look into how to structure arguments and what arguments are available at each phase for the GenoML CLI
 
-### USE CASE REQUIREMENTS THAT STILL NEED TO BE ADDRESSED
-- [Train+Tune] Ability to set seeds for reproducibility in tune and train 
-- [Pruning] (UKBiobank need) Add sex check to remove samples in wrong ICD-10 codes (and then remove sex as covariate)
-- [Pruning] (UKBiobank need) Ability to specify phenotype name (list of phenotypes) as an argument to pull from a large file of genotypes and phenotypes
-- [Pruning] (UKBiobank need) Optimizing merge – taking too much time/memory
-- [Pruning] Output intermediate file – proper, clear documentation (?)
-- [Training] K-fold Cross validation for training – setting K
-- [Training] Supervised prediction multi-class
-- [Docs] Updating the website, tutorials, and sample use-cases
+  
 
-### NOTES
-- Munging double scalars issue? (Is this just a warning and it's actually dropping the SNPs or no?)
-  - This happens when you re-munge on already munged data. 
+## 0. [OPTIONAL] How to Set Up a Virtual Environment via Conda
+
+  
+
+You can create a virtual environment to run GenoML, if you prefer.
+If you already have the Anaconda Distribution, this is fairly simple.
+
+  To create a virtual environment:
+
+```bash
+# To create a virtual environment 
+conda activate GenoML
+
+# MISC 
+	# To deactivate the virutal environment
+#conda deactivate GenoML	
+	# To delete your virutal environment 
+# conda env remove -n GenoML
+
+```
+
+To install the package at this path:
+```bash
+# Install the package at this path
+pip install .
+
+# MISC
+	# To save out the environment requirements to a .txt file
+# pip freeze > requirements.txt
+
+	# Removing a conda virtualenv
+# conda remove --name GenoML --all 
+```
+## 1. Munging with GenoML
+
+Munging with GenoML was written as a separate portion in case you did not want to preprocess using GenoML, so it's structured a little differently from the rest of the package.
+
+**Required** arguments for munging are `--prefix` , `--pheno` and `--datatype` 
+- `--prefix` : Where and what would you like to name this file when it is munged?
+- `--pheno` : Where is your phenotype file? This file only has 2 columns, ID in one, and PHENO in the other (0 for controls and 1 for cases)
+- `--datatype`: What type of data are you putting into GenoML? The options for ``--datatype`` are `d` for discrete or `c` for continuous
+
+*Note:* The following examples are for discrete data, but if you substitute following commands with `--datatype c`, you can preprocess your continuous data!
+
+If you would like to munge just with genotypes (in PLINK binary format), the simplest command is the following: 
+```bash
+# Running GenoML munging on discrete data using PLINK genotype binary files and a phenotype file 
+GenoMLMunging --prefix outputs/test_discrete_geno \
+--datatype d \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv 
+```
+If you suspect collinear variables, and think this will be a problem for training the model moving forward, you can use VIF: 
+```bash
+# Running GenoML munging on discrete data using PLINK genotype binary files and a phenotype file while using VIF to remove multicollinearity 
+GenoMLMunging --prefix outputs/test_discrete_geno \
+--datatype d \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv \
+--vif 5 \
+--iter 1
+```
+
+Well, what if you had GWAS summary statistics handy, and would like to incorporate that data in? You can do so by running the following:
+```bash
+# Running GenoML munging on discrete data using PLINK genotype binary files, a phenotype file, and a GWAS summary statistics file 
+GenoMLMunging --prefix outputs/test_discrete_geno \
+--datatype d \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv \
+--gwas examples/discrete/example_GWAS.csv 
+```
+
+...and if you wanted to add a p-value cut-off...
+```bash
+# Running GenoML munging on discrete data using PLINK genotype binary files, a phenotype file, and a GWAS summary statistics file with a p-value cut-off 
+GenoMLMunging --prefix outputs/test_discrete_geno \
+--datatype d \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv \
+--gwas examples/discrete/example_GWAS.csv \
+--p 0.01
+```
+
+Do you have additional data you would like to incorporate? Perhaps clinical, demographic, or transcriptomics data? If coded and all numerical, these can be added as an `--addit` file by doing the following: 
+```bash
+# Running GenoML munging on discrete data using PLINK genotype binary files, a phenotype file, and an addit file
+GenoMLMunging --prefix outputs/test_discrete_geno \
+--datatype d \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv \
+--addit examples/discrete/training_addit.csv 
+```
+You also have the option of not using PLINK binary files if you would like to just preprocess (and then, later train) on a phenotype and addit file by doing the following:
+```bash
+# Running GenoML munging on discrete data using PLINK genotype binary files, a phenotype file, and an addit file
+GenoMLMunging --prefix outputs/test_discrete_geno \
+--datatype d \
+--pheno examples/discrete/training_pheno.csv \
+--addit examples/discrete/training_addit.csv 
+```
+Are you interested in selecting and ranking your features? If so...:
+```bash
+# Running GenoML munging on discrete data using PLINK genotype binary files, a phenotype file, and running feature selection 
+GenoMLMunging --prefix outputs/test_discrete_geno \
+--datatype d \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv \
+--featureSelection 50
+```
+
+## 2. Training with GenoML
+Training, tuning, and testing with GenoML have a slightly different structure where there are 3 required arguments before moving forward
+
+If you were to run just `GenoML` in the command line, you would see the following:
+```bash
+# Run GenoML
+GenoML
+#usage: GenoML [-h] [--prefix PREFIX] [--geno GENO] [--addit ADDIT]
+            #  [--pheno PHENO] [--gwas GWAS] [--p P] [--vif VIF] [--iter ITER]
+            #  [--impute IMPUTE] [,run}]
+            #  [--max_tune MAX_TUNE] [--n_cv N_CV]
+            #  {discrete,continuous} {supervised,unsupervised} {train,tune}
+#GenoML: error: the following arguments are required: data, method, mode
+```
+
+**Required** arguments for GenoML are the following: 
+- `data` : Is the data `continuous` or `discrete`?
+- `method`: Do you want to use `supervised` or `unsupervised` machine learning? *(unsupervised currently under development)*
+- `mode`:  would you like to `train` or `tune` your model?
+- `--prefix` : Where would you like your outputs to be saved?
+
+The most basic command to train your model looks like the following, it looks for the `*.dataForML` file that was generated in the munging step: 
+```bash
+# Running GenoML supervised training after munging on discrete data
+GenoML discrete supervised train \
+--prefix outputs/test_discrete_geno
+```
+
+If you would like to determine the best competing algorithm by something other than the AUC, you can do so by changing the `--metric_max` flag (Options include `AUC`, `Balanced_Accuracy`, `Sensitivity`, and `Specificity`) :
+
+```bash
+# Running GenoML supervised training after munging on discrete data and specifying the metric to maximize by 
+GenoML discrete supervised train \
+--prefix outputs/test_discrete_geno \
+--metric_max Balanced_Accuracy
+```
+
+## 3. Tuning with GenoML
+Training, tuning, and testing with GenoML have a slightly different structure where there are 3 required arguments before moving forward
+
+**Required** arguments for GenoML are the following: 
+- `data` : Is the data `continuous` or `discrete`?
+- `method`: Do you want to use `supervised` or `unsupervised` machine learning? *(unsupervised currently under development)*
+- `mode`:  would you like to `train` or `tune` your model?
+- `--prefix` : Where would you like your outputs to be saved?
+
+The most basic command to tune your model looks like the following, it looks for the file that was generated in the training step: 
+```bash
+# Running GenoML supervised tuning after munging and training on discrete data
+GenoML discrete supervised tune \
+--prefix outputs/test_discrete_geno 
+```
+
+If you are interested in changing the number of iterations the tuning process goes through by modifying `--max-tune` *(default is 50)*, or the number of cross-validations by modifying `--n_cv` *(default is 5)*, this is what the command would look like: 
+```bash
+# Running GenoML supervised tuning after munging and training on discrete data, modifying the number of iterations and cross-validations 
+GenoML discrete supervised tune \
+--prefix outputs/test_discrete_geno \
+--max_tune 50 --n_cv 5
+```
+
+If you are interested in tuning on another metric other than AUC *(default is AUC)*, you can modify `--metric_tune` (options are `AUC` or `Balanced_Accuracy`) by doing the following: 
+```bash
+# Running GenoML supervised tuning after munging and training on discrete data, modifying the metric to tune by
+GenoML discrete supervised tune \
+--prefix outputs/test_discrete_geno \
+--metric_tune Balanced_Accuracy
+```
+
+## 4. Testing with GenoML
+**UNDER ACTIVE DEVELOPMENT** 

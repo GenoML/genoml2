@@ -51,6 +51,8 @@
 │   │   ├── munging.py
 │   │   └── vif.py
 │   ├── __init__.py
+│   ├── dependencies.py
+│   ├── utils.py
 │   ├── GenoML.py
 │   └── GenoMLMunging.py
 ├── outputs
@@ -74,13 +76,6 @@
 │   ├── test_discrete_geno.tunedModel_allSample_ROC.png
 │   ├── test_discrete_geno.tunedModel.joblib
 │   └── test_discrete_geno.variants_and_alleles.tab
-├── plink
-│   ├── linux
-│   │   ├── LICENSE
-│   │   └── plink
-│   └── mac
-│   │   ├── LICENSE
-│   │   └── plink
 ├── GettingStarted.sh
 ├── README.md
 ├── requirements.txt
