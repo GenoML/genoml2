@@ -1,14 +1,18 @@
 # How to Get Started with GenoML
 
-  
+### Introduction
+This README is a brief look into how to structure arguments and what arguments are available at each phase for the GenoML CLI
 
-This document is a brief look into how to structure arguments and what arguments are available at each phase for the GenoML CLI
+### Table of Contents 
+[0. (OPTIONAL) How to Set Up a Virtual Environment via Conda](#0)
+[1. Munging with GenoML](#1)
+[2. Training with GenoML](#2)
+[3. Tuning with GenoML](#3)
+[4. Testing/Validating with GenoML](#4)
+[5. Experimental Features](#5)
 
-  
-
+<a id="0"></a>
 ## 0. [OPTIONAL] How to Set Up a Virtual Environment via Conda
-
-  
 
 You can create a virtual environment to run GenoML, if you prefer.
 If you already have the Anaconda Distribution, this is fairly simple.
@@ -39,6 +43,7 @@ pip install .
 	# Removing a conda virtualenv
 # conda remove --name GenoML --all 
 ```
+<a id="1"></a>
 ## 1. Munging with GenoML
 
 Munging with GenoML was written as a separate portion in case you did not want to preprocess using GenoML, so it's structured a little differently from the rest of the package.
@@ -116,7 +121,7 @@ GenoMLMunging --prefix outputs/test_discrete_geno \
 --pheno examples/discrete/training_pheno.csv \
 --featureSelection 50
 ```
-
+<a id="2"></a>
 ## 2. Training with GenoML
 Training, tuning, and testing with GenoML have a slightly different structure where there are 3 required arguments before moving forward
 
@@ -153,7 +158,7 @@ GenoML discrete supervised train \
 --prefix outputs/test_discrete_geno \
 --metric_max Balanced_Accuracy
 ```
-
+<a id="3"></a>
 ## 3. Tuning with GenoML
 Training, tuning, and testing with GenoML have a slightly different structure where there are 3 required arguments before moving forward
 
@@ -185,6 +190,10 @@ GenoML discrete supervised tune \
 --prefix outputs/test_discrete_geno \
 --metric_tune Balanced_Accuracy
 ```
+<a id="4"></a>
+## 4. Testing/Validation with GenoML
+**UNDER ACTIVE DEVELOPMENT** 
 
-## 4. Testing with GenoML
+<a id="5"></a>
+## 5. Experimental Features
 **UNDER ACTIVE DEVELOPMENT** 
