@@ -4,12 +4,12 @@
 This README is a brief look into how to structure arguments and what arguments are available at each phase for the GenoML CLI
 
 ### Table of Contents 
-[0. (OPTIONAL) How to Set Up a Virtual Environment via Conda](#0)
-[1. Munging with GenoML](#1)
-[2. Training with GenoML](#2)
-[3. Tuning with GenoML](#3)
-[4. Testing/Validating with GenoML](#4)
-[5. Experimental Features](#5)
+#### [0. (OPTIONAL) How to Set Up a Virtual Environment via Conda](#0)
+#### [1. Munging with GenoML](#1)
+#### [2. Training with GenoML](#2)
+#### [3. Tuning with GenoML](#3)
+#### [4. Testing/Validating with GenoML](#4)
+#### [5. Experimental Features](#5)
 
 <a id="0"></a>
 ## 0. [OPTIONAL] How to Set Up a Virtual Environment via Conda
