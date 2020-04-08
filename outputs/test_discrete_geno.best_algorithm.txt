@@ -1,1 +1,1 @@
-QuadraticDiscriminantAnalysis
+MLPClassifier

@@ -31,7 +31,7 @@ pip install .
 GenoML
 #usage: GenoML [-h] [--prefix PREFIX] [--geno GENO] [--addit ADDIT]
             #  [--pheno PHENO] [--gwas GWAS] [--p P] [--vif VIF] [--iter ITER]
-            #  [--impute IMPUTE] [--rank_features {skip,run}]
+            #  [--impute IMPUTE] [,run}]
             #  [--max_tune MAX_TUNE] [--n_cv N_CV]
             #  {discrete,continuous} {supervised,unsupervised} {train,tune}
 #GenoML: error: the following arguments are required: data, method, mode
@@ -146,12 +146,11 @@ GenoMLMunging --prefix outputs/test_continuous_geno \
 # Running the supervised training script [discrete]
 GenoML discrete supervised train \
 --prefix outputs/test_discrete_geno \
---rank_features run
+--metric_max Sensitivity
 
 # Running the supervised training script [continuous]
 GenoML continuous supervised train \
 --prefix outputs/test_continuous_geno \
---rank_features run
 
 ## TUNE 
 # Running the supervised tuning script [discrete]
@@ -165,3 +164,12 @@ GenoML continuous supervised tune \
 --max_tune 10 --n_cv 3
 
 ## TEST
+
+GenoML discrete supervised train \
+--prefix outputs/test_discrete_geno \
+--metric_max Balanced_Accuracy
+
+
+GenoML discrete supervised tune \
+--prefix outputs/test_discrete_geno \
+--metric_tune Balanced_Accuracy

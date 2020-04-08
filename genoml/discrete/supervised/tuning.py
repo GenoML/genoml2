@@ -45,7 +45,6 @@ class tune():
         best_algo_df = pd.read_csv(best_algo_name_in, header=None, index_col=False)
         self.best_algo = str(best_algo_df.iloc[0,0])
 
-
         self.algorithms = [
         LogisticRegression(),
         RandomForestClassifier(),
@@ -73,9 +72,9 @@ class tune():
         self.algo_tuned = None
         self.tune_out = None
 
-    def select_tuning_parameters(self):
-        
+    def select_tuning_parameters(self, metric_tune):
         best_algo = self.best_algo
+        self.metric_tune = metric_tune 
         
         if best_algo == 'LogisticRegression':
             algo = getattr(sklearn.linear_model, best_algo)()
@@ -106,41 +105,80 @@ class tune():
 
         self.algo = algo
 
-        if best_algo == 'LogisticRegression':
-            hyperparameters = {"penalty": ["l1", "l2"], "C": sp_randint(1, 10)}
-            scoring_metric = make_scorer(roc_auc_score, needs_proba=True)
+        if(metric_tune == "AUC"):
+            if best_algo == 'LogisticRegression':
+                hyperparameters = {"penalty": ["l1", "l2"], "C": sp_randint(1, 10)}
+                scoring_metric = make_scorer(roc_auc_score, needs_proba=True)
 
-        elif  best_algo == 'SGDClassifier':
-            hyperparameters = {'alpha': [1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3], "learning_rate": ["constant", "optimal", "invscaling", "adaptive"]}
-            scoring_metric = make_scorer(roc_auc_score, needs_proba=True)
+            elif  best_algo == 'SGDClassifier':
+                hyperparameters = {'alpha': [1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3], "learning_rate": ["constant", "optimal", "invscaling", "adaptive"]}
+                scoring_metric = make_scorer(roc_auc_score, needs_proba=True)
 
-        elif (best_algo == 'RandomForestClassifier') or (best_algo == 'AdaBoostClassifier') or (best_algo == 'GradientBoostingClassifier') or  (best_algo == 'BaggingClassifier'):
-            hyperparameters = {"n_estimators": sp_randint(1, 1000)}
-            scoring_metric = make_scorer(roc_auc_score, needs_proba=True)
+            elif (best_algo == 'RandomForestClassifier') or (best_algo == 'AdaBoostClassifier') or (best_algo == 'GradientBoostingClassifier') or  (best_algo == 'BaggingClassifier'):
+                hyperparameters = {"n_estimators": sp_randint(1, 1000)}
+                scoring_metric = make_scorer(roc_auc_score, needs_proba=True)
 
-        elif best_algo == 'SVC':
-            hyperparameters = {"kernel": ["linear", "poly", "rbf", "sigmoid"], "C": sp_randint(1, 10)}
-            scoring_metric = make_scorer(roc_auc_score, needs_proba=True)
+            elif best_algo == 'SVC':
+                hyperparameters = {"kernel": ["linear", "poly", "rbf", "sigmoid"], "C": sp_randint(1, 10)}
+                scoring_metric = make_scorer(roc_auc_score, needs_proba=True)
+                
+            elif best_algo == 'ComplementNB':
+                hyperparameters = {"alpha": sp_randfloat(0,1)}
+                scoring_metric = make_scorer(roc_auc_score, needs_proba=True)
+
+            elif best_algo == 'MLPClassifier':
+                hyperparameters = {"alpha": sp_randfloat(0,1), "learning_rate": ['constant', 'invscaling', 'adaptive']}
+                scoring_metric = make_scorer(roc_auc_score, needs_proba=True)
+
+            elif best_algo == 'XGBClassifier':
+                hyperparameters = {"max_depth": sp_randint(1, 100), "learning_rate": sp_randfloat(0,1), "n_estimators": sp_randint(1, 100), "gamma": sp_randfloat(0,1)}
+                scoring_metric = make_scorer(roc_auc_score, needs_proba=True)
+
+            elif best_algo == 'KNeighborsClassifier':
+                hyperparameters = {"leaf_size": sp_randint(1, 100), "n_neighbors": sp_randint(1, 10)}
+                scoring_metric = make_scorer(roc_auc_score, needs_proba=True)
+
+            elif (best_algo == 'LinearDiscriminantAnalysis') or (best_algo == 'QuadraticDiscriminantAnalysis'):
+                hyperparameters = {"tol": sp_randfloat(0,1)}
+                scoring_metric = make_scorer(roc_auc_score, needs_proba=True)
             
-        elif best_algo == 'ComplementNB':
-            hyperparameters = {"alpha": sp_randfloat(0,1)}
-            scoring_metric = make_scorer(roc_auc_score, needs_proba=True)
+        if(metric_tune == "Balanced_Accuracy"):
+            if best_algo == 'LogisticRegression':
+                hyperparameters = {"penalty": ["l1", "l2"], "C": sp_randint(1, 10)}
+                scoring_metric = make_scorer(balanced_accuracy_score, needs_proba=False)
 
-        elif best_algo == 'MLPClassifier':
-            hyperparameters = {"alpha": sp_randfloat(0,1), "learning_rate": ['constant', 'invscaling', 'adaptive']}
-            scoring_metric = make_scorer(roc_auc_score, needs_proba=True)
+            elif  best_algo == 'SGDClassifier':
+                hyperparameters = {'alpha': [1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3], "learning_rate": ["constant", "optimal", "invscaling", "adaptive"]}
+                scoring_metric = make_scorer(balanced_accuracy_score, needs_proba=False)
 
-        elif best_algo == 'XGBClassifier':
-            hyperparameters = {"max_depth": sp_randint(1, 100), "learning_rate": sp_randfloat(0,1), "n_estimators": sp_randint(1, 100), "gamma": sp_randfloat(0,1)}
-            scoring_metric = make_scorer(roc_auc_score, needs_proba=True)
+            elif (best_algo == 'RandomForestClassifier') or (best_algo == 'AdaBoostClassifier') or (best_algo == 'GradientBoostingClassifier') or  (best_algo == 'BaggingClassifier'):
+                hyperparameters = {"n_estimators": sp_randint(1, 1000)}
+                scoring_metric = make_scorer(balanced_accuracy_score, needs_proba=False)
 
-        elif best_algo == 'KNeighborsClassifier':
-            hyperparameters = {"leaf_size": sp_randint(1, 100), "n_neighbors": sp_randint(1, 10)}
-            scoring_metric = make_scorer(roc_auc_score, needs_proba=True)
+            elif best_algo == 'SVC':
+                hyperparameters = {"kernel": ["linear", "poly", "rbf", "sigmoid"], "C": sp_randint(1, 10)}
+                scoring_metric = make_scorer(balanced_accuracy_score, needs_proba=False)
+                
+            elif best_algo == 'ComplementNB':
+                hyperparameters = {"alpha": sp_randfloat(0,1)}
+                scoring_metric = make_scorer(balanced_accuracy_score, needs_proba=False)
 
-        elif (best_algo == 'LinearDiscriminantAnalysis') or (best_algo == 'QuadraticDiscriminantAnalysis'):
-            hyperparameters = {"tol": sp_randfloat(0,1)}
-            scoring_metric = make_scorer(roc_auc_score, needs_proba=True)
+            elif best_algo == 'MLPClassifier':
+                hyperparameters = {"alpha": sp_randfloat(0,1), "learning_rate": ['constant', 'invscaling', 'adaptive']}
+                scoring_metric = make_scorer(balanced_accuracy_score, needs_proba=False)
+
+            elif best_algo == 'XGBClassifier':
+                hyperparameters = {"max_depth": sp_randint(1, 100), "learning_rate": sp_randfloat(0,1), "n_estimators": sp_randint(1, 100), "gamma": sp_randfloat(0,1)}
+                scoring_metric = make_scorer(balanced_accuracy_score, needs_proba=False)
+
+            elif best_algo == 'KNeighborsClassifier':
+                hyperparameters = {"leaf_size": sp_randint(1, 100), "n_neighbors": sp_randint(1, 10)}
+                scoring_metric = make_scorer(balanced_accuracy_score, needs_proba=False)
+
+            elif (best_algo == 'LinearDiscriminantAnalysis') or (best_algo == 'QuadraticDiscriminantAnalysis'):
+                hyperparameters = {"tol": sp_randfloat(0,1)}
+                scoring_metric = make_scorer(balanced_accuracy_score, needs_proba=False)
+
 
         self.hyperparameters = hyperparameters
         self.scoring_metric = scoring_metric

@@ -333,13 +333,3 @@ class train:
             file = open(best_algo_name_out,'w')
             file.write(self.best_algo)
             file.close() 
-
-        if(featureRankings):
-            try:
-                table_outfile = path + '.trainedModel_trainingSample_featureImportance.csv'
-                self.rfe_df.to_csv(table_outfile, index=False)  
-                print(f"Feature ranks exported as {table_outfile} if you want to be very picky and make a more parsimonious model with a minimal feature set, extract all features ranked 1 and rebuild your dataset. This analysis also gives you a concept of the relative importance of your features in the model.")
-
-            except:
-                print("No feature rankings to save.")
-        
