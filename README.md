@@ -19,12 +19,12 @@ Look at `GettingStarted.sh` to see how a virtual environment is set up
 - Adding extraTrees feature selection for discrete and continuous data
 - Splitting up munging so it only takes in --pheno and --addit files (no --geno necessary; right now it's programmed in such a way that they can't be separated)
 - Dynamically load in PLINK and check dependencies   
+- Adding argparse option and switch to training.py (d+c) to specify which metric to maximize by (`AUC_Percent`, `Balanced_Accuracy_Percent`, `Sensitivity`, or `Specificity`)
+- Modifying tuning.py to specify which metric to maximize by `AUC_Percent` or `Balanced_Accuracy_Percent`
 
 ### CURRENTLY WORKING ON
 - Discrete Supervised Test
 - Continuous Supervised Test
-- Adding argparse option and switch to training.py (d+c) to specify which metric to maximize by (`AUC_Percent`, `Balanced_Accuracy_Percent`, `Sensitivity`, or `Specificity`)
-- Modifying tuning.py to specify which metric to maximize by `AUC_Percent` or `Balanced_Accuracy_Percent`
 - Adding minor fixes 
 - Adding appropriate function descriptions
 
