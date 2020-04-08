@@ -28,9 +28,9 @@ If you already have the Anaconda Distribution, this is fairly simple.
 conda activate GenoML
 
 # MISC 
-	# To deactivate the virutal environment
+	# To deactivate the virtual environment
 #conda deactivate GenoML	
-	# To delete your virutal environment 
+	# To delete your virtual environment 
 # conda env remove -n GenoML
 
 ```
@@ -44,7 +44,7 @@ pip install .
 	# To save out the environment requirements to a .txt file
 # pip freeze > requirements.txt
 
-	# Removing a conda virtualenv
+	# Removing a conda virtual env
 # conda remove --name GenoML --all 
 ```
 <a id="1"></a>
