@@ -23,6 +23,7 @@ Look at `GettingStarted.sh` to see how a virtual environment is set up
 - Modifying tuning.py to specify which metric to maximize by `AUC_Percent` or `Balanced_Accuracy_Percent`
 
 ### CURRENTLY WORKING ON
+- Modifying GenoMLMunging to include validation munge? Or make a separate validation munge?
 - Discrete Supervised Test
 - Continuous Supervised Test
 - Adding minor fixes 
