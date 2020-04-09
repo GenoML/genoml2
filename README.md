@@ -1,7 +1,6 @@
 <p align="center">
   <img width="400" height="400" src="logo.png">
 </p>
-
 # How to Get Started with GenoML
 
 ### Introduction
@@ -28,9 +27,9 @@ If you already have the Anaconda Distribution, this is fairly simple.
 conda activate GenoML
 
 # MISC 
-	# To deactivate the virtual environment
+	# To deactivate the virutal environment
 #conda deactivate GenoML	
-	# To delete your virtual environment 
+	# To delete your virutal environment 
 # conda env remove -n GenoML
 
 ```
@@ -44,7 +43,7 @@ pip install .
 	# To save out the environment requirements to a .txt file
 # pip freeze > requirements.txt
 
-	# Removing a conda virtual env
+	# Removing a conda virtualenv
 # conda remove --name GenoML --all 
 ```
 <a id="1"></a>
@@ -67,6 +66,17 @@ GenoMLMunging --prefix outputs/test_discrete_geno \
 --geno examples/discrete/training \
 --pheno examples/discrete/training_pheno.csv 
 ```
+
+You can choose to impute on `mean` or `median` by modifying the `--impute` flag, like so *(default is median)*:
+```bash
+# Running GenoML munging on discrete data using PLINK genotype binary files and a phenotype file and specifying impute
+GenoMLMunging --prefix outputs/test_discrete_geno \
+--datatype d \
+--impute median \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv 
+```
+
 If you suspect collinear variables, and think this will be a problem for training the model moving forward, you can use VIF: 
 ```bash
 # Running GenoML munging on discrete data using PLINK genotype binary files and a phenotype file while using VIF to remove multicollinearity 
