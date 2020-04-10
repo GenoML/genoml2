@@ -1,10 +1,13 @@
 <p align="center">
-  <img width="400" height="400" src="logo.png">
+  <img width="300" height="300" src="logo.png">
 </p>
+
 # How to Get Started with GenoML
 
 ### Introduction
-This README is a brief look into how to structure arguments and what arguments are available at each phase for the GenoML CLI
+GenoML is an Automated Machine Learning (AutoML) for genomics data. In general, use a Linux or Mac with Python >3.5 for best results.
+
+This README is a brief look into how to structure arguments and what arguments are available at each phase for the GenoML CLI. 
 
 ### Table of Contents 
 #### [0. (OPTIONAL) How to Set Up a Virtual Environment via Conda](#0)
@@ -27,9 +30,9 @@ If you already have the Anaconda Distribution, this is fairly simple.
 conda activate GenoML
 
 # MISC 
-	# To deactivate the virutal environment
+	# To deactivate the virtual environment
 #conda deactivate GenoML	
-	# To delete your virutal environment 
+	# To delete your virtual environment 
 # conda env remove -n GenoML
 
 ```
@@ -189,7 +192,7 @@ GenoML discrete supervised tune \
 --prefix outputs/test_discrete_geno 
 ```
 
-If you are interested in changing the number of iterations the tuning process goes through by modifying `--max-tune` *(default is 50)*, or the number of cross-validations by modifying `--n_cv` *(default is 5)*, this is what the command would look like: 
+If you are interested in changing the number of iterations the tuning process goes through by modifying `--max_tune` *(default is 50)*, or the number of cross-validations by modifying `--n_cv` *(default is 5)*, this is what the command would look like: 
 ```bash
 # Running GenoML supervised tuning after munging and training on discrete data, modifying the number of iterations and cross-validations 
 GenoML discrete supervised tune \
@@ -204,10 +207,22 @@ GenoML discrete supervised tune \
 --prefix outputs/test_discrete_geno \
 --metric_tune Balanced_Accuracy
 ```
+
 <a id="4"></a>
 ## 4. Testing/Validation with GenoML
+
 **UNDER ACTIVE DEVELOPMENT** 
+
 
 <a id="5"></a>
 ## 5. Experimental Features
+
 **UNDER ACTIVE DEVELOPMENT** 
+
+Planned experimental features include, but are not limited to:
+- Unsupervised training, tuning, and testing
+- Network analyses
+- Meta-learning
+- Federated learning 
+- Biobank-scale support 
+- ...?
