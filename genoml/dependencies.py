@@ -24,6 +24,7 @@ import subprocess
 import zipfile
 
 from genoml import utils
+from genoml.utils import DescriptionLoader
 
 
 def __get_executable_folder():
