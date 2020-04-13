@@ -1,35 +1,21 @@
-# Importing the necessary packages 
-import argparse
-import sys
-import h5py
-import pandas as pd
-import numpy as np
-from time import time
+import joblib
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import seaborn as sns
-from joblib import dump, load
-
-# Import the necessary packages for the ML
-import xgboost
+from scipy import stats
 import sklearn
-from scipy.stats import randint as sp_randint
-from scipy.stats import uniform as sp_randfloat
-from sklearn.metrics import accuracy_score, balanced_accuracy_score, log_loss, roc_auc_score, confusion_matrix, roc_curve, auc, make_scorer
-from sklearn.linear_model import LogisticRegression, SGDClassifier
-from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, GradientBoostingClassifier, BaggingClassifier
-from sklearn.svm import SVC
-from sklearn.naive_bayes import ComplementNB
-from sklearn.neural_network import MLPClassifier
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis
-from xgboost import XGBClassifier
-from sklearn.model_selection import RandomizedSearchCV
-from sklearn.model_selection import cross_val_score
+from sklearn import discriminant_analysis
+from sklearn import ensemble
+from sklearn import linear_model
+from sklearn import metrics
+from sklearn import model_selection
+from sklearn import neighbors
+from sklearn import neural_network
+from sklearn import svm
+from time import time
+import xgboost
 
-# Import the necessary internal GenoML packages 
-from genoml.discrete.supervised import train
-
-# Define the tune class 
 class tune():
     def __init__(self, df, run_prefix, max_iter, cv_count):
         self.run_prefix = run_prefix
@@ -46,18 +32,18 @@ class tune():
         self.best_algo = str(best_algo_df.iloc[0,0])
 
         self.algorithms = [
-        LogisticRegression(),
-        RandomForestClassifier(),
-        AdaBoostClassifier(),
-        GradientBoostingClassifier(),
-        SGDClassifier(loss='modified_huber'),
-        SVC(probability=True),
-        MLPClassifier(),
-        KNeighborsClassifier(),
-        LinearDiscriminantAnalysis(),
-        QuadraticDiscriminantAnalysis(),
-        BaggingClassifier(),
-        XGBClassifier()
+        linear_model.LogisticRegression(),
+        ensemble.RandomForestClassifier(),
+        ensemble.AdaBoostClassifier(),
+        ensemble.GradientBoostingClassifier(),
+        linear_model.SGDClassifier(loss='modified_huber'),
+        svm.SVC(probability=True),
+        neural_network.MLPClassifier(),
+        neighbors.KNeighborsClassifier(),
+        discriminant_analysis.LinearDiscriminantAnalysis(),
+        discriminant_analysis.QuadraticDiscriminantAnalysis(),
+        ensemble.BaggingClassifier(),
+        xgboost.XGBClassifier()
         ]
         self.log_table = None
         self.best_algo_name_in = None
@@ -107,77 +93,77 @@ class tune():
 
         if(metric_tune == "AUC"):
             if best_algo == 'LogisticRegression':
-                hyperparameters = {"penalty": ["l1", "l2"], "C": sp_randint(1, 10)}
-                scoring_metric = make_scorer(roc_auc_score, needs_proba=True)
+                hyperparameters = {"penalty": ["l1", "l2"], "C": stats.randint(1, 10)}
+                scoring_metric = metrics.make_scorer(metrics.roc_auc_score, needs_proba=True)
 
             elif  best_algo == 'SGDClassifier':
                 hyperparameters = {'alpha': [1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3], "learning_rate": ["constant", "optimal", "invscaling", "adaptive"]}
-                scoring_metric = make_scorer(roc_auc_score, needs_proba=True)
+                scoring_metric = metrics.make_scorer(metrics.roc_auc_score, needs_proba=True)
 
             elif (best_algo == 'RandomForestClassifier') or (best_algo == 'AdaBoostClassifier') or (best_algo == 'GradientBoostingClassifier') or  (best_algo == 'BaggingClassifier'):
-                hyperparameters = {"n_estimators": sp_randint(1, 1000)}
-                scoring_metric = make_scorer(roc_auc_score, needs_proba=True)
+                hyperparameters = {"n_estimators": stats.randint(1, 1000)}
+                scoring_metric = metrics.make_scorer(metrics.roc_auc_score, needs_proba=True)
 
             elif best_algo == 'SVC':
-                hyperparameters = {"kernel": ["linear", "poly", "rbf", "sigmoid"], "C": sp_randint(1, 10)}
-                scoring_metric = make_scorer(roc_auc_score, needs_proba=True)
+                hyperparameters = {"kernel": ["linear", "poly", "rbf", "sigmoid"], "C": stats.randint(1, 10)}
+                scoring_metric = metrics.make_scorer(metrics.roc_auc_score, needs_proba=True)
                 
             elif best_algo == 'ComplementNB':
-                hyperparameters = {"alpha": sp_randfloat(0,1)}
-                scoring_metric = make_scorer(roc_auc_score, needs_proba=True)
+                hyperparameters = {"alpha": stats.uniform(0,1)}
+                scoring_metric = metrics.make_scorer(metrics.roc_auc_score, needs_proba=True)
 
             elif best_algo == 'MLPClassifier':
-                hyperparameters = {"alpha": sp_randfloat(0,1), "learning_rate": ['constant', 'invscaling', 'adaptive']}
-                scoring_metric = make_scorer(roc_auc_score, needs_proba=True)
+                hyperparameters = {"alpha": stats.uniform(0,1), "learning_rate": ['constant', 'invscaling', 'adaptive']}
+                scoring_metric = metrics.make_scorer(metrics.roc_auc_score, needs_proba=True)
 
             elif best_algo == 'XGBClassifier':
-                hyperparameters = {"max_depth": sp_randint(1, 100), "learning_rate": sp_randfloat(0,1), "n_estimators": sp_randint(1, 100), "gamma": sp_randfloat(0,1)}
-                scoring_metric = make_scorer(roc_auc_score, needs_proba=True)
+                hyperparameters = {"max_depth": stats.randint(1, 100), "learning_rate": stats.uniform(0,1), "n_estimators": stats.randint(1, 100), "gamma": stats.uniform(0,1)}
+                scoring_metric = metrics.make_scorer(metrics.roc_auc_score, needs_proba=True)
 
             elif best_algo == 'KNeighborsClassifier':
-                hyperparameters = {"leaf_size": sp_randint(1, 100), "n_neighbors": sp_randint(1, 10)}
-                scoring_metric = make_scorer(roc_auc_score, needs_proba=True)
+                hyperparameters = {"leaf_size": stats.randint(1, 100), "n_neighbors": stats.randint(1, 10)}
+                scoring_metric = metrics.make_scorer(metrics.roc_auc_score, needs_proba=True)
 
             elif (best_algo == 'LinearDiscriminantAnalysis') or (best_algo == 'QuadraticDiscriminantAnalysis'):
-                hyperparameters = {"tol": sp_randfloat(0,1)}
-                scoring_metric = make_scorer(roc_auc_score, needs_proba=True)
+                hyperparameters = {"tol": stats.uniform(0,1)}
+                scoring_metric = metrics.make_scorer(metrics.roc_auc_score, needs_proba=True)
             
         if(metric_tune == "Balanced_Accuracy"):
             if best_algo == 'LogisticRegression':
-                hyperparameters = {"penalty": ["l1", "l2"], "C": sp_randint(1, 10)}
-                scoring_metric = make_scorer(balanced_accuracy_score, needs_proba=False)
+                hyperparameters = {"penalty": ["l1", "l2"], "C": stats.randint(1, 10)}
+                scoring_metric = metrics.make_scorer(metrics.balanced_accuracy_score, needs_proba=False)
 
             elif  best_algo == 'SGDClassifier':
                 hyperparameters = {'alpha': [1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3], "learning_rate": ["constant", "optimal", "invscaling", "adaptive"]}
-                scoring_metric = make_scorer(balanced_accuracy_score, needs_proba=False)
+                scoring_metric = metrics.make_scorer(metrics.balanced_accuracy_score, needs_proba=False)
 
             elif (best_algo == 'RandomForestClassifier') or (best_algo == 'AdaBoostClassifier') or (best_algo == 'GradientBoostingClassifier') or  (best_algo == 'BaggingClassifier'):
-                hyperparameters = {"n_estimators": sp_randint(1, 1000)}
-                scoring_metric = make_scorer(balanced_accuracy_score, needs_proba=False)
+                hyperparameters = {"n_estimators": stats.randint(1, 1000)}
+                scoring_metric = metrics.make_scorer(metrics.balanced_accuracy_score, needs_proba=False)
 
             elif best_algo == 'SVC':
-                hyperparameters = {"kernel": ["linear", "poly", "rbf", "sigmoid"], "C": sp_randint(1, 10)}
-                scoring_metric = make_scorer(balanced_accuracy_score, needs_proba=False)
+                hyperparameters = {"kernel": ["linear", "poly", "rbf", "sigmoid"], "C": stats.randint(1, 10)}
+                scoring_metric = metrics.make_scorer(metrics.balanced_accuracy_score, needs_proba=False)
                 
             elif best_algo == 'ComplementNB':
-                hyperparameters = {"alpha": sp_randfloat(0,1)}
-                scoring_metric = make_scorer(balanced_accuracy_score, needs_proba=False)
+                hyperparameters = {"alpha": stats.uniform(0,1)}
+                scoring_metric = metrics.make_scorer(metrics.balanced_accuracy_score, needs_proba=False)
 
             elif best_algo == 'MLPClassifier':
-                hyperparameters = {"alpha": sp_randfloat(0,1), "learning_rate": ['constant', 'invscaling', 'adaptive']}
-                scoring_metric = make_scorer(balanced_accuracy_score, needs_proba=False)
+                hyperparameters = {"alpha": stats.uniform(0,1), "learning_rate": ['constant', 'invscaling', 'adaptive']}
+                scoring_metric = metrics.make_scorer(metrics.balanced_accuracy_score, needs_proba=False)
 
             elif best_algo == 'XGBClassifier':
-                hyperparameters = {"max_depth": sp_randint(1, 100), "learning_rate": sp_randfloat(0,1), "n_estimators": sp_randint(1, 100), "gamma": sp_randfloat(0,1)}
-                scoring_metric = make_scorer(balanced_accuracy_score, needs_proba=False)
+                hyperparameters = {"max_depth": stats.randint(1, 100), "learning_rate": stats.uniform(0,1), "n_estimators": stats.randint(1, 100), "gamma": stats.uniform(0,1)}
+                scoring_metric = metrics.make_scorer(metrics.balanced_accuracy_score, needs_proba=False)
 
             elif best_algo == 'KNeighborsClassifier':
-                hyperparameters = {"leaf_size": sp_randint(1, 100), "n_neighbors": sp_randint(1, 10)}
-                scoring_metric = make_scorer(balanced_accuracy_score, needs_proba=False)
+                hyperparameters = {"leaf_size": stats.randint(1, 100), "n_neighbors": stats.randint(1, 10)}
+                scoring_metric = metrics.make_scorer(metrics.balanced_accuracy_score, needs_proba=False)
 
             elif (best_algo == 'LinearDiscriminantAnalysis') or (best_algo == 'QuadraticDiscriminantAnalysis'):
-                hyperparameters = {"tol": sp_randfloat(0,1)}
-                scoring_metric = make_scorer(balanced_accuracy_score, needs_proba=False)
+                hyperparameters = {"tol": stats.uniform(0,1)}
+                scoring_metric = metrics.make_scorer(metrics.balanced_accuracy_score, needs_proba=False)
 
 
         self.hyperparameters = hyperparameters
@@ -188,7 +174,7 @@ class tune():
     def apply_tuning_parameters(self):
         # Randomized search with CV to tune
         print("Here is a summary of the top 10 iterations of the hyperparameter tuning...")
-        rand_search = RandomizedSearchCV(estimator=self.algo, param_distributions=self.hyperparameters, scoring=self.scoring_metric,n_iter=self.max_iter, cv=self.cv_count, n_jobs=-1, random_state=153, verbose=0)
+        rand_search = model_selection.RandomizedSearchCV(estimator=self.algo, param_distributions=self.hyperparameters, scoring=self.scoring_metric,n_iter=self.max_iter, cv=self.cv_count, n_jobs=-1, random_state=153, verbose=0)
         start = time()
         rand_search.fit(self.X_tune, self.y_tune)
         print("RandomizedSearchCV took %.2f seconds for %d candidates"
@@ -216,7 +202,7 @@ class tune():
     def summarize_tune(self):
     
         print("Here is the cross-validation summary of your best tuned model hyperparameters...")
-        cv_tuned = cross_val_score(estimator=self.rand_search.best_estimator_, X=self.X_tune, y=self.y_tune, scoring=self.scoring_metric, cv=self.cv_count, n_jobs=-1, verbose=0)
+        cv_tuned = model_selection.cross_val_score(estimator=self.rand_search.best_estimator_, X=self.X_tune, y=self.y_tune, scoring=self.scoring_metric, cv=self.cv_count, n_jobs=-1, verbose=0)
         print("Scores per cross-validation of the metric to be maximized, this scoring metric is AUC for discrete phenotypes and explained variance for continuous phenotypes:")
         print(cv_tuned)
         print("Mean cross-validation score:")
@@ -227,7 +213,7 @@ class tune():
         print("")
 
         print("Here is the cross-validation summary of your baseline/default hyperparamters for the same algorithm on the same data...")
-        cv_baseline = cross_val_score(estimator=self.algo, X=self.X_tune, y=self.y_tune, scoring=self.scoring_metric, cv=self.cv_count, n_jobs=-1, verbose=0)
+        cv_baseline = model_selection.cross_val_score(estimator=self.algo, X=self.X_tune, y=self.y_tune, scoring=self.scoring_metric, cv=self.cv_count, n_jobs=-1, verbose=0)
         print("Scores per cross-validation of the metric to be maximized, this scoring metric is AUC for discrete phenotypes and explained variance for continuous phenotypes:")
         print(cv_baseline)
         print("Mean cross-validation score:")
@@ -266,7 +252,7 @@ class tune():
             ### Save it using joblib
          
             algo_tuned_out = self.run_prefix + '.tunedModel.joblib'
-            dump(algo_tuned, algo_tuned_out)
+            joblib.dump(algo_tuned, algo_tuned_out)
 
             return algo_tuned
     
@@ -278,8 +264,8 @@ class tune():
         test_predictions = self.algo_tuned.predict_proba(self.X_tune)
         test_predictions = test_predictions[:, 1]
 
-        fpr, tpr, thresholds = roc_curve(self.y_tune, test_predictions)
-        roc_auc = auc(fpr, tpr)
+        fpr, tpr, thresholds = metrics.roc_curve(self.y_tune, test_predictions)
+        roc_auc = metrics.auc(fpr, tpr)
 
         plt.figure()
         plt.plot(fpr, tpr, color='purple', label='All sample ROC curve (area = %0.2f)' % roc_auc + '\nMean cross-validation ROC curve (area = %0.2f)' % self.cv_tuned.mean())

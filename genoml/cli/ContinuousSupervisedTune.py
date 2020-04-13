@@ -1,14 +1,7 @@
-# Importing the necessary packages 
-import argparse
-import sys
-import sklearn
-import h5py
 import pandas as pd
-import numpy as np
-import time
 
-# Import the necessary internal GenoML packages 
-from genoml.continuous.supervised import tune
+from genoml.continuous import supervised
+
 
 def cstune(run_prefix, max_iter, cv_count):
     # TUNING 
@@ -42,7 +35,7 @@ def cstune(run_prefix, max_iter, cv_count):
 
     # Tuning 
     ## This calls on the functions made in the tune class (tuning.py) at the genoml.continuous.supervised
-    model_tune = tune(df, run_prefix, max_iter, cv_count)
+    model_tune = supervised.tune(df, run_prefix, max_iter, cv_count)
     model_tune.select_tuning_parameters() # Returns algo, hyperparameters, and scoring_metric
     model_tune.apply_tuning_parameters() # Randomized search with CV to tune
     model_tune.report_tune() #  Summary of the top 10 iterations of the hyperparameter tune

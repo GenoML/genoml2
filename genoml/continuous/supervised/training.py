@@ -1,29 +1,19 @@
-# Importing the necessary packages 
-import argparse
-import sys
-import xgboost
-import sklearn
+import joblib
 import pandas as pd
-import numpy as np
-import time
 import seaborn as sns
-import statsmodels.formula.api as sm
-from joblib import dump, load
-import xgboost 
 import sklearn
+from sklearn import ensemble
+from sklearn import linear_model
+from sklearn import metrics
+from sklearn import model_selection
+from sklearn import neighbors
+from sklearn import neural_network
+from sklearn import svm
+import statsmodels.formula.api as sm
+import time
+import xgboost
 
-# Import the necessary ML packages 
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import explained_variance_score, mean_squared_error, median_absolute_error, r2_score
-from sklearn.linear_model import LinearRegression, SGDRegressor
-from sklearn.ensemble import RandomForestRegressor, AdaBoostRegressor, GradientBoostingRegressor, BaggingRegressor
-from sklearn.svm import SVR
-from sklearn.neural_network import MLPRegressor
-from sklearn.neighbors import KNeighborsRegressor
-from xgboost import XGBRegressor
-from sklearn.feature_selection import RFE
-
-# Define the train class 
+# Define the train class
 class train:
     def __init__(self, df, run_prefix):
         # Prepping the data
@@ -32,7 +22,7 @@ class train:
         X = df.drop(columns=['PHENO'])
         
         # Split the data
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42) # 70:30
+        X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, test_size=0.3, random_state=42) # 70:30
         IDs_train = X_train.ID
         IDs_test = X_test.ID
         X_train = X_train.drop(columns=['ID'])
@@ -56,16 +46,16 @@ class train:
 
         # The algorithms we will use 
         self.algorithms = [
-        LinearRegression(),
-        RandomForestRegressor(n_estimators=10),
-        AdaBoostRegressor(),
-        GradientBoostingRegressor(),
-        SGDRegressor(),
-        SVR(gamma='auto'),
-        MLPRegressor(),
-        KNeighborsRegressor(),
-        BaggingRegressor(),
-        XGBRegressor()
+        linear_model.LinearRegression(),
+        ensemble.RandomForestRegressor(n_estimators=10),
+        ensemble.AdaBoostRegressor(),
+        ensemble.GradientBoostingRegressor(),
+        linear_model.SGDRegressor(),
+        svm.SVR(gamma='auto'),
+        neural_network.MLPRegressor(),
+        neighbors.KNeighborsRegressor(),
+        ensemble.BaggingRegressor(),
+        xgboost.XGBRegressor()
         ]        
 
     # Report and data summary you want 
@@ -93,22 +83,22 @@ class train:
 
             test_predictions = algo.predict(self.X_test)
             test_predictions = test_predictions
-            evs = explained_variance_score(self.y_test, test_predictions)
+            evs = metrics.explained_variance_score(self.y_test, test_predictions)
             print("Explained Variance Score: {:.4}".format(evs))
 
             test_predictions = algo.predict(self.X_test)
             test_predictions = test_predictions
-            mse = mean_squared_error(self.y_test, test_predictions)
+            mse = metrics.mean_squared_error(self.y_test, test_predictions)
             print("Mean Squared Error: {:.4}".format(mse))
 
             test_predictions = algo.predict(self.X_test)
             test_predictions = test_predictions
-            mae = median_absolute_error(self.y_test, test_predictions)
+            mae = metrics.median_absolute_error(self.y_test, test_predictions)
             print("Median Absolute Error: {:.4}".format(mae))
 
             test_predictions = algo.predict(self.X_test)
             test_predictions = test_predictions
-            r2s = r2_score(self.y_test, test_predictions)
+            r2s = metrics.r2_score(self.y_test, test_predictions)
             print("R^2 Score: {:.4}".format(r2s))
 
             end_time = time.time()
@@ -164,27 +154,27 @@ class train:
 
         test_predictions = algo.predict(self.X_test)
         test_predictions = test_predictions
-        evs = explained_variance_score(self.y_test, test_predictions)
+        evs = metrics.explained_variance_score(self.y_test, test_predictions)
         print("Explained Variance Score: {:.4}".format(evs))
 
         test_predictions = algo.predict(self.X_test)
         test_predictions = test_predictions
-        mse = mean_squared_error(self.y_test, test_predictions)
+        mse = metrics.mean_squared_error(self.y_test, test_predictions)
         print("Mean Squared Error: {:.4}".format(mse))
 
         test_predictions = algo.predict(self.X_test)
         test_predictions = test_predictions
-        mae = median_absolute_error(self.y_test, test_predictions)
+        mae = metrics.median_absolute_error(self.y_test, test_predictions)
         print("Median absolut error: {:.4}".format(mae))
 
         test_predictions = algo.predict(self.X_test)
         test_predictions = test_predictions
-        r2s = r2_score(self.y_test, test_predictions)
+        r2s = metrics.r2_score(self.y_test, test_predictions)
         print("R^2 score: {:.4}".format(r2s))
 
         ### Save it using joblib
         algo_out = self.run_prefix + '.trainedModel.joblib'
-        dump(algo, algo_out)
+        joblib.dump(algo, algo_out)
 
         print("#"*70)
         print(f"... this model has been saved as {algo_out} for later use and can be found in your working directory.")

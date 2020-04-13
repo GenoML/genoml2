@@ -1,14 +1,14 @@
 #! /usr/bin/env python -u
 # coding=utf-8
+import io
 import logging
 import os
+import pathlib
 import platform
+import requests
 import stat
 import subprocess
 import zipfile
-from io import BytesIO
-from pathlib import Path
-import requests
 
 from genoml.utils import DescriptionLoader
 
@@ -18,7 +18,7 @@ def __get_executable_folder():
     if key in os.environ:
         return os.path.abspath(os.environ.get(key))
     else:
-        return os.path.join(str(Path.home()), ".genoml", "misc", "executables")
+        return os.path.join(str(pathlib.Path.home()), ".genoml", "misc", "executables")
 
 
 __executable_folder = __get_executable_folder()
@@ -39,7 +39,7 @@ def __check_exec(exec_path, *args, absolute_path=False):
 def __install_exec(url, exec_path):
     r = requests.get(url, verify=False, stream=True)
     r.raw.decode_content = True
-    buffer = BytesIO()
+    buffer = io.BytesIO()
     buffer.write(r.content)
     with zipfile.ZipFile(buffer, "r") as fp:
         fp.extractall(__executable_folder)

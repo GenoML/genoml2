@@ -1,25 +1,8 @@
-# Import the necessary packages
-import os
-import sys
 import argparse
-import math
-import time
-import h5py
-import joblib
-import subprocess
-import numpy as np
-import pandas as pd
-from sys import platform
+import sys
 
-# Importing additional packages necessary for VIF
-import random
-from statsmodels.stats.outliers_influence import variance_inflation_factor
-from statsmodels.tools.tools import add_constant
-from joblib import Parallel, delayed
-
-# Import the necessary internal GenoML packages
 import genoml.dependencies
-from genoml.preprocessing import munging, vif, featureselection
+from genoml import preprocessing
 
 
 def main():
@@ -83,7 +66,7 @@ def main():
     n_est = args.featureSelection
 
     # Run the munging script in genoml.preprocessing
-    munger = munging(pheno_path=args.pheno, run_prefix=args.prefix, impute_type=args.impute,
+    munger = preprocessing.munging(pheno_path=args.pheno, run_prefix=args.prefix, impute_type=args.impute,
                      p_gwas=args.p, addit_path=args.addit, gwas_path=args.gwas, geno_path=args.geno)
 
     # Process the PLINK inputs (for pruning)
@@ -91,13 +74,13 @@ def main():
 
     # Run the feature selection using extraTrees
     if (args.featureSelection > 0):
-        featureSelection_df = featureselection(run_prefix, df, dataType, n_est)
+        featureSelection_df = preprocessing.featureselection(run_prefix, df, dataType, n_est)
         df = featureSelection_df.rank()
         featureSelection_df.export_data()
 
     # Run the VIF calculation
     if (args.iter > 0):
-        vif_calc = vif(args.iter, args.vif, df, 100, run_prefix)
+        vif_calc = preprocessing.vif(args.iter, args.vif, df, 100, run_prefix)
         vif_calc.vif_calculations()
 
     # Thank the user

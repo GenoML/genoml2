@@ -1,14 +1,8 @@
-# Importing the necessary packages 
-import argparse
 import sys
-import sklearn
-import h5py
 import pandas as pd
-import numpy as np
-import time
 
-# Import the necessary internal GenoML packages 
-from genoml.discrete.supervised import train
+from genoml.discrete import supervised
+
 
 def dstrain(prefix, metric_max, prob_hist, auc):
     print("")
@@ -29,7 +23,7 @@ def dstrain(prefix, metric_max, prob_hist, auc):
     infile_h5 = run_prefix + ".dataForML.h5"
     df = pd.read_hdf(infile_h5, key = "dataForML")
 
-    model = train(df, run_prefix)
+    model = supervised.train(df, run_prefix)
     model.summary()
     
     # Give user context prior to competing algorithms 

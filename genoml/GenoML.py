@@ -1,13 +1,9 @@
-# Import the necessary packages 
 import argparse
-from functools import partial
+import functools
 
-# Import the necessary internal GenoML packages 
-from genoml.cli import dstrain
-from genoml.cli import dstune
-from genoml.cli import cstrain
-from genoml.cli import cstune
-   
+from genoml import cli
+
+
 def main():
     parser = argparse.ArgumentParser()
     # These are mandatory 
@@ -37,10 +33,10 @@ def main():
 
     # DICTIONARY OF CLI 
     clis = {
-    "discretesupervisedtrain": partial(dstrain, args.prefix, args.metric_max, args.prob_hist, args.auc),
-    "discretesupervisedtune": partial(dstune, args.prefix, args.metric_tune, args.max_tune, args.n_cv),
-    "continuoussupervisedtrain": partial(cstrain, args.prefix, args.export_predictions),
-    "continuoussupervisedtune": partial(cstune, args.prefix, args.max_tune, args.n_cv)
+    "discretesupervisedtrain": functools.partial(cli.dstrain, args.prefix, args.metric_max, args.prob_hist, args.auc),
+    "discretesupervisedtune": functools.partial(cli.dstune, args.prefix, args.metric_tune, args.max_tune, args.n_cv),
+    "continuoussupervisedtrain": functools.partial(cli.cstrain, args.prefix, args.export_predictions),
+    "continuoussupervisedtune": functools.partial(cli.cstune, args.prefix, args.max_tune, args.n_cv)
     }
 
     # Process the arguments 

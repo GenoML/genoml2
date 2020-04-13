@@ -1,15 +1,12 @@
-# Import the necessary packages
-import argparse
+import random
 import numpy as np
 import pandas as pd
-import math
-import random
-from statsmodels.stats.outliers_influence import variance_inflation_factor
-from statsmodels.tools.tools import add_constant
-from joblib import Parallel, delayed
+import joblib
+from statsmodels.stats import outliers_influence
+
 
 # Define the VIF class to be used in munging
-class vif: 
+class vif:
     def __init__(self, iterations, vif_threshold, df, chunk_size, run_prefix):
         self.iterations = iterations
         self.threshold = vif_threshold
@@ -31,7 +28,7 @@ class vif:
 
         df = self.df
 
-        print("Stripping erroneous space, dropping non-numeric columns...") 
+        print("Stripping erroneous space, dropping non-numeric columns...")
         df.columns = df.columns.str.strip()
 
         print("Drop any rows where at least one element is missing...")
@@ -52,19 +49,19 @@ class vif:
 
         original_df = df
         self.original_df = original_df
-        
+
         print("Sampling 100 rows at random to reduce memory overhead...")
         cleaned_df = df.sample(n=100).copy().reset_index()
         cleaned_df.drop(columns=["index"], inplace=True)
 
         print("Dropping columns that are not SNPs...")
-        cleaned_df.drop(columns=['PHENO'], axis=1, inplace=True) 
+        cleaned_df.drop(columns=['PHENO'], axis=1, inplace=True)
         print("Dropped!")
 
         print("Cleaned!")
         self.cleaned_df = cleaned_df
         return cleaned_df
-        
+
     def randomize_chunks(self):
         chunk_size = self.chunk_size
         cleaned_df = self.cleaned_df
@@ -86,9 +83,10 @@ class vif:
         print("Shuffled!")
 
         print("Generating chunked, randomized dataframes...")
-        chunked_list = [col_names_shuffle[i * chunk_size:(i + 1) * chunk_size] for i in range((len(col_names_shuffle) + chunk_size - 1) // chunk_size)] 
+        chunked_list = [col_names_shuffle[i * chunk_size:(i + 1) * chunk_size] for i in
+                        range((len(col_names_shuffle) + chunk_size - 1) // chunk_size)]
         df_list = []
-        for each_list in chunked_list: 
+        for each_list in chunked_list:
             temp_df = cleaned_df[each_list].astype(float)
             df_list.append(temp_df.copy())
 
@@ -123,7 +121,9 @@ class vif:
 
                 # Changed to look at indexing 
                 # Added simple joblib parallelization
-                vif = Parallel(n_jobs=5)(delayed(variance_inflation_factor)(df[variables].values, df.columns.get_loc(var)) for var in variables) 
+                vif = joblib.Parallel(n_jobs=5)(
+                    joblib.delayed(outliers_influence.variance_inflation_factor)(df[variables].values, df.columns.get_loc(var)) for var in
+                    variables)
 
                 max_vif = max(vif)
 
@@ -144,7 +144,7 @@ class vif:
         glued_df = pd.concat(df_list, axis=1)
         print("Full VIF-filtered dataframe generated!")
 
-        return glued_df 
+        return glued_df
 
     def iterate(self, checked):
         """
@@ -158,15 +158,15 @@ class vif:
 
         iterations = self.iterations
 
-        for iteration in range(iterations): 
+        for iteration in range(iterations):
             print(f"""
                 \n\n
-                Iteration {iteration+1}
+                Iteration {iteration + 1}
                 \n\n
                 """)
             rando = self.randomize_chunks()
             checked = self.calculate_vif(rando)
-        
+
         # When done, make list of features to keep 
         features_toKeep = checked.columns.values.tolist()
 

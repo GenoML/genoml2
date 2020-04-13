@@ -1,20 +1,6 @@
-import os
-import sys
-import argparse 
-import math
-import time
-import h5py
-import joblib
-import subprocess
-import numpy as np
 import pandas as pd
-from sklearn.ensemble import ExtraTreesClassifier
-from sklearn.ensemble import ExtraTreesRegressor
-from sklearn.feature_selection import SelectFromModel
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, balanced_accuracy_score, log_loss, roc_auc_score, confusion_matrix, roc_curve, auc
-
-# Select features and approximate ranks 
+from sklearn import ensemble
+from sklearn import feature_selection
 
 class featureselection:
     def __init__(self, run_prefix, df, dataType, n_est):
@@ -37,19 +23,19 @@ class featureselection:
             print(f"""
             using extraTrees Classifier for your discrete dataset 
             """)
-            clf = ExtraTreesClassifier(n_estimators=self.n_est)
+            clf = ensemble.ExtraTreesClassifier(n_estimators=self.n_est)
         
         if (self.dataType == "c"):
             print(f"""
             using extraTrees Regressor for your continuous dataset
             """)
-            clf = ExtraTreesRegressor(n_estimators=self.n_est)
+            clf = ensemble.ExtraTreesRegressor(n_estimators=self.n_est)
         
         clf.fit(self.X, self.y)
         self.featureRanks = clf.feature_importances_
         
         # Code to drop the features below threshold and return the data set like it was (aka add pheno and ids back)
-        model = SelectFromModel(clf, prefit=True) # find this import at top
+        model = feature_selection.SelectFromModel(clf, prefit=True) # find this import at top
         df_editing = model.transform(self.X)
         print("""
         Printing feature name that corresponds to the dataframe column name, then printing the relative importance as we go...

@@ -1,3 +1,2 @@
-from .training import train
-from .tuning import tune
-#from .testing import test
+from genoml.discrete.supervised.training import train
+from genoml.discrete.supervised.tuning import tune

@@ -1,26 +1,21 @@
-# Importing the necessary packages 
-import pandas as pd
-import sklearn
-import time
-from joblib import dump, load
+import joblib
 import matplotlib.pyplot as plt
+import pandas as pd
 import seaborn as sns
-import xgboost
 import sklearn
+from sklearn import discriminant_analysis
+from sklearn import ensemble
+from sklearn import linear_model
+from sklearn import metrics
+from sklearn import model_selection
+from sklearn import neighbors
+from sklearn import neural_network
+from sklearn import svm
+import time
+import xgboost
 
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, balanced_accuracy_score, log_loss, roc_auc_score, confusion_matrix, roc_curve, auc
-from sklearn.linear_model import LogisticRegression, SGDClassifier
-from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, GradientBoostingClassifier, BaggingClassifier
-from sklearn.svm import SVC
-from sklearn.naive_bayes import ComplementNB
-from sklearn.neural_network import MLPClassifier
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis
-from xgboost import XGBClassifier
-from sklearn.feature_selection import RFE
 
-# Define the train class 
+# Define the train class
 class train:
     def __init__(self, df, run_prefix):
         #code that will prepare the data
@@ -28,7 +23,7 @@ class train:
         X = df.drop(columns=['PHENO'])
         
         # Split the data 
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42) # 70:30
+        X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, test_size=0.3, random_state=42) # 70:30
         IDs_train = X_train.ID
         IDs_test = X_test.ID
         X_train = X_train.drop(columns=['ID'])
@@ -52,18 +47,18 @@ class train:
 
         #The methods we will use
         self.algorithms = [
-        LogisticRegression(solver='lbfgs'),
-        RandomForestClassifier(n_estimators=100),
-        AdaBoostClassifier(),
-        GradientBoostingClassifier(),
-        SGDClassifier(loss='modified_huber'),
-        SVC(probability=True, gamma='scale'),
-        MLPClassifier(),
-        KNeighborsClassifier(),
-        LinearDiscriminantAnalysis(),
-        QuadraticDiscriminantAnalysis(),
-        BaggingClassifier(),
-        XGBClassifier()
+        linear_model.LogisticRegression(solver='lbfgs'),
+        ensemble.RandomForestClassifier(n_estimators=100),
+        ensemble.AdaBoostClassifier(),
+        ensemble.GradientBoostingClassifier(),
+        linear_model.SGDClassifier(loss='modified_huber'),
+        svm.SVC(probability=True, gamma='scale'),
+        neural_network.MLPClassifier(),
+        neighbors.KNeighborsClassifier(),
+        discriminant_analysis.LinearDiscriminantAnalysis(),
+        discriminant_analysis.QuadraticDiscriminantAnalysis(),
+        ensemble.BaggingClassifier(),
+        xgboost.XGBClassifier()
         ]
     
     # Report and data summary you want 
@@ -91,18 +86,18 @@ class train:
 
             test_predictions = algo.predict_proba(self.X_test)
             test_predictions = test_predictions[:, 1]
-            rocauc = roc_auc_score(self.y_test, test_predictions)
+            rocauc = metrics.roc_auc_score(self.y_test, test_predictions)
             print("AUC: {:.4%}".format(rocauc))
 
             test_predictions = algo.predict(self.X_test)
-            acc = accuracy_score(self.y_test, test_predictions)
+            acc = metrics.accuracy_score(self.y_test, test_predictions)
             print("Accuracy: {:.4%}".format(acc))
 
             test_predictions = algo.predict(self.X_test)
-            balacc = balanced_accuracy_score(self.y_test, test_predictions)
+            balacc = metrics.balanced_accuracy_score(self.y_test, test_predictions)
             print("Balanced Accuracy: {:.4%}".format(balacc))
             
-            CM = confusion_matrix(self.y_test, test_predictions)
+            CM = metrics.confusion_matrix(self.y_test, test_predictions)
             TN = CM[0][0]
             FN = CM[1][0]
             TP = CM[1][1]
@@ -114,7 +109,7 @@ class train:
             
 
             test_predictions = algo.predict_proba(self.X_test)
-            ll = log_loss(self.y_test, test_predictions)
+            ll = metrics.log_loss(self.y_test, test_predictions)
             print("Log Loss: {:.4}".format(ll))
             
             end_time = time.time()
@@ -168,8 +163,8 @@ class train:
         test_predictions = self.algo.predict_proba(self.X_test)
         test_predictions = test_predictions[:, 1]
 
-        fpr, tpr, thresholds = roc_curve(self.y_test, test_predictions)
-        roc_auc = auc(fpr, tpr)
+        fpr, tpr, thresholds = metrics.roc_curve(self.y_test, test_predictions)
+        roc_auc = metrics.auc(fpr, tpr)
 
         plt.figure()
         plt.plot(fpr, tpr, color='purple', label='ROC curve (area = %0.2f)' % roc_auc)
@@ -288,24 +283,24 @@ class train:
 
         test_predictions = algo.predict_proba(self.X_test)
         test_predictions = test_predictions[:, 1]
-        rocauc = roc_auc_score(self.y_test, test_predictions)
+        rocauc = metrics.roc_auc_score(self.y_test, test_predictions)
         print("AUC: {:.4%}".format(rocauc))
 
         test_predictions = algo.predict(self.X_test)
-        acc = accuracy_score(self.y_test, test_predictions)
+        acc = metrics.accuracy_score(self.y_test, test_predictions)
         print("Accuracy: {:.4%}".format(acc))
 
         test_predictions = algo.predict(self.X_test)
-        balacc = balanced_accuracy_score(self.y_test, test_predictions)
+        balacc = metrics.balanced_accuracy_score(self.y_test, test_predictions)
         print("Balanced Accuracy: {:.4%}".format(balacc))
 
         test_predictions = algo.predict_proba(self.X_test)
-        ll = log_loss(self.y_test, test_predictions)
+        ll = metrics.log_loss(self.y_test, test_predictions)
         print("Log Loss: {:.4}".format(ll))
 
         ### Save it using joblib
         algo_out = self.run_prefix + '.trainedModel.joblib'
-        dump(algo, algo_out)
+        joblib.dump(algo, algo_out)
 
         print("#"*70)
         print(f"... this model has been saved as {algo_out} for later use and can be found in your working directory.")

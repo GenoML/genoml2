@@ -1,8 +1,6 @@
-# Import the necessary packages
 import subprocess
 import pandas as pd
 
-# Define the munging class
 import genoml.dependencies
 
 

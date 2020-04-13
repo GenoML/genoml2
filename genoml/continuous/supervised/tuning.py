@@ -1,35 +1,22 @@
-# Importing the necessary packages 
-import sys
-import h5py
-import pandas as pd
-import numpy as np
+from joblib import dump
 from time import time
-import sklearn
-import h5py
-import pandas as pd
 import numpy as np
-from time import time
+import pandas as pd
 import seaborn as sns
-from scipy.stats import randint as sp_randint
-from scipy.stats import uniform as sp_randfloat
+import sklearn
+from scipy import stats
+from sklearn import ensemble
+from sklearn import linear_model
+from sklearn import metrics
+from sklearn import model_selection
+from sklearn import neighbors
+from sklearn import neural_network
+from sklearn import svm
 import statsmodels.formula.api as sm
-from joblib import dump, load
+import xgboost
 
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import explained_variance_score, mean_squared_error, median_absolute_error, r2_score
-from sklearn.metrics import accuracy_score, balanced_accuracy_score, log_loss, roc_auc_score, confusion_matrix, roc_curve, auc, make_scorer
-from sklearn.linear_model import LinearRegression, SGDRegressor
-from sklearn.ensemble import RandomForestRegressor, AdaBoostRegressor, GradientBoostingRegressor, BaggingRegressor
-from sklearn.svm import SVR
-from sklearn.neural_network import MLPRegressor
-from sklearn.neighbors import KNeighborsRegressor
-from xgboost import XGBRegressor
-from sklearn.feature_selection import RFE
-from sklearn.model_selection import RandomizedSearchCV
-from sklearn.model_selection import cross_val_score
 
 # Import the necessary internal GenoML packages 
-from genoml.continuous.supervised import train
 
 # Define the tune class 
 class tune():
@@ -48,16 +35,16 @@ class tune():
         self.best_algo = str(best_algo_df.iloc[0,0])
 
         self.algorithms = [
-            LinearRegression(),
-            RandomForestRegressor(),
-            AdaBoostRegressor(),
-            GradientBoostingRegressor(),
-            SGDRegressor(),
-            SVR(),
-            MLPRegressor(),
-            KNeighborsRegressor(),
-            BaggingRegressor(),
-            XGBRegressor()
+            linear_model.LinearRegression(),
+            ensemble.RandomForestRegressor(),
+            ensemble.AdaBoostRegressor(),
+            ensemble.GradientBoostingRegressor(),
+            linear_model.SGDRegressor(),
+            svm.SVR(),
+            neural_network.MLPRegressor(),
+            neighbors.KNeighborsRegressor(),
+            ensemble.BaggingRegressor(),
+            xgboost.XGBRegressor()
         ]
 
         # Initialize a few variables we will be using later 
@@ -101,32 +88,32 @@ class tune():
         self.algo = algo 
 
         if best_algo == 'LinearRegression':
-            hyperparameters = {"penalty": ["l1", "l2"], "C": sp_randint(1, 10)}
-            scoring_metric = make_scorer(explained_variance_score)
+            hyperparameters = {"penalty": ["l1", "l2"], "C": stats.randint(1, 10)}
+            scoring_metric = metrics.make_scorer(metrics.explained_variance_score)
 
         elif  best_algo == 'SGDRegressor':
             hyperparameters = {'alpha': [1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3], "learning_rate": ["constant", "optimal", "invscaling", "adaptive"]}
-            scoring_metric = make_scorer(explained_variance_score)
+            scoring_metric = metrics.make_scorer(metrics.explained_variance_score)
 
         elif (best_algo == 'RandomForestRegressor') or (best_algo == 'AdaBoostRegressor') or (best_algo == 'GradientBoostingRegressor') or  (best_algo == 'BaggingRegressor'):
-            hyperparameters = {"n_estimators": sp_randint(1, 1000)}
-            scoring_metric = make_scorer(explained_variance_score)
+            hyperparameters = {"n_estimators": stats.randint(1, 1000)}
+            scoring_metric = metrics.make_scorer(metrics.explained_variance_score)
 
         elif best_algo == 'SVR':
-            hyperparameters = {"kernel": ["linear", "poly", "rbf", "sigmoid"], "C": sp_randint(1, 10)}
-            scoring_metric = make_scorer(explained_variance_score)
+            hyperparameters = {"kernel": ["linear", "poly", "rbf", "sigmoid"], "C": stats.randint(1, 10)}
+            scoring_metric = metrics.make_scorer(metrics.explained_variance_score)
             
         elif best_algo == 'MLPRegressor':
-            hyperparameters = {"alpha": sp_randfloat(0,1), "learning_rate": ['constant', 'invscaling', 'adaptive']}
-            scoring_metric = make_scorer(explained_variance_score)
+            hyperparameters = {"alpha": stats.uniform(0, 1), "learning_rate": ['constant', 'invscaling', 'adaptive']}
+            scoring_metric = metrics.make_scorer(metrics.explained_variance_score)
 
         elif best_algo == 'XGBRegressor':
-            hyperparameters = {"max_depth": sp_randint(1, 100), "learning_rate": sp_randfloat(0,1), "n_estimators": sp_randint(1, 100), "gamma": sp_randfloat(0,1)}
-            scoring_metric = make_scorer(explained_variance_score)
+            hyperparameters = {"max_depth": stats.randint(1, 100), "learning_rate": stats.uniform(0, 1), "n_estimators": stats.randint(1, 100), "gamma": stats.uniform(0, 1)}
+            scoring_metric = metrics.make_scorer(metrics.explained_variance_score)
 
         elif best_algo == 'KNeighborsRegressor':
-            hyperparameters = {"leaf_size": sp_randint(1, 100), "n_neighbors": sp_randint(1, 10)}
-            scoring_metric = make_scorer(explained_variance_score)
+            hyperparameters = {"leaf_size": stats.randint(1, 100), "n_neighbors": stats.randint(1, 10)}
+            scoring_metric = metrics.make_scorer(metrics.explained_variance_score)
 
         self.hyperparameters = hyperparameters
         self.scoring_metric = scoring_metric
@@ -136,7 +123,7 @@ class tune():
     def apply_tuning_parameters(self):
         # Randomized search with CV to tune 
         print("Here is a summary of the top 10 iterations of the hyperparameter tuning...")
-        rand_search = RandomizedSearchCV(estimator=self.algo, param_distributions=self.hyperparameters, scoring=self.scoring_metric, n_iter=self.max_iter, cv=self.cv_count, n_jobs=-1, random_state=153, verbose=0)
+        rand_search = model_selection.RandomizedSearchCV(estimator=self.algo, param_distributions=self.hyperparameters, scoring=self.scoring_metric, n_iter=self.max_iter, cv=self.cv_count, n_jobs=-1, random_state=153, verbose=0)
 
         start = time()
         rand_search.fit(self.X_tune, self.y_tune)
@@ -166,7 +153,7 @@ class tune():
     
     def summarize_tune(self):
         print("Here is the cross-validation summary of your best tuned model hyperparameters...")
-        cv_tuned = cross_val_score(estimator=self.rand_search.best_estimator_, X=self.X_tune, y=self.y_tune, scoring=self.scoring_metric, cv=self.cv_count, n_jobs=-1, verbose=0)
+        cv_tuned = model_selection.cross_val_score(estimator=self.rand_search.best_estimator_, X=self.X_tune, y=self.y_tune, scoring=self.scoring_metric, cv=self.cv_count, n_jobs=-1, verbose=0)
         print("Scores per cross-validation of the metric to be maximized, this scoring metric is AUC for discrete phenotypes and explained variance for continuous phenotypes:")
         print(cv_tuned)
         print("Mean cross-validation score:")
@@ -177,7 +164,7 @@ class tune():
         print("")
 
         print("Here is the cross-validation summary of your baseline/default hyperparamters for the same algorithm on the same data...")
-        cv_baseline = cross_val_score(estimator=self.algo, X=self.X_tune, y=self.y_tune, scoring=self.scoring_metric, cv=self.cv_count, n_jobs=-1, verbose=0)
+        cv_baseline = model_selection.cross_val_score(estimator=self.algo, X=self.X_tune, y=self.y_tune, scoring=self.scoring_metric, cv=self.cv_count, n_jobs=-1, verbose=0)
         print("Scores per cross-validation of the metric to be maximized, this scoring metric is AUC for discrete phenotypes and explained variance for continuous phenotypes:")
         print(cv_baseline)
         print("")

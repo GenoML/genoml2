@@ -1,14 +1,7 @@
-# # Importing the necessary packages 
-import argparse
-import sys
-import sklearn
-import h5py
 import pandas as pd
-import numpy as np
-import time
 
-# Import the necessary internal GenoML packages 
-from genoml.discrete.supervised import tune
+from genoml.discrete import supervised
+
 
 def dstune(run_prefix, metric_tune, max_iter, cv_count):
     # TUNING
@@ -36,7 +29,7 @@ def dstune(run_prefix, metric_tune, max_iter, cv_count):
 
     # Tuning 
     ## This calls on the functions made in the tune class (tuning.py) at the genoml.discrete.supervised 
-    model_tune = tune(df, run_prefix, max_iter, cv_count)
+    model_tune = supervised.tune(df, run_prefix, max_iter, cv_count)
     
     # Returns algo, hyperparameters, and scoring_metric
     model_tune.select_tuning_parameters(metric_tune) 

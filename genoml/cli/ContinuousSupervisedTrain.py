@@ -1,14 +1,7 @@
-# Importing the necessary packages 
-import argparse
 import sys
-import sklearn
-import h5py
 import pandas as pd
-import numpy as np
-import time
 
-# Import the necessary internal GenoML packages 
-from genoml.continuous.supervised import train
+from genoml.continuous import supervised
 
 def cstrain(prefix, export_predictions):
     # Print out simple info for users 
@@ -29,7 +22,7 @@ def cstrain(prefix, export_predictions):
     df = pd.read_hdf(infile_h5, key = "dataForML")
 
     # Train the model and output a summary
-    model = train(df, run_prefix)
+    model = supervised.train(df, run_prefix)
     model.summary()
 
     # Give user context prior to competing algorithms

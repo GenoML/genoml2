@@ -1,5 +1,5 @@
-from .munging import munging
-from .vif import vif
-from .featureselection import featureselection
+from genoml.preprocessing.munging import munging
+from genoml.preprocessing.vif import vif
+from genoml.preprocessing.featureselection import featureselection
 
 __all__ = []

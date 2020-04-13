@@ -1,1 +1,1 @@
-from . import supervised
+from genoml.discrete import supervised
