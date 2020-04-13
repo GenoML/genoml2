@@ -23,7 +23,7 @@ import stat
 import subprocess
 import zipfile
 
-from genoml.utils import DescriptionLoader
+from genoml import utils
 
 
 def __get_executable_folder():
@@ -31,7 +31,8 @@ def __get_executable_folder():
     if key in os.environ:
         return os.path.abspath(os.environ.get(key))
     else:
-        return os.path.join(str(pathlib.Path.home()), ".genoml", "misc", "executables")
+        return os.path.join(str(pathlib.Path.home()), ".genoml", "misc",
+                            "executables")
 
 
 __executable_folder = __get_executable_folder()
@@ -45,7 +46,8 @@ def __check_exec(exec_path, *args, absolute_path=False):
     if not os.path.exists(binary_path):
         return False
 
-    _ = subprocess.run([binary_path, *args], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    _ = subprocess.run([binary_path, *args], stdout=subprocess.DEVNULL,
+                       stderr=subprocess.DEVNULL)
     return True
 
 
@@ -68,7 +70,8 @@ def __check_package(name):
         raise EnvironmentError("Unknown package: {}".format(name))
 
     if platform_system not in __DEPENDENCIES[name]:
-        raise EnvironmentError("Unknown supported OK: {}".format(platform_system))
+        raise EnvironmentError(
+            "Unknown supported OK: {}".format(platform_system))
 
     entry = __DEPENDENCIES[name][platform_system]
 
@@ -95,12 +98,13 @@ def check_dependencies():
     ret = {}
     for package, data in __DEPENDENCIES.items():
         if "checker" in data:
-            ret[package] = data["checker"]()
+            with utils.DescriptionLoader.context(
+                    "check_dependencies_{}".format(package)):
+                ret[package] = data["checker"]()
 
     return ret
 
 
-@DescriptionLoader.function_description("check_dependencies_Plink")
 def check_plink():
     return __check_package("Plink")
 

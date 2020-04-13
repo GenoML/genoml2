@@ -19,7 +19,7 @@ import pandas as pd
 from genoml.discrete import supervised
 
 
-def dstrain(prefix, metric_max, prob_hist, auc):
+def main(prefix, metric_max, prob_hist, auc):
     print("")
     print("Here is some basic info on the command you are about to run.")
     print("Python Version info...")

@@ -15,9 +15,11 @@
 
 import json
 import os
+import time
 import traceback
 
 __author__ = 'Sayed Hadi Hashemi'
+
 import textwrap
 
 
@@ -52,30 +54,35 @@ class ContextScope:
     indent = 0
     _verbose = False
 
-    def __init__(self, title, description, error):
-        self._title = title
-        self._description = description
-        self._error = error
+    def __init__(self, title, description, error, start=True, end=False, **kwargs):
+        self._title = title.format(**kwargs)
+        self._description = description.format(**kwargs)
+        self._error = error.format(**kwargs)
+        self._start = start
+        self._end = end
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type is None and exc_val is None and exc_tb is None:
-            print("{}{}: {}".format(self.get_prefix(ColoredBox.GREEN), self._title,
-                                    ColoredBox.wrap('[Done]', ColoredBox.GREEN)))
-            print()
+            if self._end:
+                print(
+                    "{}{}: {}".format(self.get_prefix(ColoredBox.GREEN), ColoredBox.wrap(self._title, ColoredBox.GREEN),
+                                      ColoredBox.wrap('[Done]', ColoredBox.GREEN)))
             self.remove_indent()
         else:
             print("{}{}: {}".format(self.get_prefix(ColoredBox.RED), self._title,
                                     ColoredBox.wrap('[Failed]', ColoredBox.RED)))
-            print("{}\n".format(self.indent_text(self._error)))
+            print("{}".format(self.indent_text(self._error)))
             self.remove_indent()
             traceback.print_exception(exc_type, exc_val, exc_tb)
             exit(1)
 
     def __enter__(self):
         self.add_indent()
-        print("{}{}".format(self.get_prefix(ColoredBox.BLUE), self._title))
-        if self._verbose:
-            print("{}\n".format(self._description))
+        if self._start:
+            print()
+            print("{}{}".format(self.get_prefix(ColoredBox.BLUE), ColoredBox.wrap(self._title, ColoredBox.BLUE)))
+        if self._verbose and self._description:
+            print("{}".format(self._description))
 
     @classmethod
     def add_indent(cls):
@@ -87,7 +94,9 @@ class ContextScope:
 
     @classmethod
     def get_prefix(cls, color=None):
-        text = "=" * (cls.indent * 4) + "> "
+        indent_size = 4
+        # text = "=" * (cls.indent * 4) + "> "
+        text = "---> " * cls.indent
         if color:
             text = ColoredBox.wrap(text, color)
         return text
@@ -106,10 +115,10 @@ class ContextScope:
         cls._verbose = verbose
 
 
-def function_description(title, description, error):
+def function_description(**dkwargs):
     def wrap(func):
         def func_wrapper(*args, **kwargs):
-            with ContextScope(title, description, error):
+            with ContextScope(**dkwargs):
                 return func(*args, **kwargs)
 
         return func_wrapper
@@ -127,20 +136,45 @@ class DescriptionLoader:
             cls._descriptions = json.load(fp)
 
     @classmethod
-    def function_description(cls, key):
-        title, description, error = cls.get(key)
-        return function_description(title, description, error)
+    def function_description(cls, key, **kwargs):
+        dkwargs = cls.get(key)
+        return function_description(**dkwargs, **kwargs)
 
     @classmethod
     def get(cls, key):
         if cls._descriptions is None:
             cls._load()
-        title = cls._descriptions[key]["title"]
-        description = cls._descriptions[key]["description"]
-        error = cls._descriptions[key]["error"]
-        return title, description, error
+        return cls._descriptions[key]
 
     @classmethod
-    def context(cls, key):
-        title, description, error = cls.get(key)
-        return ContextScope(title, description, error)
+    def context(cls, key, **kwargs):
+        dkwargs = cls.get(key)
+        return ContextScope(**dkwargs, **kwargs)
+
+    @classmethod
+    def print(cls, key, **kwargs):
+        dkwargs = cls.get(key)
+        with ContextScope(**dkwargs, **kwargs):
+            pass
+
+
+class Timer:
+    def __init__(self):
+        self.start = None
+        self.end = None
+
+    def start_timer(self):
+        self.start = time.time()
+
+    def __enter__(self):
+        self.start_timer()
+        return self
+
+    def __exit__(self, *args):
+        self.stop_timer()
+
+    def stop_timer(self):
+        self.end = time.time()
+
+    def elapsed(self):
+        return self.end - self.start

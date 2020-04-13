@@ -16,7 +16,8 @@
 import joblib
 import pandas as pd
 import seaborn as sns
-import sklearn
+import statsmodels.formula.api as sm
+import xgboost
 from sklearn import ensemble
 from sklearn import linear_model
 from sklearn import metrics
@@ -24,260 +25,149 @@ from sklearn import model_selection
 from sklearn import neighbors
 from sklearn import neural_network
 from sklearn import svm
-import statsmodels.formula.api as sm
-import time
-import xgboost
 
-# Define the train class
-class train:
+from genoml import utils
+
+
+class Train:
     def __init__(self, df, run_prefix):
-        # Prepping the data
-        # Drop the PHENO column first prior to splitting 
         y = df.PHENO
-        X = df.drop(columns=['PHENO'])
-        
-        # Split the data
-        X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, test_size=0.3, random_state=42) # 70:30
-        IDs_train = X_train.ID
-        IDs_test = X_test.ID
-        X_train = X_train.drop(columns=['ID'])
-        X_test = X_test.drop(columns=['ID'])
-        
-        # Saving the prepped data the other classes will need
-        self.df = df
-        self.run_prefix = run_prefix
-        self.X_train = X_train
-        self.X_test = X_test
-        self.y_train = y_train
-        self.y_test = y_test
-        self.IDs_train = IDs_train
-        self.IDs_test = IDs_test
+        x = df.drop(columns=['PHENO'])
 
-        # Where the results will be stored 
+        x_train, x_test, y_train, y_test = model_selection.train_test_split(x, y, test_size=0.3,
+                                                                            random_state=42)  # 70:30
+        ids_train = x_train.ID
+        ids_test = x_test.ID
+        x_train = x_train.drop(columns=['ID'])
+        x_test = x_test.drop(columns=['ID'])
+
+        self._df = df
+        self._run_prefix = run_prefix
+        self._x_train = x_train
+        self._x_test = x_test
+        self._y_train = y_train
+        self._y_test = y_test
+        self._ids_train = ids_train
+        self._ids_test = ids_test
+
         self.log_table = None
-        self.best_algo = None
-        self.algo = None
+        self.best_algorithm = None
+        self.algorithm = None
         self.rfe_df = None
 
-        # The algorithms we will use 
-        self.algorithms = [
-        linear_model.LinearRegression(),
-        ensemble.RandomForestRegressor(n_estimators=10),
-        ensemble.AdaBoostRegressor(),
-        ensemble.GradientBoostingRegressor(),
-        linear_model.SGDRegressor(),
-        svm.SVR(gamma='auto'),
-        neural_network.MLPRegressor(),
-        neighbors.KNeighborsRegressor(),
-        ensemble.BaggingRegressor(),
-        xgboost.XGBRegressor()
-        ]        
+        candidate_algorithms = [
+            ensemble.AdaBoostRegressor(),
+            ensemble.BaggingRegressor(),
+            ensemble.GradientBoostingRegressor(),
+            ensemble.RandomForestRegressor(n_estimators=10),
+            linear_model.LinearRegression(),
+            linear_model.SGDRegressor(),
+            neighbors.KNeighborsRegressor(),
+            neural_network.MLPRegressor(),
+            svm.SVR(gamma='auto'),
+            xgboost.XGBRegressor()
+        ]
 
-    # Report and data summary you want 
+        self._algorithms = {algorithm.__class__.__name__: algorithm for algorithm in candidate_algorithms}
+        self._best_algorithm_name = None
+        self._best_algorithm = None
+        self._best_algorithm_metrics = None
+
     def summary(self):
-        print("Your data looks like this (showing the first few lines of the left-most and right-most columns)...")
-        print("#"*70)
-        print(self.df.describe())
-        print("#"*70)
+        """Report and data summary you want"""
+        utils.DescriptionLoader.print("continuous/supervised/training/Train/summary", data=self._df.describe())
 
-    # Compete the algorithms 
-    def compete(self, verbose=False):
-        log_cols=["Algorithm", "Explained_variance_score", "Mean_squared_error", "Median_absolute_error", "R2_score", "Runtime_Seconds"]
-        log_table = pd.DataFrame(columns=log_cols)
+    @utils.DescriptionLoader.function_description("continuous/supervised/training/Train/compete")
+    def compete(self):
+        """Compete the algorithms"""
 
-        for algo in self.algorithms:
-            start_time = time.time()
+        competing_metrics = [metrics.explained_variance_score, metrics.mean_squared_error,
+                             metrics.median_absolute_error, metrics.r2_score]
+        column_names = ["algorithm", "runtime_s"] + [metric.__name__ for metric in competing_metrics]
 
-            algo.fit(self.X_train, self.y_train)
-            name = algo.__class__.__name__
+        results = []
+        for algorithm_name, algorithm in self._algorithms.items():
+            with utils.DescriptionLoader.context("continuous/supervised/training/Train/compete/algorithm",
+                                                 name=algorithm_name):
+                algorithm.fit(self._x_train, self._y_train)
+                with utils.Timer() as timer:
+                    test_predictions = algorithm.predict(self._x_test)
+                    metric_results = [metric_func(self._y_test, test_predictions) for metric_func in competing_metrics]
+                row = [algorithm_name, timer.elapsed()] + metric_results
 
-            print("")
-            print("#"*70)
-            print("")
-            print(name)
+                results_str = self.metrics_to_str(dict(zip(column_names, row)))
+                with utils.DescriptionLoader.context("continuous/supervised/training/Train/compete/algorithm/results",
+                                                     name=algorithm_name, results=results_str):
+                    results.append(row)
 
-            test_predictions = algo.predict(self.X_test)
-            test_predictions = test_predictions
-            evs = metrics.explained_variance_score(self.y_test, test_predictions)
-            print("Explained Variance Score: {:.4}".format(evs))
+        self.log_table = pd.DataFrame(data=results, columns=column_names)
 
-            test_predictions = algo.predict(self.X_test)
-            test_predictions = test_predictions
-            mse = metrics.mean_squared_error(self.y_test, test_predictions)
-            print("Mean Squared Error: {:.4}".format(mse))
+        best_id = self.log_table.explained_variance_score.idxmax()
+        self._best_algorithm_name = self.log_table.iloc[best_id].algorithm
+        self._best_algorithm = self._algorithms[self._best_algorithm_name]
+        self._best_algorithm_metrics = self.log_table.iloc[best_id].to_dict()
 
-            test_predictions = algo.predict(self.X_test)
-            test_predictions = test_predictions
-            mae = metrics.median_absolute_error(self.y_test, test_predictions)
-            print("Median Absolute Error: {:.4}".format(mae))
+        utils.DescriptionLoader.print("continuous/supervised/training/Train/compete/algorithm/best",
+                                      algorithm=self._best_algorithm_name,
+                                      metrics=self.metrics_to_str(self._best_algorithm_metrics))
 
-            test_predictions = algo.predict(self.X_test)
-            test_predictions = test_predictions
-            r2s = metrics.r2_score(self.y_test, test_predictions)
-            print("R^2 Score: {:.4}".format(r2s))
-
-            end_time = time.time()
-            elapsed_time = (end_time - start_time)
-            print("Runtime in seconds: {:.4}".format(elapsed_time))
-
-            log_entry = pd.DataFrame([[name, evs, mse, mae, r2s, elapsed_time]], columns=log_cols)
-            log_table = log_table.append(log_entry)
-
-        print("#"*70)
-        print("")
-
-        self.log_table = log_table
-        return log_table 
-
-    def results(self):
-        best_performing_summary = self.log_table[self.log_table.Explained_variance_score == self.log_table.Explained_variance_score.max()]
-        best_algo = best_performing_summary.at[0,'Algorithm']
-        
-        self.best_algo = best_algo
-
-        return best_algo
+    @staticmethod
+    def metrics_to_str(metrics_dict):
+        rows = []
+        for key, value in metrics_dict.items():
+            if key == "algorithm":
+                rows.append("{}: {}".format(key, value))
+            elif key == "runtime_s":
+                rows.append("{}: {:0.3f} seconds\n".format(key, value))
+            else:
+                rows.append("{}: {:0.4f}".format(key, value))
+        return str.join("\n", rows)
 
     def export_model(self):
-        best_algo = self.best_algo
-        if best_algo == 'LinearRegression':
-            algo = getattr(sklearn.linear_model, best_algo)()
-
-        elif  best_algo == 'SGDRegressor':
-            algo = getattr(sklearn.linear_model, best_algo)()
-
-        elif (best_algo == 'RandomForestRegressor') or (best_algo == 'AdaBoostRegressor') or (best_algo == 'GradientBoostingRegressor') or  (best_algo == 'BaggingRegressor'):
-            algo = getattr(sklearn.ensemble, best_algo)()
-
-        elif best_algo == 'SVR':
-            algo = getattr(sklearn.svm, best_algo)()
-
-        elif best_algo == 'MLPRegressor':
-            algo = getattr(sklearn.neural_network, best_algo)()
-
-        elif best_algo == 'XGBRegressor':
-            algo = getattr(xgboost, best_algo)()
-
-        elif best_algo == 'KNeighborsRegressor':
-            algo = getattr(sklearn.neighbors, best_algo)()
-
-        algo.fit(self.X_train, self.y_train)
-        name = algo.__class__.__name__
-
-        print("...remember, there are occasionally slight fluctuations in model performance on the same withheld samples...")
-        print("#"*70)
-        print(name)
-
-        test_predictions = algo.predict(self.X_test)
-        test_predictions = test_predictions
-        evs = metrics.explained_variance_score(self.y_test, test_predictions)
-        print("Explained Variance Score: {:.4}".format(evs))
-
-        test_predictions = algo.predict(self.X_test)
-        test_predictions = test_predictions
-        mse = metrics.mean_squared_error(self.y_test, test_predictions)
-        print("Mean Squared Error: {:.4}".format(mse))
-
-        test_predictions = algo.predict(self.X_test)
-        test_predictions = test_predictions
-        mae = metrics.median_absolute_error(self.y_test, test_predictions)
-        print("Median absolut error: {:.4}".format(mae))
-
-        test_predictions = algo.predict(self.X_test)
-        test_predictions = test_predictions
-        r2s = metrics.r2_score(self.y_test, test_predictions)
-        print("R^2 score: {:.4}".format(r2s))
-
-        ### Save it using joblib
-        algo_out = self.run_prefix + '.trainedModel.joblib'
-        joblib.dump(algo, algo_out)
-
-        print("#"*70)
-        print(f"... this model has been saved as {algo_out} for later use and can be found in your working directory.")
-
-        self.algo = algo
-
-        return algo 
+        output_path = self._run_prefix + '.trainedModel.joblib'
+        with utils.DescriptionLoader.context("continuous/supervised/training/Train/export_model",
+                                             output_path=output_path):
+            joblib.dump(self._best_algorithm, output_path)
 
     def export_predictions(self):
-        test_predicted_values = self.algo.predict(self.X_test)
-        test_predicted_values_df = pd.DataFrame(test_predicted_values)
-        y_test_df = pd.DataFrame(self.y_test)
-        IDs_test_df = pd.DataFrame(self.IDs_test)
+        output_columns = ["ID", "PHENO_REPORTED", "PHENO_PREDICTED"]
 
-        test_out = pd.concat([IDs_test_df.reset_index(), y_test_df.reset_index(drop=True), test_predicted_values_df.reset_index(drop=True)], axis = 1, ignore_index=True)
-        test_out.columns=["INDEX","ID","PHENO_REPORTED","PHENO_PREDICTED"]
-        test_out = test_out.drop(columns=["INDEX"])
+        train_predicted_values = self._best_algorithm.predict(self._x_train)
+        results = pd.DataFrame(zip(self._ids_train, self._y_train, train_predicted_values), columns=output_columns)
+        output_path = self._run_prefix + '.trainedModel_trainingSample_Predictions.csv'
 
-        test_outfile = self.run_prefix + '.trainedModel_withheldSample_Predictions.csv'
-        test_out.to_csv(test_outfile, index=False)
+        with utils.DescriptionLoader.context("continuous/supervised/training/Train/export_predictions/train_data",
+                                             output_path=output_path, data=results.head()):
+            results.to_csv(output_path, index=False)
 
-        print("")
-        print(f"Preview of the exported predictions for the withheld test data that has been exported as {test_outfile} these are pretty straight forward.")
-        print("They generally include the sample ID, the previously reported phenotype and the predicted phenotype from that algorithm,")
-        print("#"*70)
-        print(test_out.head())
-        print("#"*70)
+        test_predicted_values = self._best_algorithm.predict(self._x_test)
+        results = pd.DataFrame(zip(self._ids_test, self._y_test, test_predicted_values), columns=output_columns)
+        output_path = self._run_prefix + '.trainedModel_withheldSample_Predictions.csv'
 
-        # Exporting training data, which is by nature overfit 
-        train_predicted_values = self.algo.predict(self.X_train)
-        train_predicted_values_df = pd.DataFrame(train_predicted_values)
-        y_train_df = pd.DataFrame(self.y_train)
-        IDs_train_df = pd.DataFrame(self.IDs_train)
+        with utils.DescriptionLoader.context("continuous/supervised/training/Train/export_predictions/test_data",
+                                             output_path=output_path, data=results.head()):
+            results.to_csv(output_path, index=False)
 
-        train_out = pd.concat([IDs_train_df.reset_index(), y_train_df.reset_index(drop=True), train_predicted_values_df.reset_index(drop=True)], axis = 1, ignore_index=True)
-        train_out.columns=["INDEX","ID","PHENO_REPORTED","PHENO_PREDICTED"]
-        train_out = train_out.drop(columns=["INDEX"])
-
-        train_outfile = self.run_prefix + '.trainedModel_trainingSample_Predictions.csv'
-        train_out.to_csv(train_outfile, index=False)
-
-        print("")
-        print(f"Preview of the exported predictions for the training samples which is naturally overfit and exported as {train_outfile} in the similar format as in the withheld test dataset that was just exported.")
-        print("#"*70)
-        print(train_out.head())
-        print("#"*70)
-
-        # Exporting regression summary
-        print("")
-        print("Here is a quick summary of the regression comparing PHENO_REPORTED ~ PHENO_PREDICTED in the withheld test data...")
-        print("")
-
-        reg_model = sm.ols(formula='PHENO_REPORTED ~ PHENO_PREDICTED', data=test_out)
+        output_path = self._run_prefix + '.trainedModel_withheldSample_regression.png'
+        reg_model = sm.ols(formula='PHENO_REPORTED ~ PHENO_PREDICTED', data=results)
         fitted = reg_model.fit()
-        print(fitted.summary())
+        with utils.DescriptionLoader.context("continuous/supervised/training/Train/export_predictions/plot",
+                                             output_path=output_path, data=fitted.summary()):
+            sns_plot = sns.regplot(data=results, y="PHENO_REPORTED", x="PHENO_PREDICTED", scatter_kws={"color": "cyan"},
+                                   line_kws={"color": "purple"})
 
-        print("")
-        print("...always good to see the P for the predictor.")
+            sns_plot.figure.savefig(output_path, dpi=600)
 
-        # Exporting regression plot
-        genoML_colors = ["cyan","purple"]
-        sns_plot = sns.regplot(data=test_out, y="PHENO_REPORTED", x="PHENO_PREDICTED", scatter_kws={"color": "cyan"}, line_kws={"color": "purple"})
+    def save_algorithm_results(self, output_prefix):
+        output_path = output_prefix + '.training_withheldSamples_performanceMetrics.csv'
+        with utils.DescriptionLoader.context("continuous/supervised/training/Train/save_algorithm_results",
+                                             output_path=output_path,
+                                             data=self.log_table.describe()):
+            self.log_table.to_csv(output_path, index=False)
 
-        plot_out = self.run_prefix + '.trainedModel_withheldSample_regression.png'
-        sns_plot.figure.savefig(plot_out, dpi=600)
-
-        print("")
-        print(f"We are also exporting a regression plot for you here {plot_out} this is a graphical representation of the difference between the reported and predicted phenotypes in the withheld test data for the best performing algorithm.")
-
-    def save_results(self, path, algorithmResults = False, bestAlgorithm = False):
-        path = self.run_prefix 
-
-        if(algorithmResults):
-            log_table = self.log_table
-            log_outfile = path + '.training_withheldSamples_performanceMetrics.csv'
-
-            print(f"This table below is also logged as {log_outfile} and is in your current working directory...")
-            print("#"*70)
-            print(log_table)
-            print("#"*70)
-
-            log_table.to_csv(log_outfile, index=False)
-
-        if(bestAlgorithm):
-            best_algo = self.best_algo
-            print(f"Based on your withheld samples, the algorithm with the highest explained variance score is the {best_algo}... let's save that model for you.")
-            best_algo_name_out = path + '.best_algorithm.txt'
-            file = open(best_algo_name_out,'w')
-            file.write(self.best_algo)
-            file.close()
-        
+    def save_best_algorithm(self, output_prefix):
+        output_path = output_prefix + '.best_algorithm.txt'
+        with utils.DescriptionLoader.context("continuous/supervised/training/Train/save_best_algorithm",
+                                             output_path=output_path, best_algorithm=self._best_algorithm_name):
+            with open(output_path, 'w') as fp:
+                fp.write(self._best_algorithm_name)
