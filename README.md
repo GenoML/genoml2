@@ -23,10 +23,13 @@ This README is a brief look into how to structure arguments and what arguments a
 You can create a virtual environment to run GenoML, if you prefer.
 If you already have the Anaconda Distribution, this is fairly simple.
 
-  To create a virtual environment:
+To create and activate a virtual environment:
 
 ```bash
 # To create a virtual environment 
+conda create -n GenoML python=3.7
+
+# To activate a virtual environment 
 conda activate GenoML
 
 # MISC 
