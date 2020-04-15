@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 # Copyright 2020 The GenoML Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 
-# This shows how to structure inputs for GenoML CLI
+
+# This shows how to structure inputs for GenoML CLI 
 
 ## SETTING UP A VIRTUAL ENVIRONMENT 
 # Making a virtual environment
@@ -32,7 +32,7 @@ pip install -r requirements.txt
     # If issues installing xgboost from requirements - use Homebrew to 
         # xcode-select --install
         # brew install gcc@7
-        # conda install -c conda-forge xgboost
+        # conda install -c conda-forge xgboost [or] pip install xgboost==0.90
 
 # Install the package at this path
 pip install .

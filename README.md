@@ -33,10 +33,11 @@ conda create -n GenoML python=3.7
 conda activate GenoML
 
 # MISC 
-	# To deactivate the virtual environment
-#conda deactivate GenoML	
-	# To delete your virtual environment 
-# conda env remove -n GenoML
+# To deactivate the virtual environment
+# conda deactivate 
+
+# To delete your virtual environment 
+# conda remove --name GenoML --all
 
 ```
 

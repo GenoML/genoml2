@@ -14,6 +14,7 @@
 # ==============================================================================
 
 import subprocess
+import sys
 import pandas as pd
 
 import genoml.dependencies
@@ -30,8 +31,18 @@ class munging:
         self.addit_path = addit_path
         self.gwas_path = gwas_path
         self.geno_path = geno_path
-        
+
         self.pheno_df = pd.read_csv(pheno_path, engine='c')
+        
+        # Raise an error and exit if the phenotype file is not properly formatted
+        try:
+            if set(['ID','PHENO']).issubset(self.pheno_df.columns) == False:
+                raise ValueError("""
+                Error: It doesn't look as though your phenotype file is properly formatted. 
+                Did you check that the columns are 'ID' and 'PHENO' and that controls=0 and cases=1?""")
+        except ValueError as ve:
+            print(ve)
+            sys.exit()
 
         if (addit_path==None):
             print("No additional features as predictors? No problem, we'll stick to genotypes.")
