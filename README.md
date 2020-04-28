@@ -127,7 +127,7 @@ GenoMLMunging --prefix outputs/test_discrete_geno \
 ```
 You also have the option of not using PLINK binary files if you would like to just preprocess (and then, later train) on a phenotype and addit file by doing the following:
 ```bash
-# Running GenoML munging on discrete data using PLINK genotype binary files, a phenotype file, and an addit file
+# Running GenoML munging on discrete data using only a phenotype file and an addit file
 GenoMLMunging --prefix outputs/test_discrete_geno \
 --datatype d \
 --pheno examples/discrete/training_pheno.csv \
