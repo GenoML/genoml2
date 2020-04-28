@@ -1,22 +1,9 @@
-# Copyright 2020 The GenoML Authors. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# ==============================================================================
-
+# Import the necessary packages
 import subprocess
-import sys
 import pandas as pd
+from pandas_plink import read_plink1_bin
 
+# Define the munging class
 import genoml.dependencies
 
 
@@ -31,18 +18,8 @@ class munging:
         self.addit_path = addit_path
         self.gwas_path = gwas_path
         self.geno_path = geno_path
-
-        self.pheno_df = pd.read_csv(pheno_path, engine='c')
         
-        # Raise an error and exit if the phenotype file is not properly formatted
-        try:
-            if set(['ID','PHENO']).issubset(self.pheno_df.columns) == False:
-                raise ValueError("""
-                Error: It doesn't look as though your phenotype file is properly formatted. 
-                Did you check that the columns are 'ID' and 'PHENO' and that controls=0 and cases=1?""")
-        except ValueError as ve:
-            print(ve)
-            sys.exit()
+        self.pheno_df = pd.read_csv(pheno_path, engine='c')
 
         if (addit_path==None):
             print("No additional features as predictors? No problem, we'll stick to genotypes.")
@@ -73,22 +50,20 @@ class munging:
 
         if (self.geno_path != None):
         # Set the bashes
-            bash1a = f"{plink_exec} --bfile " + self.geno_path + " --indep-pairwise 1000 50 0.05"
+            bash1a = f"{plink_exec} --bfile " + self.geno_path + " --indep-pairwise 1000 50 0.1"
             bash1b = f"{plink_exec} --bfile " + self.geno_path + " --extract " + self.run_prefix + \
-                ".p_threshold_variants.tab" + " --indep-pairwise 1000 50 0.05"
+                ".p_threshold_variants.tab" + " --indep-pairwise 1000 50 0.1"
+        # may want to consider outputting temp_genos to dir in run_prefix
             bash2 = f"{plink_exec} --bfile " + self.geno_path + \
                 " --extract plink.prune.in --make-bed --out temp_genos"
-            bash3 = f"{plink_exec} --bfile temp_genos --recode A --out " + self.run_prefix
-            bash4 = "cut -f 2,5 temp_genos.bim > " + \
+            bash3 = "cut -f 2,5 temp_genos.bim > " + \
                 self.run_prefix + ".variants_and_alleles.tab"
-            bash5 = "rm temp_genos.*"
-            bash6 = "rm " + self.run_prefix + ".raw"
-            bash7 = "rm plink.log"
-            bash8 = "rm plink.prune.*"
-            bash9 = "rm " + self.run_prefix + ".log"
+            bash4 = "rm plink.log"
+            bash5 = "rm plink.prune.*"
+            bash6 = "rm " + self.run_prefix + ".log"
         # Set the bash command groups
-            cmds_a = [bash1a, bash2, bash3, bash4, bash5, bash7, bash8, bash9]
-            cmds_b = [bash1b, bash2, bash3, bash4, bash5, bash7, bash8, bash9]
+            cmds_a = [bash1a, bash2, bash3, bash4, bash5, bash6]
+            cmds_b = [bash1b, bash2, bash3, bash4, bash5, bash6]
 
         if (self.gwas_path != None) & (self.geno_path != None):
             p_thresh = self.p_gwas
@@ -113,12 +88,43 @@ class munging:
                 subprocess.run(cmd, shell=True)
 
         if (self.geno_path != None):
-            raw_path = self.run_prefix + ".raw"
-            raw_df = pd.read_csv(raw_path, engine='c', sep=" ")
-            raw_df.drop(columns=['FID', 'MAT', 'PAT',
-                                 'SEX', 'PHENOTYPE'], inplace=True)
-            raw_df.rename(columns={'IID': 'ID'}, inplace=True)
-            subprocess.run(bash6, shell=True)
+            
+            g = read_plink1_bin('temp_genos.bed')
+            g_pruned = g.drop(['fid','father','mother','gender', 'trait', 'chrom', 'cm', 'pos','a1'])
+
+            g_pruned = g_pruned.set_index({'sample':'iid','variant':'snp'})
+            g_pruned.values = g_pruned.values.astype('int')
+
+        # swap pandas-plink genotype coding to match .raw format...more about that below:
+
+        # for example, assuming C in minor allele, alleles are coded in plink .raw labels homozygous for minor allele as 2 and homozygous for major allele as 0:
+        #A A   ->    0   
+        #A C   ->    1   
+        #C C   ->    2
+        #0 0   ->   NA
+
+        # where as, read_plink1_bin flips these, with homozygous minor allele = 0 and homozygous major allele = 2
+        #A A   ->    2   
+        #A C   ->    1   
+        #C C   ->    0
+        #0 0   ->   NA
+
+            two_idx = (g_pruned.values == 2)
+            zero_idx = (g_pruned.values == 0)
+
+            g_pruned.values[two_idx] = 0
+            g_pruned.values[zero_idx] = 2
+
+            g_pd = g_pruned.to_pandas()
+            g_pd.reset_index(inplace=True)
+            raw_df = g_pd.rename(columns={'sample': 'ID'})
+            del raw_df.index.name
+            del raw_df.columns.name
+            
+        # now, remove temp_genos
+            bash_rm_temp = "rm temp_genos.*"
+            print(bash_rm_temp)
+            subprocess.run(bash_rm_temp, shell=True)
 
     # Checking the impute flag and execute
         # Currently only supports mean and median
