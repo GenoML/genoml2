@@ -1,11 +1,26 @@
+# Copyright 2020 The GenoML Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
 # Import the necessary packages
 import subprocess
+import sys
 import pandas as pd
 from pandas_plink import read_plink1_bin
 
 # Define the munging class
 import genoml.dependencies
-
 
 class munging:
     def __init__(self, pheno_path, run_prefix="GenoML_data", impute_type="median", p_gwas=0.001, addit_path=None, gwas_path=None, geno_path=None):
@@ -20,6 +35,15 @@ class munging:
         self.geno_path = geno_path
         
         self.pheno_df = pd.read_csv(pheno_path, engine='c')
+        # Raise an error and exit if the phenotype file is not properly formatted
+        try:
+            if set(['ID','PHENO']).issubset(self.pheno_df.columns) == False:
+                raise ValueError("""
+                Error: It doesn't look as though your phenotype file is properly formatted. 
+                Did you check that the columns are 'ID' and 'PHENO' and that controls=0 and cases=1?""")
+        except ValueError as ve:
+            print(ve)
+            sys.exit()
 
         if (addit_path==None):
             print("No additional features as predictors? No problem, we'll stick to genotypes.")
@@ -118,8 +142,8 @@ class munging:
             g_pd = g_pruned.to_pandas()
             g_pd.reset_index(inplace=True)
             raw_df = g_pd.rename(columns={'sample': 'ID'})
-            del raw_df.index.name
-            del raw_df.columns.name
+        #    del raw_df.index.name
+        #    del raw_df.columns.name
             
         # now, remove temp_genos
             bash_rm_temp = "rm temp_genos.*"

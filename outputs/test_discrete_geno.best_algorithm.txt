@@ -1,1 +1,1 @@
-MLPClassifier
+SVC
