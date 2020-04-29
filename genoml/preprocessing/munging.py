@@ -196,9 +196,10 @@ class munging:
 
             # Z-scale the features
             for col in cols:
-                if (addit_df[col].min() != 0) & (addit_df[col].max() != 1):
-                    addit_df[col] = (
-                        addit_df[col] - addit_df[col].mean())/addit_df[col].std(ddof=0)
+                if (addit_df[col].min() == 0.0) and (addit_df[col].max() == 1.0):
+                    print(col, "is likely a binary indicator or a proportion and will not be scaled, just + 1 all the values of this variable and rerun to flag this column to be scaled.")
+                else:
+                    addit_df[col] = (addit_df[col] - addit_df[col].mean())/addit_df[col].std(ddof=0)
 
             print("")
             print("You have just Z-scaled your non-genotype features, putting everything on a numeric scale similar to genotypes.")
