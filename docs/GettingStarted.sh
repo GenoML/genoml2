@@ -23,7 +23,7 @@ conda create -n GenoML python=3.7
 # Activating and changing directories to environment
 conda activate GenoML
     # Deactivating a conda environment 
-        # conda deactivate ENV_NAME 
+        # conda deactivate 
     # Removing a conda environment 
         # conda env remove -n ENV_NAME
 

@@ -62,7 +62,7 @@ def main(run_prefix, metric_tune, max_iter, cv_count):
     model_tune.compare_performance()
 
     # Export the ROC curve 
-    model_tune.ROC()
+    # model_tune.ROC()
 
     # Export the newly tuned predictions 
     model_tune.export_tuned_data()

@@ -324,10 +324,10 @@ class train:
 
         return algo
 
-    def save_results(self, path, algorithmResults = False, bestAlgorithm = False, featureRankings = False):
+    def save_results(self, run_prefix, algorithmResults = False, bestAlgorithm = False, featureRankings = False):
         if(algorithmResults):
             log_table = self.log_table
-            log_outfile = path + '.training_withheldSamples_performanceMetrics.csv'
+            log_outfile = self.run_prefix + '.training_withheldSamples_performanceMetrics.csv'
 
             print(f"This table below is also logged as {log_outfile} and is in your current working directory...")
             print("#"*70)
@@ -339,7 +339,7 @@ class train:
         if(bestAlgorithm):
             best_algo = self.best_algo
             print(f"Based on your withheld samples, the algorithm with the best {self.metric_max} is the {best_algo}... let's save that model for you.")
-            best_algo_name_out = path + ".best_algorithm.txt"
+            best_algo_name_out = self.run_prefix + ".best_algorithm.txt"
             file = open(best_algo_name_out,'w')
             file.write(self.best_algo)
             file.close() 

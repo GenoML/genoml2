@@ -105,3 +105,4 @@ venv.bak/
 .idea
 genoml.code-workspace
 genoml/preprocessing/.DS_Store
+.DS_Store

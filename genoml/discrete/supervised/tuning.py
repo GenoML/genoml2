@@ -204,6 +204,10 @@ class tune():
         # Summary of the top 10 iterations of the hyperparameter tune
         n_top=10
         results = self.searchCVResults
+        
+        top10_log_cols = ["Model_Rank", "Mean_Validation_Score", "Mean_Standard_Deviation", "Parameters"]
+        top10_log_table = pd.DataFrame(columns=top10_log_cols)
+        
         for i in range(1, n_top + 1):
             candidates = np.flatnonzero(results['rank_test_score'] == i)
             for candidate in candidates:
@@ -213,12 +217,21 @@ class tune():
                 results['std_test_score'][candidate]))
                 print("Parameters: {0}".format(results['params'][candidate]))
                 print("")
+                top10_log_entry = pd.DataFrame([[i, results['mean_test_score'][candidate], results['std_test_score'][candidate], results['params'][candidate]]], columns=top10_log_cols)
+                top10_log_table = top10_log_table.append(top10_log_entry)
+
+        log_outfile = self.run_prefix + '.tunedModel_top10Iterations_Summary.csv'
+        top10_log_table.to_csv(log_outfile, index=False)
+
+        print(f"We are exporting a summary table of the top 10 iterations of the hyperparameter tuning step and its parameters here {log_outfile}.")
+
+        return top10_log_table
 
     def summarize_tune(self):
     
         print("Here is the cross-validation summary of your best tuned model hyperparameters...")
         cv_tuned = model_selection.cross_val_score(estimator=self.rand_search.best_estimator_, X=self.X_tune, y=self.y_tune, scoring=self.scoring_metric, cv=self.cv_count, n_jobs=-1, verbose=0)
-        print("Scores per cross-validation of the metric to be maximized, this scoring metric is AUC for discrete phenotypes and explained variance for continuous phenotypes:")
+        print("Scores per cross-validation of the metric to be maximized, this scoring metric is AUC or Balanced_Accuracy for discrete phenotypes and explained variance for continuous phenotypes:")
         print(cv_tuned)
         print("Mean cross-validation score:")
         print(cv_tuned.mean())
@@ -226,23 +239,33 @@ class tune():
         print(cv_tuned.std())
 
         print("")
-
+        
         print("Here is the cross-validation summary of your baseline/default hyperparamters for the same algorithm on the same data...")
         cv_baseline = model_selection.cross_val_score(estimator=self.algo, X=self.X_tune, y=self.y_tune, scoring=self.scoring_metric, cv=self.cv_count, n_jobs=-1, verbose=0)
-        print("Scores per cross-validation of the metric to be maximized, this scoring metric is AUC for discrete phenotypes and explained variance for continuous phenotypes:")
+        print("Scores per cross-validation of the metric to be maximized, this scoring metric is AUC or Balanced_Accuracy for discrete phenotypes and explained variance for continuous phenotypes:")
         print(cv_baseline)
         print("Mean cross-validation score:")
         print(cv_baseline.mean())
         print("Standard deviation of the cross-validation score:")
         print(cv_baseline.std())
-        
+
         print("")
         print("Just a note, if you have a relatively small variance among the cross-validation iterations, there is a higher chance of your model being more generalizable to similar datasets.")
 
         self.cv_baseline = cv_baseline
         self.cv_tuned = cv_tuned
 
-        return cv_baseline, cv_tuned
+        # Output a log table summarizing CV mean scores and standard deviations 
+        summary_CV_log_cols = ["Mean_CV_Score_Baseline", "Standard_Dev_CV_Score_Baseline", "Min_CV_Score_Baseline", "Max_CV_Score_Baseline", "Mean_CV_Score_BestTuned", "Standard_Dev_CV_Score_BestTuned", "Min_CV_Score_BestTuned", "Max_CV_Score_BestTuned"]
+        summary_CV_log_table = pd.DataFrame(columns=summary_CV_log_cols)
+        summary_CV_log_entry = pd.DataFrame([[cv_baseline.mean(), cv_baseline.std(), cv_baseline.min(), cv_baseline.max(), cv_tuned.mean(), cv_tuned.std(), cv_tuned.min(), cv_tuned.max()]], columns=summary_CV_log_cols)
+        summary_CV_log_table = summary_CV_log_table.append(summary_CV_log_entry)
+        log_outfile = self.run_prefix + '.tunedModel_CV_Summary.csv'
+        summary_CV_log_table.to_csv(log_outfile, index=False)
+
+        print(f"We are exporting a summary table of the cross-validation mean score and standard deviation of the baseline vs. best tuned model here {log_outfile}.")
+
+        return summary_CV_log_table
 
     def compare_performance(self):
         cv_tuned = self.cv_tuned
@@ -271,30 +294,30 @@ class tune():
 
             return algo_tuned
     
-    def ROC(self):
-        ### Export the ROC curve
+    # def ROC(self):
+    #     ### Export the ROC curve
 
-        plot_out = self.run_prefix + '.tunedModel_allSample_ROC.png'
+    #     plot_out = self.run_prefix + '.tunedModel_allSample_ROC.png'
 
-        test_predictions = self.algo_tuned.predict_proba(self.X_tune)
-        test_predictions = test_predictions[:, 1]
+    #     test_predictions = self.algo_tuned.predict_proba(self.X_tune)
+    #     test_predictions = test_predictions[:, 1]
 
-        fpr, tpr, thresholds = metrics.roc_curve(self.y_tune, test_predictions)
-        roc_auc = metrics.auc(fpr, tpr)
+    #     fpr, tpr, thresholds = metrics.roc_curve(self.y_tune, test_predictions)
+    #     roc_auc = metrics.auc(fpr, tpr)
 
-        plt.figure()
-        plt.plot(fpr, tpr, color='purple', label='All sample ROC curve (area = %0.2f)' % roc_auc + '\nMean cross-validation ROC curve (area = %0.2f)' % self.cv_tuned.mean())
-        plt.plot([0, 1], [0, 1], color='cyan', linestyle='--', label='Chance (area = %0.2f)' % 0.5)
-        plt.xlim([0.0, 1.0])
-        plt.ylim([0.0, 1.05])
-        plt.xlabel('False positive rate')
-        plt.ylabel('True positive rate')
-        plt.title('Receiver operating characteristic (ROC) - ' + self.best_algo + '- tuned' )
-        plt.legend(loc="lower right")
-        plt.savefig(plot_out, dpi = 600)
+    #     plt.figure()
+    #     plt.plot(fpr, tpr, color='purple', label='All sample ROC curve (area = %0.2f)' % roc_auc + '\nMean cross-validation ROC curve (area = %0.2f)' % self.cv_tuned.mean())
+    #     plt.plot([0, 1], [0, 1], color='cyan', linestyle='--', label='Chance (area = %0.2f)' % 0.5)
+    #     plt.xlim([0.0, 1.0])
+    #     plt.ylim([0.0, 1.05])
+    #     plt.xlabel('False positive rate')
+    #     plt.ylabel('True positive rate')
+    #     plt.title('Receiver operating characteristic (ROC) - ' + self.best_algo + '- tuned' )
+    #     plt.legend(loc="lower right")
+    #     plt.savefig(plot_out, dpi = 600)
 
-        print()
-        print(f"We are also exporting a ROC curve for you here {plot_out} this is a graphical representation of AUC in all samples for the best performing algorithm.")
+    #     print()
+    #     print(f"We are also exporting a ROC curve for you here {plot_out} this is a graphical representation of AUC in all samples for the best performing algorithm.")
     
     def export_tuned_data(self):
         tune_predicteds_probs = self.algo_tuned.predict_proba(self.X_tune)
