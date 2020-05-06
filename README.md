@@ -225,7 +225,7 @@ GenoML discrete supervised tune \
 ## 4. Testing/Validation with GenoML
 **UNDER ACTIVE DEVELOPMENT!** 
 
-In order to properly compare 2 models with different PLINK binaries, we have created the harmonization step that will:
+In order to properly rest how your model performs on a dataset it's never seen before (but you start with different PLINK binaries), we have created the harmonization step that will:
 1. Keep only the same SNPs between your reference dataset and the dataset you are using for validation
 2. Force the reference alleles in the validation dataset to match your reference dataset
 3. Export a `.txt` file with the column names from your reference dataset to later use in the munging of your validation dataset 
@@ -237,7 +237,7 @@ If using GenoML for both your reference dataset and then your validation dataset
 2. Use the outputs of step 1's munge for your reference dataset to harmonize your incoming validation dataset
 3.  Run through harmonization step with your validation dataset
 4.  Run through munging with your newly harmonized dataset
-5.  Training your validation/test dataset ***[currently under development]***
+5.  Comparing validation/test dataset performance ***[currently under development]***
 
 ### Harmonizing your Validation/Test Dataset 
 **Required** arguments for GenoMLHarmonizing are the following: 
