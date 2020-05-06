@@ -231,7 +231,7 @@ If using GenoML for both your reference dataset and then your validation dataset
 2. Use the outputs of step 1's munge for your reference dataset to harmonize your incoming validation dataset
 3.  Run through harmonization step with your validation dataset
 4.  Run through munging with your newly harmonized dataset
-5.  Training your validation/test dataset ***[cuurently under development]***
+5.  Training your validation/test dataset ***[currently under development]***
 
 ### Harmonizing your Validation/Test Dataset 
 **Required** arguments for GenoMLHarmonizing are the following: 
