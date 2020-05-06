@@ -26,19 +26,18 @@ If you already have the Anaconda Distribution, this is fairly simple.
 To create and activate a virtual environment:
 
 ```bash
-# To create a virtual environment 
+# To create a virtual environment
 conda create -n GenoML python=3.7
 
-# To activate a virtual environment 
+# To activate a virtual environment
 conda activate GenoML
 
-# MISC 
+## MISC
 # To deactivate the virtual environment
-# conda deactivate 
+# conda deactivate GenoML
 
-# To delete your virtual environment 
-# conda remove --name GenoML --all
-
+# To delete your virtual environment
+# conda env remove -n GenoML
 ```
 
 To install the package at this path:
@@ -94,6 +93,8 @@ GenoMLMunging --prefix outputs/test_discrete_geno \
 --vif 5 \
 --iter 1
 ```
+The `--vif` flag specifies the VIF threshold you would like to use (5 is recommended) and the number of iterations you'd like to run can be modified with the `--iter` flag (if you have or anticipate many collinear variables, it's a good idea to increase the iterations)
+
 
 Well, what if you had GWAS summary statistics handy, and would like to incorporate that data in? You can do so by running the following:
 ```bash
@@ -104,6 +105,7 @@ GenoMLMunging --prefix outputs/test_discrete_geno \
 --pheno examples/discrete/training_pheno.csv \
 --gwas examples/discrete/example_GWAS.csv 
 ```
+*Note:* When using the GWAS flag, the PLINK binaries will be pruned to include matching SNPs to the GWAS file. 
 
 ...and if you wanted to add a p-value cut-off...
 ```bash
@@ -127,7 +129,7 @@ GenoMLMunging --prefix outputs/test_discrete_geno \
 ```
 You also have the option of not using PLINK binary files if you would like to just preprocess (and then, later train) on a phenotype and addit file by doing the following:
 ```bash
-# Running GenoML munging on discrete data using only a phenotype file and an addit file
+# Running GenoML munging on discrete data using PLINK genotype binary files, a phenotype file, and an addit file
 GenoMLMunging --prefix outputs/test_discrete_geno \
 --datatype d \
 --pheno examples/discrete/training_pheno.csv \
@@ -142,6 +144,8 @@ GenoMLMunging --prefix outputs/test_discrete_geno \
 --pheno examples/discrete/training_pheno.csv \
 --featureSelection 50
 ```
+This will output an `*_approx_feature_importance.txt` file with the features most contributing to your model at the top. 
+
 <a id="2"></a>
 ## 2. Training with GenoML
 Training, tuning, and testing with GenoML have a slightly different structure where there are 3 required arguments before moving forward
@@ -211,22 +215,66 @@ GenoML discrete supervised tune \
 --prefix outputs/test_discrete_geno \
 --metric_tune Balanced_Accuracy
 ```
-
 <a id="4"></a>
 ## 4. Testing/Validation with GenoML
+**UNDER ACTIVE DEVELOPMENT!** 
 
-**UNDER ACTIVE DEVELOPMENT** 
+In order to properly compare 2 models with different PLINK binaries, we have created the harmonization step that will:
+1. Keep only the same SNPs between your reference dataset and the dataset you are using for validation
+2. Force the reference alleles in the validation dataset to match your reference dataset
+3. Export a `.txt` file with the column names from your reference dataset to later use in the munging of your validation dataset 
+
+If using GenoML for both your reference dataset and then your validation dataset, the process will look like the following: 
+
+1. Munge, train, and tune your first dataset
+    	- That will be your “reference” dataset
+2. Use the outputs of step 1's munge for your reference dataset to harmonize your incoming validation dataset
+3.  Run through harmonization step with your validation dataset
+4.  Run through munging with your newly harmonized dataset
+5.  Training your validation/test dataset ***[cuurently under development]***
+
+### Harmonizing your Validation/Test Dataset 
+**Required** arguments for GenoMLHarmonizing are the following: 
+- `--testGenoPrefix` : What is the prefix of your validation dataset PLINK binaries?
+- `--testOutPrefix`: What do you want the output to be named?
+- `--refDatasetPrefix`:  What is the name of the previously GenoML-munged dataset you would like to use as your reference dataset? (Without the `.dataForML.h5` suffix)
+- `--trainingSNPsAlleles` : What are the SNPs and alleles you would like to use? (This is generated at the end of your previously-GenoML munged dataset with the suffix `variants_and_alleles.tab`)
+
+To harmonize your incoming validation dataset to match the SNPs and alleles to your reference dataset, the command would look like the following:
+```bash
+# Running GenoMLHarmonizing 
+GenoMLHarmonizing --testGenoPrefix examples/discrete/validation \
+--testOutPrefix outputs/validation_test_discrete_geno \
+--refDatasetPrefix outputs/test_discrete_geno \
+--trainingSNPsAlleles outputs/test_discrete_geno.variants_and_alleles.tab
+```
+
+Now that you have harmonized your validation dataset to your reference dataset, you can now munge using a command similar to the following:
+```bash
+# Running GenoMLMunging after GenoMLHarmonizing
+GenoMLMunging --prefix outputs/validation_test_discrete_geno \
+--datatype d \
+--geno outputs/validation_test_discrete_geno_refSNPs_andAlleles \
+--pheno examples/discrete/validation_pheno.csv \
+--addit examples/discrete/validation_addit.csv \
+--refColsHarmonize outputs/validation_test_discrete_geno_refColsHarmonize_toKeep.txt
+```
+All munging options discussed above are available at this step, the only difference here is you will add the `--refColsHarmonize` flag to include the `*_refColsHarmonize_toKeep.txt` file generated at the end of harmonizing to only keep the same columns that the reference dataset had. 
+
+### Training your Validation/Test Dataset
+```bash
+#TODO: UNDER DEVELOPMENT 
+```
 
 
 <a id="5"></a>
 ## 5. Experimental Features
-
 **UNDER ACTIVE DEVELOPMENT** 
 
 Planned experimental features include, but are not limited to:
 - Unsupervised training, tuning, and testing
 - Network analyses
 - Meta-learning
-- Federated learning 
-- Biobank-scale support 
+- Federated learning
+- Biobank-scale support
 - ...?

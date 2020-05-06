@@ -16,6 +16,7 @@
 # Import the necessary packages
 import subprocess
 import sys
+import numpy as np
 import pandas as pd
 from pandas_plink import read_plink1_bin
 
@@ -23,7 +24,7 @@ from pandas_plink import read_plink1_bin
 import genoml.dependencies
 
 class munging:
-    def __init__(self, pheno_path, run_prefix="GenoML_data", impute_type="median", p_gwas=0.001, addit_path=None, gwas_path=None, geno_path=None):
+    def __init__(self, pheno_path, run_prefix="GenoML_data", impute_type="median", p_gwas=0.001, addit_path=None, gwas_path=None, geno_path=None, refColsHarmonize=None):
         self.pheno_path = pheno_path
         self.run_prefix = run_prefix
         
@@ -34,7 +35,14 @@ class munging:
         self.gwas_path = gwas_path
         self.geno_path = geno_path
         
-        self.pheno_df = pd.read_csv(pheno_path, engine='c')
+        self.refColsHarmonize = refColsHarmonize
+
+        # Forcing input to read in the ID column as a string and the PHENO as an integer
+        pheno_df_colnames =  pd.read_csv(pheno_path, engine='c', nrows=0).columns 
+        types_dict = {'ID': str, 'PHENO': int}
+        types_dict.update({col: str for col in pheno_df_colnames if col not in types_dict})
+        self.pheno_df = pd.read_csv(pheno_path, engine='c', dtype=types_dict)
+        
         # Raise an error and exit if the phenotype file is not properly formatted
         try:
             if set(['ID','PHENO']).issubset(self.pheno_df.columns) == False:
@@ -84,10 +92,10 @@ class munging:
                 self.run_prefix + ".variants_and_alleles.tab"
             bash4 = "rm plink.log"
             bash5 = "rm plink.prune.*"
-            bash6 = "rm " + self.run_prefix + ".log"
+        #    bash6 = "rm " + self.run_prefix + ".log"
         # Set the bash command groups
-            cmds_a = [bash1a, bash2, bash3, bash4, bash5, bash6]
-            cmds_b = [bash1b, bash2, bash3, bash4, bash5, bash6]
+            cmds_a = [bash1a, bash2, bash3, bash4, bash5]
+            cmds_b = [bash1b, bash2, bash3, bash4, bash5]
 
         if (self.gwas_path != None) & (self.geno_path != None):
             p_thresh = self.p_gwas
@@ -149,6 +157,21 @@ class munging:
             bash_rm_temp = "rm temp_genos.*"
             print(bash_rm_temp)
             subprocess.run(bash_rm_temp, shell=True)
+
+    # Checking the reference column names flag 
+        # If this is a step that comes after harmonize, then a .txt file with columns to keep should have been produced
+        # This is a list of column names from the reference dataset that the test dataset was harmonized against 
+        # We want to compare apples to apples, so we will only keep the column names that match
+        if (self.refColsHarmonize != None):
+            print("") 
+            print(f"Looks like you are munging after the harmonization step. Great! We will keep the columns generated from your reference dataset from that harmonize step that was exported to this file: {self.refColsHarmonize}")
+            print("")
+            with open(self.refColsHarmonize, 'r') as refCols_file:
+                ref_column_names_list = refCols_file.read().splitlines()
+        # Keep the reference columns from the test dataset if found in test data
+            matching_cols = raw_df[np.intersect1d(raw_df.columns, ref_column_names_list)]
+        # Replace the raw_df variable with the matching options
+            raw_df = matching_cols
 
     # Checking the impute flag and execute
         # Currently only supports mean and median

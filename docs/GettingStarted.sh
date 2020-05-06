@@ -180,12 +180,18 @@ GenoML continuous supervised tune \
 --max_tune 10 --n_cv 3
 
 ## TEST
+### HARMONIZE 
+GenoMLHarmonizing --testGenoPrefix examples/discrete/validation \
+--testOutPrefix outputs/validation_test_discrete_geno \
+--refDatasetPrefix outputs/test_discrete_geno \
+--trainingSNPsAlleles outputs/test_discrete_geno.variants_and_alleles.tab
 
-GenoML discrete supervised train \
---prefix outputs/test_discrete_geno \
---metric_max Balanced_Accuracy
+### THEN MUNGE 
+GenoMLMunging --prefix outputs/validation_test_discrete_geno \
+--datatype d \
+--geno outputs/validation_test_discrete_geno_refSNPs_andAlleles \
+--pheno examples/discrete/validation_pheno.csv \
+--addit examples/discrete/validation_addit.csv \
+--refColsHarmonize outputs/validation_test_discrete_geno_refColsHarmonize_toKeep.txt
 
-
-GenoML discrete supervised tune \
---prefix outputs/test_discrete_geno \
---metric_tune Balanced_Accuracy
+## EXPERIMENTAL

@@ -30,11 +30,12 @@ setuptools.setup(
     description="GenoML is an automated machine learning tool that optimizes basic machine learning pipelines for genomic data.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://genoml.github.io/", #TODO: Change to GitHub repository?
+    url="https://genoml.github.io/", 
     entry_points = {
         'console_scripts': 
         ['GenoML=genoml.GenoML:main',
-        'GenoMLMunging=genoml.GenoMLMunging:main'],
+        'GenoMLMunging=genoml.GenoMLMunging:main',
+        'GenoMLHarmonizing=genoml.GenoMLHarmonizing:main'],
     },
     packages=setuptools.find_packages(),
     install_requires=requires,

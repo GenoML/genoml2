@@ -50,8 +50,25 @@ def main():
                         choices=["median", "mean"])
     parser.add_argument('--featureSelection', type=int, default=0,
                         help='Run a quick tree-based feature selection routine prior to anything else, here you input the integer number of estimators needed, we suggest >= 50. The default of 0 will skip this functionality. This will also output a reduced dataset for analyses in addition to feature ranks. [default: 0]')
+    parser.add_argument('--refColsHarmonize', type=str, default=None,
+                        help='Are you now munging a test dataset following the harmonize step? Here you input the path to the to the *_refColsHarmonize_toKeep.txt file generated at that step.')
 
+    # Process the arguments
     args = parser.parse_args()
+    
+    run_prefix = args.prefix
+    dataType = args.datatype
+    impute_type = args.impute
+    geno_path = args.geno
+    pheno_path = args.pheno
+    addit_path = args.addit
+    n_est = args.featureSelection
+    gwas_path = args.gwas
+    p_gwas = args.p
+    vif_thresh = args.vif
+    vif_iter = args.iter
+    refColsHarmonize = args.refColsHarmonize
+
 
     # Print configurations
     print("")
@@ -60,42 +77,37 @@ def main():
     print(sys.version)
     print("CLI argument info...")
     print(
-        f"The output prefix for this run is {args.prefix} and will be appended to later runs of GenoML.")
-    print(f"Working with genotype data? {args.geno}")
-    print(f"Working with additional predictors? {args.addit}")
-    print(f"Where is your phenotype file? {args.pheno}")
-    print(f"Any use for an external set of GWAS summary stats? {args.gwas}")
+        f"The output prefix for this run is {run_prefix} and will be appended to later runs of GenoML.")
+    print(f"Working with genotype data? {geno_path}")
+    print(f"Working with additional predictors? {addit_path}")
+    print(f"Where is your phenotype file? {pheno_path}")
+    print(f"Any use for an external set of GWAS summary stats? {gwas_path}")
     print(
-        f"If you plan on using external GWAS summary stats for SNP filtering, we'll only keep SNPs at what P value? {args.p}")
-    print(f"How strong is your VIF filter? {args.vif}")
-    print(f"How many iterations of VIF filtering are you doing? {args.iter}")
+        f"If you plan on using external GWAS summary stats for SNP filtering, we'll only keep SNPs at what P value? {p_gwas}")
+    print(f"How strong is your VIF filter? {vif_thresh}")
+    print(f"How many iterations of VIF filtering are you doing? {vif_iter}")
     print(
-        f"The imputation method you picked is using the column {args.impute} to fill in any remaining NAs.")
+        f"The imputation method you picked is using the column {impute_type} to fill in any remaining NAs.")
     print(
         "Give credit where credit is due, for this stage of analysis we use code from the great contributors to python packages: os, sys, argparse, numpy, pandas, joblib, math and time. We also use PLINK v1.9 from https://www.cog-genomics.org/plink/1.9/.")
     print("")
 
-    # Process the arguments
-    run_prefix = args.prefix
-    dataType = args.datatype
-    n_est = args.featureSelection
-
     # Run the munging script in genoml.preprocessing
-    munger = preprocessing.munging(pheno_path=args.pheno, run_prefix=args.prefix, impute_type=args.impute,
-                     p_gwas=args.p, addit_path=args.addit, gwas_path=args.gwas, geno_path=args.geno)
+    munger = preprocessing.munging(pheno_path=pheno_path, run_prefix=run_prefix, impute_type=impute_type,
+                     p_gwas=p_gwas, addit_path=addit_path, gwas_path=gwas_path, geno_path=geno_path, refColsHarmonize=refColsHarmonize)
 
     # Process the PLINK inputs (for pruning)
     df = munger.plink_inputs()
 
     # Run the feature selection using extraTrees
-    if (args.featureSelection > 0):
+    if (n_est > 0):
         featureSelection_df = preprocessing.featureselection(run_prefix, df, dataType, n_est)
         df = featureSelection_df.rank()
         featureSelection_df.export_data()
 
     # Run the VIF calculation
-    if (args.iter > 0):
-        vif_calc = preprocessing.vif(args.iter, args.vif, df, 100, run_prefix)
+    if (vif_iter > 0):
+        vif_calc = preprocessing.vif(vif_iter, vif_thresh, df, 100, run_prefix)
         vif_calc.vif_calculations()
 
     # Thank the user
