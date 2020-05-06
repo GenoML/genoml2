@@ -64,6 +64,12 @@ Munging with GenoML was written as a separate portion in case you did not want t
 
 *Note:* The following examples are for discrete data, but if you substitute following commands with `--datatype c`, you can preprocess your continuous data!
 
+*Note:* Be sure to have your files formatted the same as the examples, key points being: 
+- 0=controls and 1=case in your PLINK and phenotype files 
+- Your phenotype file consisting only of the "ID" and "PHENO" columns
+- Your sample IDs matching across all files
+- Your sample IDs not consisting with only integers (add a prefix or suffix to all sample IDs if this is the case prior to running GenoML)  
+
 If you would like to munge just with genotypes (in PLINK binary format), the simplest command is the following: 
 ```bash
 # Running GenoML munging on discrete data using PLINK genotype binary files and a phenotype file 
