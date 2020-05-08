@@ -25,20 +25,20 @@ def main():
     # Create the arguments 
     parser = argparse.ArgumentParser(description='Arguments for prepping a test dataset')    
     
-    parser.add_argument('--testGenoPrefix', type=str, default='genotype_binaries', help='Prefix of the genotypes for the test dataset in PLINK binary format.', required=True)
-    parser.add_argument('--testOutPrefix', type=str, default='GenoML_model', help='Prefix of the output that will be generated.', required=True)
-    parser.add_argument('--refDatasetPrefix', type=str, default=None, help='Prefix for the training dataset we will use to compare, you can leave off the \'.joblib\' suffix.', required=True)
-    parser.add_argument('--trainingSNPsAlleles', type=str, default=None, help='File to the SNPs and alleles file generated in the training phase that we will use to compare.', required=True)
+    parser.add_argument('--test_geno_prefix', type=str, default='genotype_binaries', help='Prefix of the genotypes for the test dataset in PLINK binary format.', required=True)
+    parser.add_argument('--test_prefix', type=str, default='GenoML_model', help='Prefix of the output that will be generated.', required=True)
+    parser.add_argument('--refModel_prefix', type=str, default=None, help='Prefix for the training dataset we will use to compare, you can leave off the \'.joblib\' suffix.', required=True)
+    parser.add_argument('--training_SNPsAlleles', type=str, default=None, help='File to the SNPs and alleles file generated in the training phase that we will use to compare.', required=True)
     print("")
 
     # Process the arguments 
     args = parser.parse_args()
     
-    test_geno_prefix = args.testGenoPrefix
-    test_out_prefix = args.testOutPrefix
+    test_geno_prefix = args.test_geno_prefix
+    test_out_prefix = args.test_prefix
 
-    ref_model_prefix = args.refDatasetPrefix
-    training_SNPs = args.trainingSNPsAlleles
+    ref_model_prefix = args.refModel_prefix
+    training_SNPs = args.training_SNPsAlleles
 
     # Print configurations
     print("Here is some basic info on the command you are about to run.")

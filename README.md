@@ -225,7 +225,7 @@ GenoML discrete supervised tune \
 ## 4. Testing/Validation with GenoML
 **UNDER ACTIVE DEVELOPMENT!** 
 
-In order to properly rest how your model performs on a dataset it's never seen before (but you start with different PLINK binaries), we have created the harmonization step that will:
+In order to properly test how your model performs on a dataset it's never seen before (but you start with different PLINK binaries), we have created the harmonization step that will:
 1. Keep only the same SNPs between your reference dataset and the dataset you are using for validation
 2. Force the reference alleles in the validation dataset to match your reference dataset
 3. Export a `.txt` file with the column names from your reference dataset to later use in the munging of your validation dataset 
@@ -237,23 +237,26 @@ If using GenoML for both your reference dataset and then your validation dataset
 2. Use the outputs of step 1's munge for your reference dataset to harmonize your incoming validation dataset
 3.  Run through harmonization step with your validation dataset
 4.  Run through munging with your newly harmonized dataset
-5.  Comparing validation/test dataset performance ***[currently under development]***
+5.  Training your validation/test dataset ***[currently under development]***
 
 ### Harmonizing your Validation/Test Dataset 
 **Required** arguments for GenoMLHarmonizing are the following: 
-- `--testGenoPrefix` : What is the prefix of your validation dataset PLINK binaries?
-- `--testOutPrefix`: What do you want the output to be named?
-- `--refDatasetPrefix`:  What is the name of the previously GenoML-munged dataset you would like to use as your reference dataset? (Without the `.dataForML.h5` suffix)
-- `--trainingSNPsAlleles` : What are the SNPs and alleles you would like to use? (This is generated at the end of your previously-GenoML munged dataset with the suffix `variants_and_alleles.tab`)
+- `--test_geno_prefix` : What is the prefix of your validation dataset PLINK binaries?
+- `--test_prefix`: What do you want the output to be named?
+- `--refModel_prefix`:  What is the name of the previously GenoML-munged dataset you would like to use as your reference dataset? (Without the `.dataForML.h5` suffix)
+- `--training_SNPsAlleles` : What are the SNPs and alleles you would like to use? (This is generated at the end of your previously-GenoML munged dataset with the suffix `variants_and_alleles.tab`)
 
 To harmonize your incoming validation dataset to match the SNPs and alleles to your reference dataset, the command would look like the following:
 ```bash
 # Running GenoMLHarmonizing 
-GenoMLHarmonizing --testGenoPrefix examples/discrete/validation \
---testOutPrefix outputs/validation_test_discrete_geno \
---refDatasetPrefix outputs/test_discrete_geno \
---trainingSNPsAlleles outputs/test_discrete_geno.variants_and_alleles.tab
+GenoMLHarmonizing --test_geno_prefix examples/discrete/validation \
+--test_prefix outputs/validation_test_discrete_geno \
+--refModel_prefix outputs/test_discrete_geno \
+--training_SNPsAlleles outputs/test_discrete_geno.variants_and_alleles.tab
 ```
+This step will generate: 
+- a `*_refColsHarmonize_toKeep.txt` file of columns to keep for the next step 
+- `*_refSNPs_andAlleles.*` PLINK binary files (.bed, .bim, and .fam) that have the SNPs and alleles match your reference dataset
 
 Now that you have harmonized your validation dataset to your reference dataset, you can now munge using a command similar to the following:
 ```bash

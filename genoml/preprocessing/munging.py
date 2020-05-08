@@ -37,11 +37,8 @@ class munging:
         
         self.refColsHarmonize = refColsHarmonize
 
-        # Forcing input to read in the ID column as a string and the PHENO as an integer
-        pheno_df_colnames =  pd.read_csv(pheno_path, engine='c', nrows=0).columns 
-        types_dict = {'ID': str, 'PHENO': int}
-        types_dict.update({col: str for col in pheno_df_colnames if col not in types_dict})
-        self.pheno_df = pd.read_csv(pheno_path, engine='c', dtype=types_dict)
+        # Reading in the phenotype file 
+        self.pheno_df = pd.read_csv(pheno_path, engine='c')
         
         # Raise an error and exit if the phenotype file is not properly formatted
         try:
@@ -52,6 +49,10 @@ class munging:
         except ValueError as ve:
             print(ve)
             sys.exit()
+
+        # Typecase to read in the ID column as a string and the PHENO as an integer
+        self.pheno_df['ID'] = self.pheno_df['ID'].astype(str)
+        self.pheno_df['PHENO'] = self.pheno_df['PHENO'].astype(int)
 
         if (addit_path==None):
             print("No additional features as predictors? No problem, we'll stick to genotypes.")
@@ -158,21 +159,6 @@ class munging:
             print(bash_rm_temp)
             subprocess.run(bash_rm_temp, shell=True)
 
-    # Checking the reference column names flag 
-        # If this is a step that comes after harmonize, then a .txt file with columns to keep should have been produced
-        # This is a list of column names from the reference dataset that the test dataset was harmonized against 
-        # We want to compare apples to apples, so we will only keep the column names that match
-        if (self.refColsHarmonize != None):
-            print("") 
-            print(f"Looks like you are munging after the harmonization step. Great! We will keep the columns generated from your reference dataset from that harmonize step that was exported to this file: {self.refColsHarmonize}")
-            print("")
-            with open(self.refColsHarmonize, 'r') as refCols_file:
-                ref_column_names_list = refCols_file.read().splitlines()
-        # Keep the reference columns from the test dataset if found in test data
-            matching_cols = raw_df[np.intersect1d(raw_df.columns, ref_column_names_list)]
-        # Replace the raw_df variable with the matching options
-            raw_df = matching_cols
-
     # Checking the impute flag and execute
         # Currently only supports mean and median
         impute_list = ["mean", "median"]
@@ -255,7 +241,28 @@ class munging:
             addit = pd.read_hdf(outfile_h5, key="addit")
             merged = pd.merge(pheno, addit, on='ID', how='inner')
 
+        # Checking the reference column names flag 
+        # If this is a step that comes after harmonize, then a .txt file with columns to keep should have been produced
+        # This is a list of column names from the reference dataset that the test dataset was harmonized against 
+        # We want to compare apples to apples, so we will only keep the column names that match
+        if (self.refColsHarmonize != None):
+            print("") 
+            print(f"Looks like you are munging after the harmonization step. Great! We will keep the columns generated from your reference dataset from that harmonize step that was exported to this file: {self.refColsHarmonize}")
+            print("")
+            with open(self.refColsHarmonize, 'r') as refCols_file:
+                ref_column_names_list = refCols_file.read().splitlines()
+            
+            # Keep the reference columns from the test dataset if found in test data
+            matching_cols = merged[np.intersect1d(merged.columns, ref_column_names_list)]
+            
+            # Replace the dataframe variable with the matching options
+            merged = matching_cols
+
         self.merged = merged
         merged.to_hdf(outfile_h5, key='dataForML')
+
+        print("")
+        print(f"Your .dataForML file that has been fully munged can be found here: {outfile_h5}")
+
 
         return merged
