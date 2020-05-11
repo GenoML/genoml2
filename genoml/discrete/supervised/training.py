@@ -18,14 +18,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import sklearn
-from sklearn import discriminant_analysis
-from sklearn import ensemble
-from sklearn import linear_model
-from sklearn import metrics
-from sklearn import model_selection
-from sklearn import neighbors
-from sklearn import neural_network
-from sklearn import svm
+from sklearn import discriminant_analysis, ensemble, linear_model, metrics, model_selection, neighbors, neural_network, svm
 import time
 import xgboost
 

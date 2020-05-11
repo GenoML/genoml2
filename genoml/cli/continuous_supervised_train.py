@@ -15,13 +15,14 @@
 
 import sys
 import pandas as pd
+import numpy as np
 
 from genoml.continuous import supervised
 from genoml import utils
 
 
 @utils.DescriptionLoader.function_description("cli/continuous_supervised_train")
-def main(run_prefix, export_predictions):
+def main(run_prefix, export_predictions, matchingCols):
     utils.DescriptionLoader.print("cli/continuous_supervised_train/info",
                                   python_version=sys.version, prefix=run_prefix)
 
@@ -29,8 +30,18 @@ def main(run_prefix, export_predictions):
     with utils.DescriptionLoader.context(
             "cli/continuous_supervised_train/input", path=input_path):
         df = pd.read_hdf(input_path, key="dataForML")
+    
+    if (matchingCols != None):
+        print(f"Looks like you are retraining your reference file. We are using the harmonized columns you provided here: {matchingCols}")
+        print(f"Note that you might have different/less features than before, given this was harmonized between training and test dataset, and might mean your model now performs worse...")
 
-    model = supervised.Train(df, run_prefix)
+        with open(matchingCols, 'r') as matchingCols_file:
+                matching_column_names_list = matchingCols_file.read().splitlines()
+        
+        # Keep only the columns found in the file 
+        df = df[np.intersect1d(df.columns, matching_column_names_list)]
+        
+    model = supervised.train(df, run_prefix)
     model.summary()
     model.compete()
     model.export_model()

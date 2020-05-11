@@ -16,10 +16,14 @@
 import argparse
 import functools
 
-from genoml.cli import continuous_supervised_train
-from genoml.cli import continuous_supervised_tune
 from genoml.cli import discrete_supervised_train
 from genoml.cli import discrete_supervised_tune
+from genoml.cli import discrete_supervised_test
+
+from genoml.cli import continuous_supervised_train
+from genoml.cli import continuous_supervised_tune
+from genoml.cli import continuous_supervised_test
+
 from genoml import utils
 
 
@@ -28,14 +32,16 @@ def main():
     # These are mandatory 
     parser.add_argument("data", choices=["discrete", "continuous"])
     parser.add_argument("method", choices=["supervised", "unsupervised"])
-    parser.add_argument("mode", choices=["train", "tune"])
+    parser.add_argument("mode", choices=["train", "tune", "test"])
 
     # Global
-    parser.add_argument("--prefix", type=str, default="GenoML_data", help="Prefix for your training data build.")
+    parser.add_argument("--prefix", type=str, default="GenoML_data", help="Prefix for your output build.")
     parser.add_argument('--metric_max', type=str, default='AUC',
                         choices=['AUC', "Balanced_Accuracy", "Specificity", "Sensitivity"],
                         help='How do you want to determine which algorithm performed the best? [default: AUC].')
     parser.add_argument('--verbose', action='store_true', default=False, help="Verbose output.")
+    
+    parser.add_argument('--matchingCols', type=str, default=None, help="This is the list of intersecting columns between reference and testing datasets with the suffix *_finalHarmonizedCols_toKeep.txt")
 
     # TRAINING
 
@@ -54,18 +60,21 @@ def main():
     parser.add_argument('--n_cv', type=int, default=5,
                         help='Number of cross validations: (integer likely greater than 3). Here we set the number of cross-validation runs for the algorithms [default: 5].')
 
+    # TESTING
+    parser.add_argument('--test_prefix', type=str, default='GenoML_data', help='Prefix for the dataset you would like to test against your reference model. Remember, the model will not function well if it does not include the same features, and these features should be on the same numeric scale, you can leave off the \'.dataForML.h5\' suffix.')
+    parser.add_argument('--refModel_prefix', type=str, default='GenoML_model', help='Prefix of your reference model file, you can leave off the \'.joblib\' suffix.')
+
     args = parser.parse_args()
     utils.ContextScope._verbose = args.verbose
 
     entry = {
-        ("discrete", "supervised", "train"): (discrete_supervised_train.main,
-                                              (args.prefix, args.metric_max, args.prob_hist, args.auc)),
-        ("discrete", "supervised", "tune"): (discrete_supervised_tune.main,
-                                             (args.prefix, args.metric_tune, args.max_tune, args.n_cv)),
-        ("continuous", "supervised", "train"): (continuous_supervised_train.main,
-                                                (args.prefix, args.export_predictions)),
-        ("continuous", "supervised", "tune"): (continuous_supervised_tune.main,
-                                               (args.prefix, args.max_tune, args.n_cv))
+        ("discrete", "supervised", "train"): (discrete_supervised_train.main, (args.prefix, args.metric_max, args.prob_hist, args.auc, args.matchingCols)),
+        ("discrete", "supervised", "tune"): (discrete_supervised_tune.main, (args.prefix, args.metric_tune, args.max_tune, args.n_cv)),
+        ("discrete", "supervised", "test"): (discrete_supervised_test.main, (args.prefix, args.test_prefix, args.refModel_prefix)),
+        ("continuous", "supervised", "train"): (continuous_supervised_train.main, (args.prefix, args.export_predictions, args.matchingCols)),
+        ("continuous", "supervised", "tune"): (continuous_supervised_tune.main, (args.prefix, args.max_tune, args.n_cv)),
+        ("continuous", "supervised", "test"): (continuous_supervised_test.main, (args.prefix, args.test_prefix, args.refModel_prefix))
+
     }[(args.data, args.method, args.mode)]
     entry[0](*entry[1])
 

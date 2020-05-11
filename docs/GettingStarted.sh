@@ -179,19 +179,76 @@ GenoML continuous supervised tune \
 --prefix outputs/test_continuous_geno \
 --max_tune 10 --n_cv 3
 
-## TEST
-### HARMONIZE 
-GenoMLHarmonizing --testGenoPrefix examples/discrete/validation \
---testOutPrefix outputs/validation_test_discrete_geno \
---refDatasetPrefix outputs/test_discrete_geno \
---trainingSNPsAlleles outputs/test_discrete_geno.variants_and_alleles.tab
 
-### THEN MUNGE 
+## TEST DISCRETE
+# MUNGE THE REFERENCE
+GenoMLMunging --prefix outputs/test_discrete_geno \
+--datatype d \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv
+
+# TRAIN THE REFERENCE
+GenoML discrete supervised train \
+--prefix outputs/test_discrete_geno
+  
+# HARMONIZE TEST DATASET
+GenoMLHarmonizing --test_geno_prefix examples/discrete/validation \
+--test_prefix outputs/validation_test_discrete_geno \
+--refModel_prefix outputs/test_discrete_geno \
+--training_SNPsAlleles outputs/test_discrete_geno.variants_and_alleles.tab
+  
+# MUNGE THE TEST DATASET ON INTERSECTING COLUMNS
 GenoMLMunging --prefix outputs/validation_test_discrete_geno \
 --datatype d \
 --geno outputs/validation_test_discrete_geno_refSNPs_andAlleles \
 --pheno examples/discrete/validation_pheno.csv \
 --addit examples/discrete/validation_addit.csv \
 --refColsHarmonize outputs/validation_test_discrete_geno_refColsHarmonize_toKeep.txt
+  
+# RETRAIN REFERENCE ON INTERSECTING COLUMNS
+GenoML discrete supervised train \
+--prefix outputs/test_discrete_geno \
+--matchingCols outputs/validation_test_discrete_geno_finalHarmonizedCols_toKeep.txt
 
-## EXPERIMENTAL
+# TEST RETRAINED REFERENCE MODEL ON UNSEEN DATA
+GenoML discrete supervised test \
+--prefix outputs/validation_test_discrete_geno \
+--test_prefix outputs/validation_test_discrete_geno \
+--refModel_prefix outputs/test_discrete_geno.trainedModel
+
+
+## TEST continuous
+# MUNGE THE REFERENCE
+GenoMLMunging --prefix outputs/test_continuous_geno \
+--datatype c \
+--geno examples/continuous/training \
+--pheno examples/continuous/training_pheno.csv
+
+# TRAIN THE REFERENCE
+GenoML continuous supervised train \
+--prefix outputs/test_continuous_geno
+  
+# HARMONIZE TEST DATASET
+GenoMLHarmonizing --test_geno_prefix examples/continuous/validation \
+--test_prefix outputs/validation_test_continuous_geno \
+--refModel_prefix outputs/test_continuous_geno \
+--training_SNPsAlleles outputs/test_continuous_geno.variants_and_alleles.tab
+  
+# MUNGE THE TEST DATASET ON INTERSECTING COLUMNS
+GenoMLMunging --prefix outputs/validation_test_continuous_geno \
+--datatype d \
+--geno outputs/validation_test_continuous_geno_refSNPs_andAlleles \
+--pheno examples/continuous/validation_pheno.csv \
+--addit examples/continuous/validation_addit.csv \
+--refColsHarmonize outputs/validation_test_continuous_geno_refColsHarmonize_toKeep.txt
+  
+# RETRAIN REFERENCE ON INTERSECTING COLUMNS
+GenoML continuous supervised train \
+--prefix outputs/test_continuous_geno \
+--matchingCols outputs/validation_test_continuous_geno_finalHarmonizedCols_toKeep.txt
+
+# TEST RETRAINED REFERENCE MODEL ON UNSEEN DATA
+GenoML continuous supervised test \
+--prefix outputs/validation_test_continuous_geno \
+--test_prefix outputs/validation_test_continuous_geno \
+--refModel_prefix outputs/test_continuous_geno.trainedModel

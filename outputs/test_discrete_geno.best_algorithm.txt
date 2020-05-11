@@ -1,1 +1,1 @@
-SVC
+KNeighborsClassifier

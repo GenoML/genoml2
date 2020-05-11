@@ -255,6 +255,20 @@ class munging:
             # Keep the reference columns from the test dataset if found in test data
             matching_cols = merged[np.intersect1d(merged.columns, ref_column_names_list)]
             
+            # Make a list of final features that will be included in the model 
+                # This will be used again when remunging the reference dataset
+            matching_cols_list = matching_cols.columns.values.tolist()
+
+            # Save out the final list 
+            intersecting_cols_outfile = self.run_prefix + "_finalHarmonizedCols_toKeep.txt"
+
+            with open(intersecting_cols_outfile, 'w') as filehandle:
+                for col in matching_cols_list:
+                    filehandle.write('%s\n' % col)
+
+            print(f"A final list of harmonized columns between your reference and test dataset has been generated here: {intersecting_cols_outfile}")
+            print(f"Use this to re-train your reference dataset in order to move on to testing.")
+
             # Replace the dataframe variable with the matching options
             merged = matching_cols
 

@@ -14,12 +14,13 @@
 # ==============================================================================
 
 import sys
+import numpy as np
 import pandas as pd
 
 from genoml.discrete import supervised
 
 
-def main(prefix, metric_max, prob_hist, auc):
+def main(prefix, metric_max, prob_hist, auc, matchingCols):
     print("")
     print("Here is some basic info on the command you are about to run.")
     print("Python Version info...")
@@ -37,6 +38,16 @@ def main(prefix, metric_max, prob_hist, auc):
     run_prefix = prefix
     infile_h5 = run_prefix + ".dataForML.h5"
     df = pd.read_hdf(infile_h5, key = "dataForML")
+
+    if (matchingCols != None):
+        print(f"Looks like you are retraining your reference file. We are using the harmonized columns you provided here: {matchingCols}")
+        print(f"Note that you might have different/less features than before, given this was harmonized between training and test dataset, and might mean your model now performs worse...")
+
+        with open(matchingCols, 'r') as matchingCols_file:
+                matching_column_names_list = matchingCols_file.read().splitlines()
+        
+        # Keep only the columns found in the file 
+        df = df[np.intersect1d(df.columns, matching_column_names_list)]
 
     model = supervised.train(df, run_prefix)
     model.summary()

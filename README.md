@@ -232,12 +232,14 @@ In order to properly test how your model performs on a dataset it's never seen b
 
 If using GenoML for both your reference dataset and then your validation dataset, the process will look like the following: 
 
-1. Munge, train, and tune your first dataset
-    	- That will be your “reference” dataset
-2. Use the outputs of step 1's munge for your reference dataset to harmonize your incoming validation dataset
+1. Munge and train your first dataset
+    	- That will be your “reference” model
+2. Use the outputs of step 1's munge for your reference model to harmonize your incoming validation dataset
 3.  Run through harmonization step with your validation dataset
 4.  Run through munging with your newly harmonized dataset
-5.  Testing validation/test dataset with your trained reference model ***[currently under development]***
+5.  Retrain your reference model with only the matching columns of your unseen data 
+	- Given the nature of ML algorithms, you cannot test a model on a set of data that does not have identical features
+6. Test your newly retrained reference model on the unseen data
 
 ### Harmonizing your Validation/Test Dataset 
 **Required** arguments for GenoMLHarmonizing are the following: 
@@ -270,11 +272,49 @@ GenoMLMunging --prefix outputs/validation_test_discrete_geno \
 ```
 All munging options discussed above are available at this step, the only difference here is you will add the `--refColsHarmonize` flag to include the `*_refColsHarmonize_toKeep.txt` file generated at the end of harmonizing to only keep the same columns that the reference dataset had. 
 
-### Training your Validation/Test Dataset
-```bash
-#TODO: UNDER DEVELOPMENT 
-```
+After munging and training your reference model and harmonizing and munging your unseen test data, **you will retrain your reference model to include only matching features**. Given the nature of ML algorithms, you cannot test a model on a set of data that does not have identical features. 
 
+To retrain your model appropriately, after munging your test data with the `--refColsHarmonize` flag, a final columns list will be generated at `*_finalHarmonizedCols_toKeep.txt`. This includes all the features that match between your unseen test data and your reference model. Use the `--matchingCols` flag when retraining your reference model to use the appropriate features.
+
+When retraining of the reference model is complete, you are ready to test!
+
+A step-by-step guide on how to achieve this is listed below:
+```bash
+# 0. MUNGE THE REFERENCE DATASET
+GenoMLMunging --prefix outputs/test_discrete_geno \
+--datatype d \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv
+
+# 1. TRAIN THE REFERENCE DATASET
+GenoML discrete supervised train \
+--prefix outputs/test_discrete_geno
+
+# 2. HARMONIZE TEST DATASET
+GenoMLHarmonizing --test_geno_prefix examples/discrete/validation \
+--test_prefix outputs/validation_test_discrete_geno \
+--refModel_prefix outputs/test_discrete_geno \
+--training_SNPsAlleles outputs/test_discrete_geno.variants_and_alleles.tab
+
+# 3. MUNGE THE TEST DATASET ON REFERENCE MODEL COLUMNS
+GenoMLMunging --prefix outputs/validation_test_discrete_geno \
+--datatype d \
+--geno outputs/validation_test_discrete_geno_refSNPs_andAlleles \
+--pheno examples/discrete/validation_pheno.csv \
+--addit examples/discrete/validation_addit.csv \
+--refColsHarmonize outputs/validation_test_discrete_geno_refColsHarmonize_toKeep.txt
+
+# 4. RETRAIN REFERENCE MODEL ON INTERSECTING COLUMNS BETWEEN REFERENCE AND TEST
+GenoML discrete supervised train \
+--prefix outputs/test_discrete_geno \
+--matchingCols outputs/validation_test_discrete_geno_finalHarmonizedCols_toKeep.txt
+  
+# 5. TEST RETRAINED REFERENCE MODEL ON UNSEEN DATA
+GenoML discrete supervised test \
+--prefix outputs/validation_test_discrete_geno \
+--test_prefix outputs/validation_test_discrete_geno \
+--refModel_prefix outputs/test_discrete_geno.trainedModel
+```
 
 <a id="5"></a>
 ## 5. Experimental Features

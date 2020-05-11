@@ -29,7 +29,7 @@ from sklearn import svm
 from genoml import utils
 
 
-class Train:
+class train:
     def __init__(self, df, run_prefix):
         y = df.PHENO
         x = df.drop(columns=['PHENO'])
