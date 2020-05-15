@@ -284,7 +284,8 @@ A step-by-step guide on how to achieve this is listed below:
 GenoMLMunging --prefix outputs/test_discrete_geno \
 --datatype d \
 --geno examples/discrete/training \
---pheno examples/discrete/training_pheno.csv
+--pheno examples/discrete/training_pheno.csv \
+--addit examples/discrete/training_addit.csv
 
 # 1. TRAIN THE REFERENCE DATASET
 GenoML discrete supervised train \
