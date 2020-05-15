@@ -141,28 +141,25 @@ class train:
             best_performing_summary = self.log_table[self.log_table.AUC_Percent == self.log_table.AUC_Percent.max()]
             best_algo = best_performing_summary.at[0,'Algorithm']
         
-            self.best_algo = best_algo
-        
         if(metric_max == "Balanced_Accuracy"):
             best_performing_summary = self.log_table[self.log_table.Balanced_Accuracy_Percent == self.log_table.Balanced_Accuracy_Percent.max()]
             best_algo = best_performing_summary.at[0,'Algorithm']
         
-            self.best_algo = best_algo
-        
         if(metric_max == "Sensitivity"):
             best_performing_summary = self.log_table[self.log_table.Sensitivity == self.log_table.Sensitivity.max()]
-            best_algo = best_performing_summary.at[0,'Algorithm']
-        
-            self.best_algo = best_algo            
+            best_algo = best_performing_summary.at[0,'Algorithm']           
         
         if(metric_max == "Specificity"):
             best_performing_summary = self.log_table[self.log_table.Specificity == self.log_table.Specificity.max()]
             best_algo = best_performing_summary.at[0,'Algorithm']
         
-            self.best_algo = best_algo
+        # If, for some reason, algorithms report the exact same score, only choose the first one so things don't crash
+        if isinstance(best_algo, list):
+            best_algo = best_algo[0]
+        
+        self.best_algo = best_algo
 
         return best_algo
-
 
 
     def AUC(self, save = False):
