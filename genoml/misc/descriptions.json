@@ -26,6 +26,11 @@
     "description": "",
     "error": ""
   },
+  "cli/continuous_supervised_train/matching_columns_path": {
+    "title": "",
+    "description": "Looks like you are retraining your reference file. We are using the harmonized columns you provided here: {matching_columns_path}\nNote that you might have different/less features than before, given this was harmonized between training and test dataset, and might mean your model now performs worse...",
+    "error": ""
+  },
   "continuous/supervised/training/Train/summary": {
     "title": "Input Data Summary",
     "description": "Your data looks like this (showing the first few lines of the left-most and right-most columns)...\n\n{data}",

@@ -33,9 +33,9 @@ setuptools.setup(
     url="https://genoml.github.io/",
     entry_points={
         'console_scripts':
-            ['GenoML=genoml.GenoML:main',
-             'GenoMLMunging=genoml.GenoMLMunging:main',
-             'GenoMLHarmonizing=genoml.GenoMLHarmonizing:main'],
+            ['genoml=genoml.genoml:main',
+             'genoml-munging=genoml.genoml_munging:main',
+             'genoml-harmonizing=genoml.genoml_harmonizing:main'],
     },
     packages=setuptools.find_packages(),
     install_requires=requires,

@@ -54,7 +54,8 @@ class ContextScope:
     indent = 0
     _verbose = False
 
-    def __init__(self, title, description, error, start=True, end=False, **kwargs):
+    def __init__(self, title, description, error, start=True, end=False,
+                 **kwargs):
         self._title = title.format(**kwargs)
         self._description = description.format(**kwargs)
         self._error = error.format(**kwargs)
@@ -65,12 +66,15 @@ class ContextScope:
         if exc_type is None and exc_val is None and exc_tb is None:
             if self._end:
                 print(
-                    "{}{}: {}".format(self.get_prefix(ColoredBox.GREEN), ColoredBox.wrap(self._title, ColoredBox.GREEN),
-                                      ColoredBox.wrap('[Done]', ColoredBox.GREEN)))
+                    "{}{}: {}".format(
+                        self.get_prefix(ColoredBox.GREEN),
+                        ColoredBox.wrap(self._title, ColoredBox.GREEN),
+                        ColoredBox.wrap('[Done]', ColoredBox.GREEN)))
             self.remove_indent()
         else:
-            print("{}{}: {}".format(self.get_prefix(ColoredBox.RED), self._title,
-                                    ColoredBox.wrap('[Failed]', ColoredBox.RED)))
+            print("{}{}: {}".format(
+                self.get_prefix(ColoredBox.RED), self._title,
+                ColoredBox.wrap('[Failed]', ColoredBox.RED)))
             print("{}".format(self.indent_text(self._error)))
             self.remove_indent()
             traceback.print_exception(exc_type, exc_val, exc_tb)
@@ -80,7 +84,8 @@ class ContextScope:
         self.add_indent()
         if self._start:
             print()
-            print("{}{}".format(self.get_prefix(ColoredBox.BLUE), ColoredBox.wrap(self._title, ColoredBox.BLUE)))
+            print("{}{}".format(self.get_prefix(ColoredBox.BLUE),
+                                ColoredBox.wrap(self._title, ColoredBox.BLUE)))
         if self._verbose and self._description:
             print("{}".format(self._description))
 
@@ -131,7 +136,8 @@ class DescriptionLoader:
 
     @classmethod
     def _load(cls):
-        description_file = os.path.join(os.path.dirname(__file__), "misc", "descriptions.json")
+        description_file = os.path.join(os.path.dirname(__file__),
+                                        "misc", "descriptions.json")
         with open(description_file) as fp:
             cls._descriptions = json.load(fp)
 

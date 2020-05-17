@@ -19,6 +19,7 @@ import pandas as pd
 
 from genoml.continuous import supervised
 
+
 def main(prefix, test_prefix, refModel_prefix):
     print("")
     print("Here is some basic info on the command you are about to run.")
@@ -29,15 +30,17 @@ def main(prefix, test_prefix, refModel_prefix):
     print("CLI argument info...")
     print(f"You are importing this test dataset: {test_prefix}.")
     print(f"You are applying the model saved here: {refModel_prefix}.")
-    print(f"The results of this test application of your model will be saved in files with the given prefix: {prefix}.")
-    print("As a note, in all exported probabilities and other graphics, case status is treated as a 0 or 1, with 1 representing a positive case.")
+    print(
+        f"The results of this test application of your model will be saved in files with the given prefix: {prefix}.")
+    print(
+        "As a note, in all exported probabilities and other graphics, case status is treated as a 0 or 1, with 1 representing a positive case.")
 
     print("")
 
     # Specify prefix and dataframe variables to be passed into class
     run_prefix = prefix
     infile_h5 = test_prefix + ".dataForML.h5"
-    df = pd.read_hdf(infile_h5, key = "dataForML")
+    df = pd.read_hdf(infile_h5, key="dataForML")
 
     infile_model = refModel_prefix + ".joblib"
     loaded_model = joblib.load(infile_model)
@@ -56,8 +59,9 @@ def main(prefix, test_prefix, refModel_prefix):
 
     # Exporting regression plot + summary
     test.regression_summary()
-    
+
     # Thank the user
     print("")
-    print("Let's shut everything down, thanks for testing your model with GenoML!")
+    print(
+        "Let's shut everything down, thanks for testing your model with GenoML!")
     print("")
