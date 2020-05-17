@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="300" height="300" src="logo.png">
+  <img width="300" height="300" src="https://github.com/GenoML/genoml/raw/python_v1.5/logo.png">
 </p>
 
 # How to Get Started with GenoML
