@@ -24,7 +24,6 @@ import subprocess
 import zipfile
 
 from genoml import utils
-from genoml.utils import DescriptionLoader
 
 
 def __get_executable_folder():
@@ -93,7 +92,7 @@ def __check_package(name):
         return os.path.join(__executable_folder, binary_name)
 
 
-@DescriptionLoader.function_description("check_dependencies")
+@utils.DescriptionLoader.function_description("check_dependencies")
 def check_dependencies():
     global __DEPENDENCIES
     ret = {}
