@@ -104,5 +104,4 @@ venv.bak/
 .mypy_cache/
 .idea
 genoml.code-workspace
-genoml/preprocessing/.DS_Store
 .DS_Store
