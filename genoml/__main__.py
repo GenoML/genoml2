@@ -22,7 +22,7 @@ from genoml import utils
 from genoml import dependencies
 from genoml.cli import continuous_supervised_train, continuous_supervised_tune, \
     continuous_supervised_test, discrete_supervised_train, \
-    discrete_supervised_tune, munging, harmonizing
+    discrete_supervised_tune, discrete_supervised_test, munging, harmonizing
 
 
 def handle_main():
@@ -137,7 +137,7 @@ def handle_discrete_supervised_tune():
 def handle_discrete_supervised_test():
     handle_endpoints("genoml discrete supervised test",
                      ["prefix", "test_prefix", "ref_model_prefix"],
-                     discrete_supervised_tune.main, 3)
+                     discrete_supervised_test.main, 3)
 
 
 def handle_dispatcher(entry_points, command_name, level):

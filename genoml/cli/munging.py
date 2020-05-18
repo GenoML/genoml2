@@ -66,7 +66,7 @@ def main(prefix, impute, geno, pheno, addit, feature_selection, gwas, p, vif, it
 
     # Run the feature selection using extraTrees
     if n_est > 0:
-        featureSelection_df = preprocessing.featureselection(run_prefix, df, dataType, n_est)
+        featureSelection_df = preprocessing.featureselection(run_prefix, df, data_type, n_est)
         df = featureSelection_df.rank()
         featureSelection_df.export_data()
 

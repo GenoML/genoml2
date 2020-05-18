@@ -45,18 +45,16 @@ pip install .
 
 # Run GenoML 
 genoml
-#usage: GenoML [-h] [--prefix PREFIX] [--geno GENO] [--addit ADDIT]
-            #  [--pheno PHENO] [--gwas GWAS] [--p P] [--vif VIF] [--iter ITER]
-            #  [--impute IMPUTE] [,run}]
-            #  [--max_tune MAX_TUNE] [--n_cv N_CV]
-            #  {discrete,continuous} {supervised,unsupervised} {train,tune}
-#GenoML: error: the following arguments are required: data, method, mode
-
-##### TESTED 
+    # usage: genoml <command> [<args>]
+    #    continuous      TODO
+    #    discrete        TODO
+    #    harmonize       TODO
+    # genoml: error: the following arguments are required: command
 
 ## MUNGING 
 # Running the munging script [discrete]
-genoml discrete supervised munge --prefix outputs/test_discrete_geno \
+genoml discrete supervised munge \
+--prefix outputs/test_discrete_geno \
 --geno examples/discrete/training \
 --pheno examples/discrete/training_pheno.csv 
 
@@ -188,7 +186,7 @@ genoml discrete supervised munge --prefix outputs/validation_test_discrete_geno 
 --geno outputs/validation_test_discrete_geno_refSNPs_andAlleles \
 --pheno examples/discrete/validation_pheno.csv \
 --addit examples/discrete/validation_addit.csv \
---ref_cols_harmonize outputs/validation_test_discrete_geno_ref_cols_harmonize_toKeep.txt
+--ref_cols_harmonize outputs/validation_test_discrete_geno_refColsHarmonize_toKeep.txt
   
 # RETRAIN REFERENCE ON INTERSECTING COLUMNS
 genoml discrete supervised train \
@@ -199,8 +197,7 @@ genoml discrete supervised train \
 genoml discrete supervised test \
 --prefix outputs/validation_test_discrete_geno \
 --test_prefix outputs/validation_test_discrete_geno \
---ref_model_prefix outputs/test_discrete_geno.trainedModel
-
+--ref_model_prefix outputs/test_discrete_geno.trainedModel 
 
 ## TEST continuous
 # MUNGE THE REFERENCE
