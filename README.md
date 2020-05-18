@@ -11,10 +11,13 @@ This README is a brief look into how to structure arguments and what arguments a
 
 ### Installing + Downloading Example Data 
 - Install using pip
-`TODO`
 
-- To install the `examples/` directory (~?? MB) 
-`TODO`
+`Coming Soon!`
+
+- To install the `examples/` directory (~315 KB) , you can use SVN (pre-installed on Macs)
+
+`svn checkout https://github.com/GenoML/genoml.git/branches/python_v1.5/examples`
+
 
 ### Table of Contents 
 #### [0. (OPTIONAL) How to Set Up a Virtual Environment via Conda](#0)
