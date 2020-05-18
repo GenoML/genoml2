@@ -28,10 +28,11 @@ from genoml.cli import continuous_supervised_train, continuous_supervised_tune, 
 def handle_main():
     entry_points = [
         {"name": "continuous", "handler": handle_continuous,
-         "description": "TODO"},
-        {"name": "discrete", "handler": handle_discrete, "description": "TODO"},
+        "description": "for processing continuous datatypes (ex: age at onset)"},
+        {"name": "discrete", "handler": handle_discrete, 
+        "description": "for processing discrete datatypes (ex: case vs. control status)"},
         {"name": "harmonize", "handler": handle_harmonize,
-         "description": "TODO"},
+        "description": "for harmonizing incoming test datasets to use the same SNPs and reference alleles prior to munging, training, and testing"},
     ]
     handle_dispatcher(entry_points, "genoml", 0)
 
@@ -39,7 +40,7 @@ def handle_main():
 def handle_continuous():
     entry_points = [
         {"name": "supervised", "handler": handle_continuous_supervised,
-         "description": "TODO"},
+         "description": "choice of munge, train, tune, or test your continuous dataset must be specified"},
     ]
     handle_dispatcher(entry_points, "genoml continuous", 1)
 
@@ -47,7 +48,7 @@ def handle_continuous():
 def handle_discrete():
     entry_points = [
         {"name": "supervised", "handler": handle_discrete_supervised,
-         "description": "TODO"},
+         "description": "choice of munge, train, tune, or test your discrete dataset must be specified"},
     ]
     handle_dispatcher(entry_points, "genoml discrete", 1)
 
@@ -55,13 +56,13 @@ def handle_discrete():
 def handle_continuous_supervised():
     entry_points = [
         {"name": "munge", "handler": handle_continuous_supervised_munge,
-         "description": "TODO"},
+         "description": "for supervised munging and preprocessing of your continuous dataset prior to training"},
         {"name": "train", "handler": handle_continuous_supervised_train,
-         "description": "TODO"},
+         "description": "for supervised training of your munged continuous dataset by competing different algorithms"},
         {"name": "tune", "handler": handle_continuous_supervised_tune,
-         "description": "TODO"},
+         "description": "for supervised tuning of your munged and trained continuous dataset"},
         {"name": "test", "handler": handle_continuous_supervised_test,
-         "description": "TODO"},
+         "description": "for supervised testing of your model generated on continuous data on unseen continuous data (after its been harmonized and munged)"},
     ]
     handle_dispatcher(entry_points, "genoml continuous supervised", 2)
 
@@ -69,13 +70,13 @@ def handle_continuous_supervised():
 def handle_discrete_supervised():
     entry_points = [
         {"name": "munge", "handler": handle_discrete_supervised_munge,
-         "description": "TODO"},
+         "description": "for supervised munging and preprocessing of your discrete dataset prior to training"},
         {"name": "train", "handler": handle_discrete_supervised_train,
-         "description": "TODO"},
+         "description": "for supervised training of your munged discrete dataset by competing different algorithms"},
         {"name": "tune", "handler": handle_discrete_supervised_tune,
-         "description": "TODO"},
+         "description": "for supervised tuning of your munged and trained discrete dataset"},
         {"name": "test", "handler": handle_discrete_supervised_test,
-         "description": "TODO"},
+         "description": "for supervised testing of your model generated on discrete data on unseen discrete data (after its been harmonized and munged)"},
     ]
     handle_dispatcher(entry_points, "genoml discrete supervised", 2)
 

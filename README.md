@@ -14,7 +14,7 @@ This README is a brief look into how to structure arguments and what arguments a
 
 `Coming Soon!`
 
-- To install the `examples/` directory (~315 KB) , you can use SVN (pre-installed on Macs)
+- To install the `examples/` directory (~315 KB), you can use SVN (pre-installed on Macs)
 
 `svn checkout https://github.com/GenoML/genoml.git/branches/python_v1.5/examples`
 
