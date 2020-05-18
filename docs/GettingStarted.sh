@@ -18,10 +18,10 @@
 
 ## SETTING UP A VIRTUAL ENVIRONMENT 
 # Making a virtual environment
-conda create -n GenoML python=3.7
+#conda create -n GenoML python=3.7
 
 # Activating and changing directories to environment
-conda activate GenoML
+#conda activate GenoML
     # Deactivating a conda environment 
         # conda deactivate 
     # Removing a conda environment 
@@ -56,37 +56,32 @@ genoml
 
 ## MUNGING 
 # Running the munging script [discrete]
-genoml-munging --prefix outputs/test_discrete_geno \
---datatype d \
+genoml discrete supervised munge --prefix outputs/test_discrete_geno \
 --geno examples/discrete/training \
 --pheno examples/discrete/training_pheno.csv 
 
 # Running the munging script with VIF and iterations [discrete]
-genoml-munging --prefix outputs/test_discrete_geno \
---datatype d \
+genoml discrete supervised munge --prefix outputs/test_discrete_geno \
 --geno examples/discrete/training \
 --pheno examples/discrete/training_pheno.csv \
 --vif 5 \
 --iter 1
 
 # Running the munging script with GWAS [discrete]
-genoml-munging --prefix outputs/test_discrete_geno \
---datatype d \
+genoml discrete supervised munge --prefix outputs/test_discrete_geno \
 --geno examples/discrete/training \
 --pheno examples/discrete/training_pheno.csv \
 --gwas examples/discrete/example_GWAS.csv 
 
 # Running the munging script with VIF and GWAS [discrete]
-genoml-munging --prefix outputs/test_discrete_geno \
---datatype d \
+genoml discrete supervised munge --prefix outputs/test_discrete_geno \
 --geno examples/discrete/training \
 --pheno examples/discrete/training_pheno.csv \
 --gwas examples/discrete/example_GWAS.csv \
 --vif 5 --iter 1
 
 # Running the munging script with addit, VIF, and GWAS [discrete]
-genoml-munging --prefix outputs/test_discrete_geno \
---datatype d \
+genoml discrete supervised munge --prefix outputs/test_discrete_geno \
 --geno examples/discrete/training \
 --pheno examples/discrete/training_pheno.csv \
 --gwas examples/discrete/example_GWAS.csv \
@@ -94,15 +89,13 @@ genoml-munging --prefix outputs/test_discrete_geno \
 --vif 5 --iter 1
 
 # Running the munging script with featureSelection [discrete]
-genoml-munging --prefix outputs/test_discrete_geno \
---datatype d \
+genoml discrete supervised munge --prefix outputs/test_discrete_geno \
 --geno examples/discrete/training \
 --pheno examples/discrete/training_pheno.csv \
---featureSelection 50
+--feature_selection 50
 
 # Running the munging script with everything [discrete]
-genoml-munging --prefix outputs/test_discrete_geno \
---datatype d \
+genoml discrete supervised munge --prefix outputs/test_discrete_geno \
 --geno examples/discrete/training \
 --pheno examples/discrete/training_pheno.csv \
 --gwas examples/discrete/example_GWAS.csv \
@@ -111,37 +104,32 @@ genoml-munging --prefix outputs/test_discrete_geno \
 --vif 5 --iter 1
 
 # Running the munging script [continuous]
-genoml-munging --prefix outputs/test_continuous_geno \
---datatype c \
+genoml continuous supervised munge --prefix outputs/test_continuous_geno \
 --geno examples/continuous/training \
 --pheno examples/continuous/training_pheno.csv 
 
 # Running the munging script with VIF [continuous]
-genoml-munging --prefix outputs/test_continuous_geno \
---datatype c \
+genoml continuous supervised munge --prefix outputs/test_continuous_geno \
 --geno examples/continuous/training \
 --pheno examples/continuous/training_pheno.csv \
 --vif 5 \
 --iter 2
 
 # Running the munging script with GWAS [continuous]
-genoml-munging --prefix outputs/test_continuous_geno \
---datatype c \
+genoml continuous supervised munge --prefix outputs/test_continuous_geno \
 --geno examples/continuous/training \
 --pheno examples/continuous/training_pheno.csv \
 --gwas examples/continuous/example_GWAS.csv 
 
 # Running the munging script with VIF and GWAS [continuous]
-genoml-munging --prefix outputs/test_continuous_geno \
---datatype c \
+genoml continuous supervised munge --prefix outputs/test_continuous_geno \
 --geno examples/continuous/training \
 --pheno examples/continuous/training_pheno.csv \
 --gwas examples/continuous/example_GWAS.csv \
 --vif 5 --iter 1
 
 # Running the munging script with addit, VIF, and GWAS [continuous]
-genoml-munging --prefix outputs/test_continuous_geno \
---datatype c \
+genoml continuous supervised munge --prefix outputs/test_continuous_geno \
 --geno examples/continuous/training \
 --pheno examples/continuous/training_pheno.csv \
 --gwas examples/continuous/example_GWAS.csv \
@@ -149,8 +137,7 @@ genoml-munging --prefix outputs/test_continuous_geno \
 --vif 5 --iter 1
 
 # Running the munging script with everything [continuous]
-genoml-munging --prefix outputs/test_continuous_geno \
---datatype c \
+genoml continuous supervised munge --prefix outputs/test_continuous_geno \
 --geno examples/continuous/training \
 --pheno examples/continuous/training_pheno.csv \
 --gwas examples/continuous/example_GWAS.csv \
@@ -182,8 +169,7 @@ genoml continuous supervised tune \
 
 ## TEST DISCRETE
 # MUNGE THE REFERENCE
-genoml-munging --prefix outputs/test_discrete_geno \
---datatype d \
+genoml discrete supervised munge --prefix outputs/test_discrete_geno \
 --geno examples/discrete/training \
 --pheno examples/discrete/training_pheno.csv
 
@@ -192,35 +178,33 @@ genoml discrete supervised train \
 --prefix outputs/test_discrete_geno
   
 # HARMONIZE TEST DATASET
-genoml-harmonizing --test_geno_prefix examples/discrete/validation \
+genoml harmonize --test_geno_prefix examples/discrete/validation \
 --test_prefix outputs/validation_test_discrete_geno \
---refModel_prefix outputs/test_discrete_geno \
---training_SNPsAlleles outputs/test_discrete_geno.variants_and_alleles.tab
+--ref_model_prefix outputs/test_discrete_geno \
+--training_snps_alleles outputs/test_discrete_geno.variants_and_alleles.tab
   
 # MUNGE THE TEST DATASET ON INTERSECTING COLUMNS
-genoml-munging --prefix outputs/validation_test_discrete_geno \
---datatype d \
+genoml discrete supervised munge --prefix outputs/validation_test_discrete_geno \
 --geno outputs/validation_test_discrete_geno_refSNPs_andAlleles \
 --pheno examples/discrete/validation_pheno.csv \
 --addit examples/discrete/validation_addit.csv \
---refColsHarmonize outputs/validation_test_discrete_geno_refColsHarmonize_toKeep.txt
+--ref_cols_harmonize outputs/validation_test_discrete_geno_ref_cols_harmonize_toKeep.txt
   
 # RETRAIN REFERENCE ON INTERSECTING COLUMNS
 genoml discrete supervised train \
 --prefix outputs/test_discrete_geno \
---matchingCols outputs/validation_test_discrete_geno_finalHarmonizedCols_toKeep.txt
+--matching_columns outputs/validation_test_discrete_geno_finalHarmonizedCols_toKeep.txt
 
 # TEST RETRAINED REFERENCE MODEL ON UNSEEN DATA
 genoml discrete supervised test \
 --prefix outputs/validation_test_discrete_geno \
 --test_prefix outputs/validation_test_discrete_geno \
---refModel_prefix outputs/test_discrete_geno.trainedModel
+--ref_model_prefix outputs/test_discrete_geno.trainedModel
 
 
 ## TEST continuous
 # MUNGE THE REFERENCE
-genoml-munging --prefix outputs/test_continuous_geno \
---datatype c \
+genoml continuous supervised munge --prefix outputs/test_continuous_geno \
 --geno examples/continuous/training \
 --pheno examples/continuous/training_pheno.csv
 
@@ -229,26 +213,25 @@ genoml continuous supervised train \
 --prefix outputs/test_continuous_geno
   
 # HARMONIZE TEST DATASET
-genoml-harmonizing --test_geno_prefix examples/continuous/validation \
+genoml harmonize --test_geno_prefix examples/continuous/validation \
 --test_prefix outputs/validation_test_continuous_geno \
---refModel_prefix outputs/test_continuous_geno \
---training_SNPsAlleles outputs/test_continuous_geno.variants_and_alleles.tab
+--ref_model_prefix outputs/test_continuous_geno \
+--training_snps_alleles outputs/test_continuous_geno.variants_and_alleles.tab
   
 # MUNGE THE TEST DATASET ON INTERSECTING COLUMNS
-genoml-munging --prefix outputs/validation_test_continuous_geno \
---datatype d \
+genoml discrete supervised munge --prefix outputs/validation_test_continuous_geno \
 --geno outputs/validation_test_continuous_geno_refSNPs_andAlleles \
 --pheno examples/continuous/validation_pheno.csv \
 --addit examples/continuous/validation_addit.csv \
---refColsHarmonize outputs/validation_test_continuous_geno_refColsHarmonize_toKeep.txt
+--ref_cols_harmonize outputs/validation_test_continuous_geno_refColsHarmonize_toKeep.txt
   
 # RETRAIN REFERENCE ON INTERSECTING COLUMNS
 genoml continuous supervised train \
 --prefix outputs/test_continuous_geno \
---matchingCols outputs/validation_test_continuous_geno_finalHarmonizedCols_toKeep.txt
+--matching_columns outputs/validation_test_continuous_geno_finalHarmonizedCols_toKeep.txt
 
 # TEST RETRAINED REFERENCE MODEL ON UNSEEN DATA
 genoml continuous supervised test \
 --prefix outputs/validation_test_continuous_geno \
 --test_prefix outputs/validation_test_continuous_geno \
---refModel_prefix outputs/test_continuous_geno.trainedModel
+--ref_model_prefix outputs/test_continuous_geno.trainedModel
