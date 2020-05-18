@@ -2,8 +2,8 @@
 Dep. Variable:   ,PHENO_REPORTED  ,  R-squared:         ,   0.691
 Model:           ,OLS             ,  Adj. R-squared:    ,   0.687
 Method:          ,Least Squares   ,  F-statistic:       ,   218.7
-Date:            ,Mon, 11 May 2020,  Prob (F-statistic):,1.05e-26
-Time:            ,12:47:27        ,  Log-Likelihood:    , -306.32
+Date:            ,Mon, 18 May 2020,  Prob (F-statistic):,1.05e-26
+Time:            ,11:42:42        ,  Log-Likelihood:    , -306.32
 No. Observations:,   100          ,  AIC:               ,   616.6
 Df Residuals:    ,    98          ,  BIC:               ,   621.9
 Df Model:        ,     1          ,                     ,        
