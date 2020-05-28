@@ -204,6 +204,8 @@ class munging:
             addit_df[cols]
 
             # Z-scale the features
+            print(f"Now Z-scaling your non-genotype features...")
+
             for col in cols:
                 if (addit_df[col].min() == 0.0) and (addit_df[col].max() == 1.0):
                     print(col, "is likely a binary indicator or a proportion and will not be scaled, just + 1 all the values of this variable and rerun to flag this column to be scaled.")

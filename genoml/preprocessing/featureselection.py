@@ -18,11 +18,11 @@ from sklearn import ensemble
 from sklearn import feature_selection
 
 class featureselection:
-    def __init__(self, run_prefix, df, dataType, n_est):
+    def __init__(self, run_prefix, df, data_type, n_est):
         self.run_prefix = run_prefix
         self.featureRanks = None
         self.n_est = n_est
-        self.dataType = dataType
+        self.data_type = data_type
 
         self.y = df['PHENO']
         self.X = df.drop(columns=['PHENO'])
@@ -34,13 +34,13 @@ class featureselection:
         print(f"""
             Beginning featureSelection using {self.n_est} estimators...""")
 
-        if (self.dataType == "d"):
+        if (self.data_type == "d"):
             print(f"""
             using extraTrees Classifier for your discrete dataset 
             """)
             clf = ensemble.ExtraTreesClassifier(n_estimators=self.n_est)
         
-        if (self.dataType == "c"):
+        if (self.data_type == "c"):
             print(f"""
             using extraTrees Regressor for your continuous dataset
             """)
