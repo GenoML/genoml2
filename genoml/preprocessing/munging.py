@@ -206,12 +206,31 @@ class munging:
             # Z-scale the features
             print(f"Now Z-scaling your non-genotype features...")
 
+            # Remove any columns with a standard deviation of zero
+            print(f"Removing any columns that have a standard deviation of 0 prior to Z-scaling...")
+            
+            if any(addit_df.std() == 0.0):
+                print("")
+                print(f"Looks like there's at least one column with a standard deviation of 0. Let's remove that for you...")
+                threshold = 0.0
+                addit_keep = addit_df.drop(addit_df.std()[addit_df.std() == threshold].index.values, axis=1)
+                addit_keep_list = list(addit_keep.columns.values)
+                addit_df = addit_df[addit_keep_list]
+                addit_keep_list.remove('ID')
+
+                removed_list = np.setdiff1d(cols, addit_keep_list)
+                for removed_column in range(len(removed_list)):
+                    print("") 
+                    print(f"The column {removed_list[removed_column]} was removed")
+                    print("")
+
+                cols = addit_keep_list
+            
             for col in cols:
                 if (addit_df[col].min() == 0.0) and (addit_df[col].max() == 1.0):
                     print(col, "is likely a binary indicator or a proportion and will not be scaled, just + 1 all the values of this variable and rerun to flag this column to be scaled.")
                 else:
                     addit_df[col] = (addit_df[col] - addit_df[col].mean())/addit_df[col].std(ddof=0)
-                    addit_df[col] = addit_df[col].fillna(0.0)
             
             print("")
             print("You have just Z-scaled your non-genotype features, putting everything on a numeric scale similar to genotypes.")
