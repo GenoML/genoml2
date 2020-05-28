@@ -211,7 +211,8 @@ class munging:
                     print(col, "is likely a binary indicator or a proportion and will not be scaled, just + 1 all the values of this variable and rerun to flag this column to be scaled.")
                 else:
                     addit_df[col] = (addit_df[col] - addit_df[col].mean())/addit_df[col].std(ddof=0)
-
+                    addit_df[col] = addit_df[col].fillna(0.0)
+            
             print("")
             print("You have just Z-scaled your non-genotype features, putting everything on a numeric scale similar to genotypes.")
             print("Now your non-genotype features might look a little closer to zero (showing the first few lines of the left-most and right-most columns)...")

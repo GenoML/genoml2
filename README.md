@@ -1,3 +1,5 @@
+# GenoML 
+
 <p align="center">
   <img width="300" height="300" src="logo.png">
 </p>
@@ -35,7 +37,7 @@ If you already have the Anaconda Distribution, this is fairly simple.
 
 To create and activate a virtual environment:
 
-```bash
+```shell
 # To create a virtual environment
 conda create -n GenoML python=3.7
 
@@ -51,7 +53,7 @@ conda activate GenoML
 ```
 
 To install the package at this path:
-```bash
+```shell
 # Install the package at this path
 pip install .
 
@@ -70,6 +72,7 @@ Munging with GenoML will, at minimum, do the following:
 - Prune your genotypes using PLINK v1.9 (if `--geno` flag is used)
 - Impute per column using median or mean (can be changed with the `--impute` flag)
 - Z-scaling of features 
+    - *Technical Note:* Currently, following the imputation and Z-scaling of features, some features might return NaN values. Currently, if this happens, the NaN values are replaced with 0s.
 
 **Required** arguments for GenoML munging are `--prefix` and `--pheno` 
 - `data` : Is the data `continuous` or `discrete`?
@@ -85,11 +88,12 @@ Be sure to have your files formatted the same as the examples, key points being:
 - Your sample IDs matching across all files
 - Your sample IDs not consisting with only integers (add a prefix or suffix to all sample IDs ensuring they are alphanumeric if this is the case prior to running GenoML)  
 
-*Note:* The following examples are for discrete data, but if you substitute following commands with `continuous` instead of discrete, you can preprocess your continuous data!
+> *Note:* The following examples are for discrete data, but if you substitute following commands with `continuous` instead of discrete, you can preprocess your continuous data!
 
 If you would like to munge just with genotypes (in PLINK binary format), the simplest command is the following: 
-```bash
+```shell
 # Running GenoML munging on discrete data using PLINK genotype binary files and a phenotype file 
+
 genoml discrete supervised munge \
 --prefix outputs/test_discrete_geno \
 --geno examples/discrete/training \
@@ -97,8 +101,9 @@ genoml discrete supervised munge \
 ```
 
 You can choose to impute on `mean` or `median` by modifying the `--impute` flag, like so *(default is median)*:
-```bash
+```shell
 # Running GenoML munging on discrete data using PLINK genotype binary files and a phenotype file and specifying impute
+
 genoml discrete supervised munge \
 --prefix outputs/test_discrete_geno \
 --geno examples/discrete/training \
@@ -107,8 +112,9 @@ genoml discrete supervised munge \
 ```
 
 If you suspect collinear variables, and think this will be a problem for training the model moving forward, you can use [variance inflation factor](https://www.investopedia.com/terms/v/variance-inflation-factor.asp) (VIF) filtering: 
-```bash
+```shell
 # Running GenoML munging on discrete data using PLINK genotype binary files and a phenotype file while using VIF to remove multicollinearity 
+
 genoml discrete supervised munge \
 --prefix outputs/test_discrete_geno \
 --geno examples/discrete/training \
@@ -121,19 +127,21 @@ genoml discrete supervised munge \
 - The number of iterations you'd like to run can be modified with the `--iter` flag (if you have or anticipate many collinear variables, it's a good idea to increase the iterations)
 
 Well, what if you had GWAS summary statistics handy, and would like to just use the same SNPs outlined in that file? You can do so by running the following:
-```bash
+```shell
 # Running GenoML munging on discrete data using PLINK genotype binary files, a phenotype file, and a GWAS summary statistics file 
+
 genoml discrete supervised munge \
 --prefix outputs/test_discrete_geno \
 --geno examples/discrete/training \
 --pheno examples/discrete/training_pheno.csv \
 --gwas examples/discrete/example_GWAS.csv
 ```
-*Note:* When using the GWAS flag, the PLINK binaries will be pruned to include matching SNPs to the GWAS file. 
+> *Note:* When using the GWAS flag, the PLINK binaries will be pruned to include matching SNPs to the GWAS file. 
 
 ...and if you wanted to add a p-value cut-off...
-```bash
+```shell
 # Running GenoML munging on discrete data using PLINK genotype binary files, a phenotype file, and a GWAS summary statistics file with a p-value cut-off 
+
 genoml discrete supervised munge \
 --prefix outputs/test_discrete_geno \
 --geno examples/discrete/training \
@@ -142,8 +150,9 @@ genoml discrete supervised munge \
 --p 0.01
 ```
 Do you have additional data you would like to incorporate? Perhaps clinical, demographic, or transcriptomics data? If coded and all numerical, these can be added as an `--addit` file by doing the following: 
-```bash
+```shell
 # Running GenoML munging on discrete data using PLINK genotype binary files, a phenotype file, and an addit file
+
 genoml discrete supervised munge \
 --prefix outputs/test_discrete_geno \
 --geno examples/discrete/training \
@@ -151,17 +160,19 @@ genoml discrete supervised munge \
 --addit examples/discrete/training_addit.csv
 ```
 You also have the option of not using PLINK binary files if you would like to just preprocess (and then, later train) on a phenotype and addit file by doing the following:
-```bash
+```shell
 # Running GenoML munging on discrete data using PLINK genotype binary files, a phenotype file, and an addit file
+
 genoml discrete supervised munge \
 --prefix outputs/test_discrete_geno \
 --pheno examples/discrete/training_pheno.csv \
 --addit examples/discrete/training_addit.csv
 ```
 
-Are you interested in selecting and ranking your features? If so, you can use the `feature_selection` flag and specify like so...:
-```bash
+Are you interested in selecting and ranking your features? If so, you can use the `--feature_selection` flag and specify like so...:
+```shell
 # Running GenoML munging on discrete data using PLINK genotype binary files, a phenotype file, and running feature selection 
+
 genoml discrete supervised munge \
 --prefix outputs/test_discrete_geno \
 --geno examples/discrete/training \
@@ -170,6 +181,7 @@ genoml discrete supervised munge \
 --feature_selection 50
 ```
 The `--feature_selection` flag uses extraTrees ([classifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.ExtraTreesClassifier.html) for discrete data; [regressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.ExtraTreesRegressor.html) for continuous data) to output a `*_approx_feature_importance.txt` file with the features most contributing to your model at the top. 
+
 
 <a id="2"></a>
 ## 2. Training with GenoML
@@ -182,42 +194,47 @@ Training with GenoML competes a number of different algorithms and outputs the b
 - `--prefix` : Where would you like your outputs to be saved?
 
 The most basic command to train your model looks like the following, it looks for the `*.dataForML` file that was generated in the munging step: 
-```bash
+```shell
 # Running GenoML supervised training after munging on discrete data
+
 genoml discrete supervised train \
 --prefix outputs/test_discrete_geno
 ```
 
 If you would like to determine the best competing algorithm by something other than the AUC, you can do so by changing the `--metric_max` flag (Options include `AUC`, `Balanced_Accuracy`, `Sensitivity`, and `Specificity`) :
-```bash
+```shell
 # Running GenoML supervised training after munging on discrete data and specifying the metric to maximize by 
+
 genoml discrete supervised train \
 --prefix outputs/test_discrete_geno \
 --metric_max Sensitivity
 ```
-*Note:* The `--metric_max` flag is only available for discrete datasets.
+> *Note:* The `--metric_max` flag is only available for discrete datasets.
 
 <a id="3"></a>
 ## 3. Tuning with GenoML
 
 The most basic command to tune your model looks like the following, it looks for the file that was generated in the training step: 
-```bash
+```shell
 # Running GenoML supervised tuning after munging and training on discrete data
+
 genoml discrete supervised tune \
 --prefix outputs/test_discrete_geno
 ```
 
 If you are interested in changing the number of iterations the tuning process goes through by modifying `--max_tune` *(default is 50)*, or the number of cross-validations by modifying `--n_cv` *(default is 5)*, this is what the command would look like: 
-```bash
+```shell
 # Running GenoML supervised tuning after munging and training on discrete data, modifying the number of iterations and cross-validations 
+
 genoml discrete supervised tune \
 --prefix outputs/test_discrete_geno \
 --max_tune 10 --n_cv 3
 ```
 
 If you are interested in tuning on another metric other than AUC *(default is AUC)*, you can modify `--metric_tune` (options are `AUC` or `Balanced_Accuracy`) by doing the following: 
-```bash
+```shell
 # Running GenoML supervised tuning after munging and training on discrete data, modifying the metric to tune by
+
 genoml discrete supervised tune \
 --prefix outputs/test_discrete_geno \
 --metric_tune Balanced_Accuracy
@@ -251,8 +268,10 @@ Using GenoML for both your reference dataset and then your validation dataset, t
 - `--training_snps_alleles` : What are the SNPs and alleles you would like to use? (This is generated at the end of your previously-GenoML munged dataset with the suffix `variants_and_alleles.tab`)
 
 To harmonize your incoming validation dataset to match the SNPs and alleles to your reference dataset, the command would look like the following:
-```bash
+
+```shell
 # Running GenoML harmonize
+
 genoml harmonize \
 --test_geno_prefix examples/discrete/validation \
 --test_prefix outputs/validation_test_discrete_geno \
@@ -265,8 +284,9 @@ This step will generate:
 - `*_refSNPs_andAlleles.*` PLINK binary files (.bed, .bim, and .fam) that have the SNPs and alleles match your reference dataset
 
 Now that you have harmonized your validation dataset to your reference dataset, you can now munge using a command similar to the following:
-```bash
+```shell
 # Running GenoML munge after GenoML harmonize
+
 genoml discrete supervised munge --prefix outputs/validation_test_discrete_geno \
 --geno outputs/validation_test_discrete_geno_refSNPs_andAlleles \
 --pheno examples/discrete/validation_pheno.csv \
@@ -282,7 +302,7 @@ To retrain your model appropriately, after munging your test data with the `--re
 When retraining of the reference model is complete, you are ready to test!
 
 A step-by-step guide on how to achieve this is listed below:
-```bash
+```shell
 # 0. MUNGE THE REFERENCE DATASET
 genoml discrete supervised munge \
 --prefix outputs/test_discrete_geno \
@@ -312,7 +332,7 @@ genoml discrete supervised munge \
 genoml discrete supervised train \
 --prefix outputs/test_discrete_geno \
 --matching_columns outputs/validation_test_discrete_geno_finalHarmonizedCols_toKeep.txt
-  
+
 # 5. TEST RETRAINED REFERENCE MODEL ON UNSEEN DATA
 genoml discrete supervised test \
 --prefix outputs/validation_test_discrete_geno \
@@ -326,6 +346,7 @@ genoml discrete supervised test \
 
 Planned experimental features include, but are not limited to:
 - Unsupervised munging, training, tuning, and testing
+- GWAS QC and Pipeline
 - Network analyses
 - Meta-learning
 - Federated learning
