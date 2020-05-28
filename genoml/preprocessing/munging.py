@@ -212,12 +212,12 @@ class munging:
             if any(addit_df.std() == 0.0):
                 print("")
                 print(f"Looks like there's at least one column with a standard deviation of 0. Let's remove that for you...")
-                threshold = 0.0
-                addit_keep = addit_df.drop(addit_df.std()[addit_df.std() == threshold].index.values, axis=1)
+                addit_keep = addit_df.drop(addit_df.std()[addit_df.std() == 0.0].index.values, axis=1)
                 addit_keep_list = list(addit_keep.columns.values)
+                
                 addit_df = addit_df[addit_keep_list]
+                
                 addit_keep_list.remove('ID')
-
                 removed_list = np.setdiff1d(cols, addit_keep_list)
                 for removed_column in range(len(removed_list)):
                     print("") 
