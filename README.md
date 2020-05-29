@@ -71,8 +71,7 @@ pip install .
 Munging with GenoML will, at minimum, do the following: 
 - Prune your genotypes using PLINK v1.9 (if `--geno` flag is used)
 - Impute per column using median or mean (can be changed with the `--impute` flag)
-- Z-scaling of features 
-    - *Technical Note:* Currently, following the imputation and Z-scaling of features, some features might return NaN values. Currently, if this happens, the NaN values are replaced with 0s.
+- Z-scaling of features and removing columns with a std dev = 0 
 
 **Required** arguments for GenoML munging are `--prefix` and `--pheno` 
 - `data` : Is the data `continuous` or `discrete`?
