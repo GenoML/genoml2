@@ -52,7 +52,7 @@ conda activate GenoML
 # conda env remove -n GenoML
 ```
 
-To install the package at this path:
+To install the GenoML in the user's path in a virtual environment, you can do the following:
 ```shell
 # Install the package at this path
 pip install .
@@ -345,9 +345,11 @@ genoml discrete supervised test \
 
 Planned experimental features include, but are not limited to:
 - Unsupervised munging, training, tuning, and testing
-- GWAS QC and Pipeline
-- Network analyses
-- Meta-learning
-- Federated learning
-- Biobank-scale support
-- ...?
+-  GWAS QC and Pipeline
+-  Network analyses
+-  Meta-learning
+-  Federated learning
+-  Biobank-scale support
+-  Cross-silo checks for genetic duplicates
+-  Outlier detection
+-  ...?
