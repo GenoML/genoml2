@@ -49,21 +49,31 @@ class featureselection:
         clf.fit(self.X, self.y)
         self.featureRanks = clf.feature_importances_
         
-        # Code to drop the features below threshold and return the data set like it was (aka add pheno and ids back)
+        # Code to drop the features below threshold and return the data set like it was (aka add PHENO and IDs back)
         model = feature_selection.SelectFromModel(clf, prefit=True) # find this import at top
         df_editing = model.transform(self.X)
         print("""
         Printing feature name that corresponds to the dataframe column name, then printing the relative importance as we go...
         """)
         
+        list_featureScores = []
+
         for col,score in zip(self.X.columns,clf.feature_importances_):
             print(col,score)
-            print(col,score, file=open(self.run_prefix + "_approx_feature_importance.txt","a"))
-        
+            list_featureScores.append([col, score])
+
+        df_featureScores = pd.DataFrame(list_featureScores, columns=["Feature_Name", "Score"])
+        #df_featureScores = df_featureScores[df_featureScores['Score'] !=0]
+        df_featureScores = df_featureScores.sort_values(by=['Score'], ascending=False)
+        featureScores_outfile = self.run_prefix + "_approx_feature_importance.txt"
+        df_featureScores.to_csv(featureScores_outfile, index=False, sep="\t")
+
         print(f"""
         You have reduced your dataset to {df_editing.shape[0]} samples at {df_editing.shape[1]} features.
+
+        A file with your most important features, ranked from largest to smallest contributor, can be found at {featureScores_outfile}.
         """)
-        
+
         y_df = self.y
         ID_df = pd.DataFrame(self.IDs)
         features_selected = model.get_support()
@@ -78,7 +88,9 @@ class featureselection:
         ## Export reduced data
         outfile_h5 = self.run_prefix + ".dataForML.h5"
         self.df_selecta.to_hdf(outfile_h5, key='dataForML')
+        
         print(f"""
         Exporting a new {outfile_h5} file that has a reduced feature set based on your importance approximations. 
         This is a good dataset for general ML applications for the chosen PHENO as it includes only features that are likely to impact the model.
         """)
+
