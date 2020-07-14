@@ -69,9 +69,7 @@ class featureselection:
         df_featureScores.to_csv(featureScores_outfile, index=False, sep="\t")
 
         print(f"""
-        You have reduced your dataset to {df_editing.shape[0]} samples at {df_editing.shape[1]} features.
-
-        A file with your most important features, ranked from largest to smallest contributor, can be found at {featureScores_outfile}.
+        You have reduced your dataset to {df_editing.shape[0]} samples at {df_editing.shape[1]} features, not including ID and PHENO.
         """)
 
         y_df = self.y
@@ -81,6 +79,7 @@ class featureselection:
         df_selecta = pd.concat([ID_df.reset_index(drop=True), y_df.reset_index(drop=True), X_reduced.reset_index(drop=True)], axis = 1, ignore_index=False)
         
         self.df_selecta = df_selecta
+        self.featureScores_outfile = featureScores_outfile
 
         return df_selecta
     
@@ -88,9 +87,19 @@ class featureselection:
         ## Export reduced data
         outfile_h5 = self.run_prefix + ".dataForML.h5"
         self.df_selecta.to_hdf(outfile_h5, key='dataForML')
-        
-        print(f"""
-        Exporting a new {outfile_h5} file that has a reduced feature set based on your importance approximations. 
-        This is a good dataset for general ML applications for the chosen PHENO as it includes only features that are likely to impact the model.
-        """)
 
+        features_list = self.df_selecta.columns.values.tolist()
+    
+        features_listpath = self.run_prefix + "_list_features.txt"
+        with open(features_listpath, 'w') as f:
+            for feature in features_list:
+                f.write("%s\n" % feature)
+
+        print(f"""Exporting a new {outfile_h5} file that has a reduced feature set based on your importance approximations. 
+        This is a good dataset for general ML applications for the chosen PHENO as it includes only features that are likely to impact the model.
+
+        An updated list of {len(features_list)} features, including ID and PHENO, that is in your munged dataForML.h5 file can be found here {features_listpath}
+        
+        A file with all your features, ranked from largest contributors at the top to smallest contributors at the bottom, can be found at {self.featureScores_outfile}.
+        """)
+        

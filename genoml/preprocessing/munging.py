@@ -297,6 +297,16 @@ class munging:
         self.merged = merged
         merged.to_hdf(outfile_h5, key='dataForML')
 
+        features_list = merged.columns.values.tolist()
+    
+        features_listpath = self.run_prefix + "_list_features.txt"
+        with open(features_listpath, 'w') as f:
+            for feature in features_list:
+                f.write("%s\n" % feature)
+
+        print(f"An updated list of {len(features_list)} features, including ID and PHENO, that is in your munged dataForML.h5 file can be found here {features_listpath}")
+
+
         print("")
         print(f"Your .dataForML file that has been fully munged can be found here: {outfile_h5}")
 
