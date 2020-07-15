@@ -44,6 +44,15 @@ conda create -n GenoML python=3.7
 # To activate a virtual environment
 conda activate GenoML
 
+# To install requirements via pip 
+pip install -r requirements.txt
+    # If issues installing xgboost from requirements - (3 options)
+        # use Homebrew to 
+            # xcode-select --install
+            # brew install gcc@7
+        # conda install -c conda-forge xgboost 
+        # pip install xgboost==0.90
+
 ## MISC
 # To deactivate the virtual environment
 # conda deactivate GenoML
