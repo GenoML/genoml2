@@ -90,7 +90,7 @@ def handle_harmonize():
 
 def handle_continuous_supervised_munge():
     handle_endpoints("genoml continuous supervised munge",
-                     ["prefix", "impute", "geno", "pheno", "addit",
+                     ["prefix", "impute", "geno", "skip_prune", "pheno", "addit",
                       "feature_selection", "gwas", "p", "vif", "iter",
                       "ref_cols_harmonize"],
                      functools.partial(munging.main, data_type="c"), 3)
@@ -116,7 +116,7 @@ def handle_continuous_supervised_test():
 
 def handle_discrete_supervised_munge():
     handle_endpoints("genoml discrete supervised munge",
-                     ["prefix", "impute", "geno", "pheno", "addit",
+                     ["prefix", "impute", "geno", "skip_prune", "pheno", "addit",
                       "feature_selection", "gwas", "p", "vif", "iter",
                       "ref_cols_harmonize"],
                      functools.partial(munging.main, data_type="d"), 3)
@@ -266,6 +266,11 @@ def add_default_flag(parser, flag_name):
                                  "format genotype file, everything before the "
                                  "*.bed/bim/fam [default: None].")
 
+    elif flag_name == "skip_prune":
+        parser.add_argument("--skip_prune", type=str, default="no",
+                            help="[default: no].",
+                            required=False)
+                            
     elif flag_name == "addit":
         parser.add_argument("--addit", type=str, default=None,
                             help="Additional: (string file path). Path to CSV "

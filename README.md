@@ -99,6 +99,17 @@ genoml discrete supervised munge \
 --pheno examples/discrete/training_pheno.csv
 ```
 
+You can choose to skip pruning your SNPs at this stage by changing the `--skip_prune` flag to "yes" (default is "no")
+```shell
+# Running GenoML munging on discrete data using PLINK genotype binary files and a phenotype file 
+
+genoml discrete supervised munge \
+--prefix outputs/test_discrete_geno \
+--geno examples/discrete/training \
+--skip_prune yes \
+--pheno examples/discrete/training_pheno.csv
+```
+
 You can choose to impute on `mean` or `median` by modifying the `--impute` flag, like so *(default is median)*:
 ```shell
 # Running GenoML munging on discrete data using PLINK genotype binary files and a phenotype file and specifying impute

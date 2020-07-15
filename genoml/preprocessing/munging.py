@@ -24,7 +24,7 @@ from pandas_plink import read_plink1_bin
 import genoml.dependencies
 
 class munging:
-    def __init__(self, pheno_path, run_prefix="GenoML_data", impute_type="median", p_gwas=0.001, addit_path=None, gwas_path=None, geno_path=None, refColsHarmonize=None):
+    def __init__(self, pheno_path, run_prefix="GenoML_data", impute_type="median", skip_prune="no", p_gwas=0.001, addit_path=None, gwas_path=None, geno_path=None, refColsHarmonize=None):
         self.pheno_path = pheno_path
         self.run_prefix = run_prefix
         
@@ -34,6 +34,8 @@ class munging:
         self.addit_path = addit_path
         self.gwas_path = gwas_path
         self.geno_path = geno_path
+
+        self.skip_prune = skip_prune
         
         self.refColsHarmonize = refColsHarmonize
 
@@ -69,7 +71,7 @@ class munging:
         if (geno_path==None):
             print("So no genotypes? Okay, we'll just use additional features provided for the predictions.")
         else:
-            print("Pruning your data and exporting a reduced set of genotypes.")
+            print("Exporting genotype data")
 
     def plink_inputs(self):
         # Initializing some variables
@@ -82,43 +84,79 @@ class munging:
         pheno_df.to_hdf(outfile_h5, key='pheno', mode='w')
 
         if (self.geno_path != None):
-        # Set the bashes
-            bash1a = f"{plink_exec} --bfile " + self.geno_path + " --indep-pairwise 1000 50 0.1"
-            bash1b = f"{plink_exec} --bfile " + self.geno_path + " --extract " + self.run_prefix + \
-                ".p_threshold_variants.tab" + " --indep-pairwise 1000 50 0.1"
-        # may want to consider outputting temp_genos to dir in run_prefix
-            bash2 = f"{plink_exec} --bfile " + self.geno_path + \
-                " --extract plink.prune.in --make-bed --out temp_genos"
-            bash3 = "cut -f 2,5 temp_genos.bim > " + \
-                self.run_prefix + ".variants_and_alleles.tab"
-            bash4 = "rm plink.log"
-            bash5 = "rm plink.prune.*"
-        #    bash6 = "rm " + self.run_prefix + ".log"
-        # Set the bash command groups
-            cmds_a = [bash1a, bash2, bash3, bash4, bash5]
-            cmds_b = [bash1b, bash2, bash3, bash4, bash5]
+            if (self.skip_prune == "no"):
+            # Set the bashes
+                bash1a = f"{plink_exec} --bfile " + self.geno_path + " --indep-pairwise 1000 50 0.1"
+                bash1b = f"{plink_exec} --bfile " + self.geno_path + " --extract " + self.run_prefix + \
+                    ".p_threshold_variants.tab" + " --indep-pairwise 1000 50 0.1"
+            # may want to consider outputting temp_genos to dir in run_prefix
+                bash2 = f"{plink_exec} --bfile " + self.geno_path + \
+                    " --extract plink.prune.in --make-bed --out temp_genos"
+                bash3 = "cut -f 2,5 temp_genos.bim > " + \
+                    self.run_prefix + ".variants_and_alleles.tab"
+                bash4 = "rm plink.log"
+                bash5 = "rm plink.prune.*"
+            #    bash6 = "rm " + self.run_prefix + ".log"
+            # Set the bash command groups
+                cmds_a = [bash1a, bash2, bash3, bash4, bash5]
+                cmds_b = [bash1b, bash2, bash3, bash4, bash5]
+            
 
-        if (self.gwas_path != None) & (self.geno_path != None):
-            p_thresh = self.p_gwas
-            gwas_df_reduced = self.gwas_df[['SNP', 'p']]
-            snps_to_keep = gwas_df_reduced.loc[(
-                gwas_df_reduced['p'] <= p_thresh)]
-            outfile = self.run_prefix + ".p_threshold_variants.tab"
-            snps_to_keep.to_csv(outfile, index=False, sep="\t")
-            print(
-                f"Your candidate variant list prior to pruning is right here: {outfile}.")
+                if (self.gwas_path != None) & (self.geno_path != None):
+                    p_thresh = self.p_gwas
+                    gwas_df_reduced = self.gwas_df[['SNP', 'p']]
+                    snps_to_keep = gwas_df_reduced.loc[(
+                        gwas_df_reduced['p'] <= p_thresh)]
+                    outfile = self.run_prefix + ".p_threshold_variants.tab"
+                    snps_to_keep.to_csv(outfile, index=False, sep="\t")
+                    print(
+                        f"Your candidate variant list prior to pruning is right here: {outfile}.")
 
-        if (self.gwas_path == None) & (self.geno_path != None):
-            print(
-                f"A list of pruned variants and the allele being counted in the dosages (usually the minor allele) can be found here: {self.run_prefix}.variants_and_alleles.tab")
-            for cmd in cmds_a:
-                subprocess.run(cmd, shell=True)
+                if (self.gwas_path == None) & (self.geno_path != None):
+                    print(
+                        f"A list of pruned variants and the allele being counted in the dosages (usually the minor allele) can be found here: {self.run_prefix}.variants_and_alleles.tab")
+                    for cmd in cmds_a:
+                        subprocess.run(cmd, shell=True)
 
-        if (self.gwas_path != None) & (self.geno_path != None):
-            print(
-                f"A list of pruned variants and the allele being counted in the dosages (usually the minor allele) can be found here: {self.run_prefix}.variants_and_alleles.tab")
-            for cmd in cmds_b:
-                subprocess.run(cmd, shell=True)
+                if (self.gwas_path != None) & (self.geno_path != None):
+                    print(
+                        f"A list of pruned variants and the allele being counted in the dosages (usually the minor allele) can be found here: {self.run_prefix}.variants_and_alleles.tab")
+                    for cmd in cmds_b:
+                        subprocess.run(cmd, shell=True)
+        
+            if (self.skip_prune == "yes"):
+                bash1a = f"{plink_exec} --bfile " + self.geno_path 
+                bash1b = f"{plink_exec} --bfile " + self.geno_path + " --extract " + self.run_prefix + ".p_threshold_variants.tab"
+            # may want to consider outputting temp_genos to dir in run_prefix
+                bash2 = f"{plink_exec} --bfile " + self.geno_path + " --make-bed --out temp_genos"
+                bash3 = "cut -f 2,5 temp_genos.bim > " + self.run_prefix + ".variants_and_alleles.tab"
+                bash4 = "rm plink.log"
+
+            # Set the bash command groups
+                cmds_a = [bash1a, bash2, bash3, bash4]
+                cmds_b = [bash1b, bash2, bash3, bash4]
+
+                if (self.gwas_path != None) & (self.geno_path != None):
+                    p_thresh = self.p_gwas
+                    gwas_df_reduced = self.gwas_df[['SNP', 'p']]
+                    snps_to_keep = gwas_df_reduced.loc[(
+                        gwas_df_reduced['p'] <= p_thresh)]
+                    outfile = self.run_prefix + ".p_threshold_variants.tab"
+                    snps_to_keep.to_csv(outfile, index=False, sep="\t")
+                    print(
+                        f"Your candidate variant list is right here: {outfile}.")
+
+                if (self.gwas_path == None) & (self.geno_path != None):
+                    print(
+                        f"A list of variants and the allele being counted in the dosages (usually the minor allele) can be found here: {self.run_prefix}.variants_and_alleles.tab")
+                    for cmd in cmds_a:
+                        subprocess.run(cmd, shell=True)
+
+                if (self.gwas_path != None) & (self.geno_path != None):
+                    print(
+                        f"A list of variants and the allele being counted in the dosages (usually the minor allele) can be found here: {self.run_prefix}.variants_and_alleles.tab")
+                    for cmd in cmds_b:
+                        subprocess.run(cmd, shell=True)
 
         if (self.geno_path != None):
             
