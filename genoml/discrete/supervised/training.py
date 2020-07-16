@@ -265,28 +265,28 @@ class train:
         if best_algo == 'LogisticRegression':
             algo = getattr(sklearn.linear_model, best_algo)()
 
-        if  best_algo == 'SGDClassifier':
+        elif  best_algo == 'SGDClassifier':
             algo = getattr(sklearn.linear_model, best_algo)(loss='modified_huber')
 
-        if (best_algo == 'RandomForestClassifier') or (best_algo == 'AdaBoostClassifier') or (best_algo == 'GradientBoostingClassifier') or  (best_algo == 'BaggingClassifier'):
+        elif (best_algo == 'RandomForestClassifier') or (best_algo == 'AdaBoostClassifier') or (best_algo == 'GradientBoostingClassifier') or  (best_algo == 'BaggingClassifier'):
             algo = getattr(sklearn.ensemble, best_algo)()
 
-        if best_algo == 'SVC':
+        elif best_algo == 'SVC':
             algo = getattr(sklearn.svm, best_algo)(probability=True)
 
-        if best_algo == 'ComplementNB':
+        elif best_algo == 'ComplementNB':
             algo = getattr(sklearn.naive_bayes, best_algo)()
 
-        if best_algo == 'MLPClassifier':
+        elif best_algo == 'MLPClassifier':
             algo = getattr(sklearn.neural_network, best_algo)()
 
-        if best_algo == 'XGBClassifier':
+        elif best_algo == 'XGBClassifier':
             algo = getattr(xgboost, best_algo)()
 
-        if best_algo == 'KNeighborsClassifier':
+        elif best_algo == 'KNeighborsClassifier':
             algo = getattr(sklearn.neighbors, best_algo)()
 
-        if (best_algo == 'LinearDiscriminantAnalysis') or (best_algo == 'QuadraticDiscriminantAnalysis'):
+        elif (best_algo == 'LinearDiscriminantAnalysis') or (best_algo == 'QuadraticDiscriminantAnalysis'):
             algo = getattr(sklearn.discriminant_analysis, best_algo)()
 
         algo.fit(self.X_train, self.y_train)
