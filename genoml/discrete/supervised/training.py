@@ -93,6 +93,7 @@ class train:
             print(name)
 
             test_predictions = algo.predict_proba(self.X_test)
+            self.test_predictions = test_predictions
             test_predictions = test_predictions[:, 1]
             rocauc = metrics.roc_auc_score(self.y_test, test_predictions)
             print("AUC: {:.4%}".format(rocauc))
@@ -115,8 +116,9 @@ class train:
             PPV = TP/(TP+FP)
             NPV = TN/(TN+FN)
             
-
-            test_predictions = algo.predict_proba(self.X_test)
+            test_predictions = self.test_predictions
+            #test_predictions = algo.predict_proba(self.X_test)
+            #self.test_predictions = test_predictions
             ll = metrics.log_loss(self.y_test, test_predictions)
             print("Log Loss: {:.4}".format(ll))
             
@@ -165,8 +167,15 @@ class train:
     def AUC(self, save = False):
         plot_out = self.run_prefix + '.trainedModel_withheldSample_ROC.png'
 
-        test_predictions = self.algo.predict_proba(self.X_test)
-        test_predictions = test_predictions[:, 1]
+        # Issue #24: RandomForestClassifier is finicky - can't recalculate moving forward like the other 
+        if(self.best_algo == 'RandomForestClassifier'):
+            test_predictions = self.test_predictions
+            self.test_predictions = test_predictions
+            test_predictions = test_predictions[:, 1]
+        else:
+            test_predictions = self.algo.predict_proba(self.X_test)
+            self.test_predictions = test_predictions
+            test_predictions = test_predictions[:, 1]
 
         fpr, tpr, thresholds = metrics.roc_curve(self.y_test, test_predictions)
         roc_auc = metrics.auc(fpr, tpr)
@@ -184,11 +193,12 @@ class train:
             plt.savefig(plot_out, dpi = 600)
 
         #print()
-        #print(f"We are also exporting a ROC curve for you here {plot_out} this is a graphical representation of AUC in the withheld test data for the best performing algorithm.")
+        print(f"We are also exporting a ROC curve for you here {plot_out} this is a graphical representation of AUC in the withheld test data for the best performing algorithm.")
     
     def export_prob_hist(self):
         # Exporting withheld test data
-        test_predicteds_probs = self.algo.predict_proba(self.X_test)
+        #test_predicteds_probs = self.algo.predict_proba(self.X_test)
+        test_predicteds_probs = self.test_predictions
         test_case_probs = test_predicteds_probs[:, 1]
         test_predicted_cases = self.algo.predict(self.X_test)
 
@@ -286,7 +296,8 @@ class train:
         print("#"*70)
         print(name)
 
-        test_predictions = algo.predict_proba(self.X_test)
+        #test_predictions = algo.predict_proba(self.X_test)
+        test_predictions = self.test_predictions
         test_predictions = test_predictions[:, 1]
         rocauc = metrics.roc_auc_score(self.y_test, test_predictions)
         print("AUC: {:.4%}".format(rocauc))
@@ -299,7 +310,8 @@ class train:
         balacc = metrics.balanced_accuracy_score(self.y_test, test_predictions)
         print("Balanced Accuracy: {:.4%}".format(balacc))
 
-        test_predictions = algo.predict_proba(self.X_test)
+        #test_predictions = algo.predict_proba(self.X_test)
+        test_predictions = self.test_predictions
         ll = metrics.log_loss(self.y_test, test_predictions)
         print("Log Loss: {:.4}".format(ll))
 
