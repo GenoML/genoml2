@@ -37,7 +37,7 @@ This README is a brief look into how to structure arguments and what arguments a
 ## 0. [OPTIONAL] How to Set Up a Virtual Environment via Conda
 
 You can create a virtual environment to run GenoML, if you prefer.
-If you already have the Anaconda Distribution, this is fairly simple.
+If you already have the [Anaconda Distribution](https://www.anaconda.com/products/individual#download), this is fairly simple.
 
 To create and activate a virtual environment:
 
