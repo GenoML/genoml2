@@ -12,6 +12,10 @@ GenoML is an Automated Machine Learning (AutoML) for genomics data. In general, 
 This README is a brief look into how to structure arguments and what arguments are available at each phase for the GenoML CLI. 
 
 ### Installing + Downloading Example Data 
+- Install this branch directly from GitHub
+
+`git clone --single-branch --branch python_v1.5 https://github.com/GenoML/genoml.git`
+
 - Install using pip
 
 `Coming Soon!`
