@@ -65,7 +65,7 @@ class featureselection:
         df_featureScores = pd.DataFrame(list_featureScores, columns=["Feature_Name", "Score"])
         #df_featureScores = df_featureScores[df_featureScores['Score'] !=0]
         df_featureScores = df_featureScores.sort_values(by=['Score'], ascending=False)
-        featureScores_outfile = self.run_prefix + "_approx_feature_importance.txt"
+        featureScores_outfile = self.run_prefix + ".approx_feature_importance.txt"
         df_featureScores.to_csv(featureScores_outfile, index=False, sep="\t")
 
         print(f"""
