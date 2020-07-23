@@ -320,7 +320,7 @@ class munging:
             matching_cols_list = matching_cols.columns.values.tolist()
 
             # Save out the final list 
-            intersecting_cols_outfile = self.run_prefix + "_finalHarmonizedCols_toKeep.txt"
+            intersecting_cols_outfile = self.run_prefix + ".finalHarmonizedCols_toKeep.txt"
 
             with open(intersecting_cols_outfile, 'w') as filehandle:
                 for col in matching_cols_list:
@@ -337,7 +337,7 @@ class munging:
 
         features_list = merged.columns.values.tolist()
     
-        features_listpath = self.run_prefix + "_list_features.txt"
+        features_listpath = self.run_prefix + ".list_features.txt"
         with open(features_listpath, 'w') as f:
             for feature in features_list:
                 f.write("%s\n" % feature)

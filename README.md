@@ -203,7 +203,7 @@ genoml discrete supervised munge \
 --addit examples/discrete/training_addit.csv \
 --feature_selection 50
 ```
-The `--feature_selection` flag uses extraTrees ([classifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.ExtraTreesClassifier.html) for discrete data; [regressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.ExtraTreesRegressor.html) for continuous data) to output a `*_approx_feature_importance.txt` file with the features most contributing to your model at the top. 
+The `--feature_selection` flag uses extraTrees ([classifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.ExtraTreesClassifier.html) for discrete data; [regressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.ExtraTreesRegressor.html) for continuous data) to output a `*.approx_feature_importance.txt` file with the features most contributing to your model at the top. 
 
 
 <a id="2"></a>
@@ -316,11 +316,11 @@ genoml discrete supervised munge --prefix outputs/validation_test_discrete_geno 
 --addit examples/discrete/validation_addit.csv \
 --ref_cols_harmonize outputs/validation_test_discrete_geno_refColsHarmonize_toKeep.txt
 ```
-All munging options discussed above are available at this step, the only difference here is you will add the `--ref_cols_harmonize` flag to include the `*_refColsHarmonize_toKeep.txt` file generated at the end of harmonizing to only keep the same columns that the reference dataset had. 
+All munging options discussed above are available at this step, the only difference here is you will add the `--ref_cols_harmonize` flag to include the `*.refColsHarmonize_toKeep.txt` file generated at the end of harmonizing to only keep the same columns that the reference dataset had. 
 
 After munging and training your reference model and harmonizing and munging your unseen test data, **you will retrain your reference model to include only matching features**. Given the nature of ML algorithms, you cannot test a model on a set of data that does not have identical features. 
 
-To retrain your model appropriately, after munging your test data with the `--ref_cols_harmonize ` flag, a final columns list will be generated at `*_finalHarmonizedCols_toKeep.txt`. This includes all the features that match between your unseen test data and your reference model. Use the `--matching_columns` flag when retraining your reference model to use the appropriate features.
+To retrain your model appropriately, after munging your test data with the `--ref_cols_harmonize ` flag, a final columns list will be generated at `*.finalHarmonizedCols_toKeep.txt`. This includes all the features that match between your unseen test data and your reference model. Use the `--matching_columns` flag when retraining your reference model to use the appropriate features.
 
 When retraining of the reference model is complete, you are ready to test!
 
@@ -333,19 +333,20 @@ genoml discrete supervised munge \
 --pheno examples/discrete/training_pheno.csv
 # Files made: 
     # outputs/test_discrete_geno.dataForML.h5
+    # outputs/test_discrete_geno.list_features.txt
     # outputs/test_discrete_geno.variants_and_alleles.tab
 
 # 1. TRAIN THE REFERENCE DATASET
 genoml discrete supervised train \
 --prefix outputs/test_discrete_geno
 # Files made: 
+    # outputs/test_discrete_geno.best_algorithm.txt
     # outputs/test_discrete_geno.trainedModel.joblib
     # outputs/test_discrete_geno.trainedModel_trainingSample_Predictions.csv
     # outputs/test_discrete_geno.trainedModel_withheldSample_Predictions.csv
-    # outputs/test_discrete_geno.trainedModel_withheldSample_probabilities.png
     # outputs/test_discrete_geno.trainedModel_withheldSample_ROC.png
+    # outputs/test_discrete_geno.trainedModel_withheldSample_probabilities.png
     # outputs/test_discrete_geno.training_withheldSamples_performanceMetrics.csv
-    # outputs/test_discrete_geno.best_algorithm.txt
 
 # 2. HARMONIZE TEST DATASET IF USING PLINK/GENOTYPES
 genoml harmonize \
@@ -354,36 +355,38 @@ genoml harmonize \
 --ref_model_prefix outputs/test_discrete_geno \
 --training_snps_alleles outputs/test_discrete_geno.variants_and_alleles.tab
 # Files made: 
-    # outputs/validation_test_discrete_geno_refColsHarmonize_toKeep.txt
-    # outputs/validation_test_discrete_geno_refSNPs_andAlleles.bed
-    # outputs/validation_test_discrete_geno_refSNPs_andAlleles.bim
-    # outputs/validation_test_discrete_geno_refSNPs_andAlleles.fam
+    # outputs/validation_test_discrete_geno.refColsHarmonize_toKeep.txt
+    # outputs/validation_test_discrete_geno.refSNPs_andAlleles.bed
+    # outputs/validation_test_discrete_geno.refSNPs_andAlleles.bim
+    # outputs/validation_test_discrete_geno.refSNPs_andAlleles.fam
 
 # 3. MUNGE THE TEST DATASET ON REFERENCE MODEL COLUMNS
 genoml discrete supervised munge \
 --prefix outputs/validation_test_discrete_geno \
---geno outputs/validation_test_discrete_geno_refSNPs_andAlleles \
+--geno outputs/validation_test_discrete_geno.refSNPs_andAlleles \
 --pheno examples/discrete/validation_pheno.csv \
 --addit examples/discrete/validation_addit.csv \
---ref_cols_harmonize outputs/validation_test_discrete_geno_refColsHarmonize_toKeep.txt
+--ref_cols_harmonize outputs/validation_test_discrete_geno.refColsHarmonize_toKeep.txt
 # Files made: 
-    # outputs/validation_test_discrete_geno_finalHarmonizedCols_toKeep.txt
+    # outputs/validation_test_discrete_geno.finalHarmonizedCols_toKeep.txt
+    # outputs/validation_test_discrete_geno.list_features.txt
+    # outputs/test_discrete_geno.variants_and_alleles.tab
     # outputs/validation_test_discrete_geno.dataForML.h5
-    # outputs/validation_test_discrete_geno.variants_and_alleles.tab
 
 # 4. RETRAIN REFERENCE MODEL ON INTERSECTING COLUMNS BETWEEN REFERENCE AND TEST
 genoml discrete supervised train \
 --prefix outputs/test_discrete_geno \
---matching_columns outputs/validation_test_discrete_geno_finalHarmonizedCols_toKeep.txt
+--matching_columns outputs/validation_test_discrete_geno.finalHarmonizedCols_toKeep.txt
 # Note: This replaces the trained model you made in step 1! 
 # Files made: 
+    # outputs/test_discrete_geno.best_algorithm.txt
     # outputs/test_discrete_geno.trainedModel.joblib
     # outputs/test_discrete_geno.trainedModel_trainingSample_Predictions.csv
     # outputs/test_discrete_geno.trainedModel_withheldSample_Predictions.csv
-    # outputs/test_discrete_geno.trainedModel_withheldSample_probabilities.png
     # outputs/test_discrete_geno.trainedModel_withheldSample_ROC.png
+    # outputs/test_discrete_geno.trainedModel_withheldSample_probabilities.png
     # outputs/test_discrete_geno.training_withheldSamples_performanceMetrics.csv
-    # outputs/test_discrete_geno.best_algorithm.txt
+
 
 # 5. TEST RETRAINED REFERENCE MODEL ON UNSEEN DATA
 genoml discrete supervised test \

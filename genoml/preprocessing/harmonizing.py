@@ -69,7 +69,7 @@ class harmonizing:
 
         # Creating outfile with SNPs
         # Force the allele designations based on the reference dataset
-        plink_outfile = self.test_out_prefix + "_refSNPs_andAlleles"
+        plink_outfile = self.test_out_prefix + ".refSNPs_andAlleles"
         
         print("")
         print(f"Now we will create PLINK binaries where the reference SNPS and alleles will be based off of your file here: {self.training_SNPs}")
@@ -142,7 +142,7 @@ class harmonizing:
         ref_columns_list = self.df.columns.values.tolist()
 
         # Write out the columns to a text file we will use in munge later 
-        ref_cols_outfile = self.test_out_prefix + "_refColsHarmonize_toKeep.txt"
+        ref_cols_outfile = self.test_out_prefix + ".refColsHarmonize_toKeep.txt"
 
         with open(ref_cols_outfile, 'w') as filehandle:
             for col in ref_columns_list:

@@ -1,7 +1,6 @@
 snp410	T
 snp403	T
 snp164	C
-snp363	T
 snp439	G
 snp370	A
 snp389	T
@@ -38,7 +37,6 @@ snp499	C
 snp443	A
 snp488	C
 snp32	C
-snp33	A
 snp113	A
 snp242	T
 snp369	A
@@ -49,7 +47,6 @@ snp160	G
 snp429	G
 snp159	G
 snp396	G
-snp374	C
 snp437	G
 snp486	T
 snp376	A
@@ -57,8 +54,6 @@ snp268	C
 snp255	T
 snp423	C
 snp250	A
-snp411	T
-snp194	A
 snp267	C
 snp424	A
 snp408	G
@@ -75,7 +70,6 @@ snp352	G
 snp38	G
 snp262	C
 snp441	T
-snp39	T
 snp307	G
 snp393	T
 snp133	G
@@ -96,7 +90,6 @@ snp483	T
 snp143	C
 snp270	T
 snp98	T
-snp391	G
 snp341	T
 snp243	T
 snp495	C
@@ -114,10 +107,8 @@ snp325	G
 snp455	C
 snp418	T
 snp195	A
-snp210	A
 snp199	G
 snp109	G
-snp40	T
 snp263	G
 snp442	A
 snp498	T
@@ -135,9 +126,7 @@ snp293	G
 snp167	C
 snp55	T
 snp56	C
-snp406	T
 snp47	G
-snp201	G
 snp313	A
 snp449	G
 snp49	A
@@ -157,11 +146,8 @@ snp318	T
 snp166	G
 snp241	C
 snp315	C
-snp53	G
-snp54	G
 snp91	T
 snp284	A
-snp280	C
 snp354	C
 snp46	T
 snp464	A
@@ -183,7 +169,6 @@ snp346	T
 snp59	G
 snp170	A
 snp73	G
-snp453	T
 snp417	A
 snp436	A
 snp57	G
@@ -207,7 +192,6 @@ snp310	G
 snp298	T
 snp185	G
 snp61	A
-snp392	G
 snp452	C
 snp189	T
 snp62	T
@@ -232,7 +216,6 @@ snp63	T
 snp80	G
 snp161	G
 snp330	G
-snp316	C
 snp226	A
 snp246	T
 snp60	G
@@ -264,7 +247,6 @@ snp66	T
 snp111	C
 snp67	T
 snp187	C
-snp221	A
 snp149	C
 snp386	C
 snp240	T
@@ -278,7 +260,6 @@ snp68	T
 snp69	G
 snp106	T
 snp273	A
-snp481	G
 snp70	C
 snp230	A
 snp387	C
@@ -296,12 +277,10 @@ snp398	T
 snp265	C
 snp266	T
 snp456	C
-snp362	C
 snp478	G
 snp251	G
 snp402	T
 snp328	T
-snp165	T
 snp184	G
 snp323	A
 snp205	T
@@ -324,10 +303,7 @@ snp4	G
 snp206	T
 snp169	A
 snp134	T
-snp279	T
-snp179	T
 snp236	G
-snp435	C
 snp136	A
 snp237	T
 snp467	G
@@ -354,9 +330,6 @@ snp401	T
 snp291	C
 snp176	G
 snp487	G
-snp321	A
-snp171	G
-snp301	C
 snp9	T
 snp10	A
 snp173	A
@@ -386,14 +359,11 @@ snp425	T
 snp283	T
 snp222	C
 snp209	C
-snp14	T
 snp198	G
 snp233	C
 snp444	T
 snp335	A
 snp476	T
-snp405	A
-snp367	A
 snp219	C
 snp81	G
 snp15	T
@@ -449,9 +419,7 @@ snp102	T
 snp214	G
 snp252	A
 snp25	G
-snp216	T
 snp26	G
-snp289	A
 snp132	A
 snp446	C
 snp311	C
@@ -494,7 +462,6 @@ snp382	T
 snp450	A
 snp107	A
 snp224	C
-snp153	T
 snp368	G
 snp304	C
 snp306	G

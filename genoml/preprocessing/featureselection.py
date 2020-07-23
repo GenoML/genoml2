@@ -90,7 +90,7 @@ class featureselection:
 
         features_list = self.df_selecta.columns.values.tolist()
     
-        features_listpath = self.run_prefix + "_list_features.txt"
+        features_listpath = self.run_prefix + ".list_features.txt"
         with open(features_listpath, 'w') as f:
             for feature in features_list:
                 f.write("%s\n" % feature)
