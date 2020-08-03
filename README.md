@@ -14,7 +14,7 @@ This README is a brief look into how to structure arguments and what arguments a
 ### Installing + Downloading Example Data 
 - Install this repository directly from GitHub (from source; master branch)
 
-`[git clone https://github.com/GenoML/genoml_v2](https://github.com/GenoML/genoml_v2.git)`
+`git clone https://github.com/GenoML/genoml_v2.git`
 
 - Install using pip
 
