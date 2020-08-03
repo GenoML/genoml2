@@ -12,9 +12,9 @@ GenoML is an Automated Machine Learning (AutoML) for genomics data. In general, 
 This README is a brief look into how to structure arguments and what arguments are available at each phase for the GenoML CLI. 
 
 ### Installing + Downloading Example Data 
-- Install this branch directly from GitHub
+- Install this repository directly from GitHub (from source; master branch)
 
-`git clone --single-branch --branch python_v1.5 https://github.com/GenoML/genoml.git`
+`[git clone https://github.com/GenoML/genoml_v2](https://github.com/GenoML/genoml_v2.git)`
 
 - Install using pip
 
@@ -22,7 +22,7 @@ This README is a brief look into how to structure arguments and what arguments a
 
 - To install the `examples/` directory (~315 KB), you can use SVN (pre-installed on Macs)
 
-`svn checkout https://github.com/GenoML/genoml.git/branches/python_v1.5/examples`
+`svn export https://github.com/GenoML/genoml_v2.git/trunk/examples`
 
 
 ### Table of Contents 
