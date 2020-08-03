@@ -9,6 +9,7 @@ python:
 install:
   - pip install -r requirements.txt
   - pip install .
+  - make build
 # command to run tests
 script:
-  - pytest
+  - echo "TODO"
