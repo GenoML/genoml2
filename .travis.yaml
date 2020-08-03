@@ -1,0 +1,15 @@
+language: python
+rvm:
+ - 3.6
+ - joblib
+ - matplotlib
+ - numpy
+ - tables
+ - pandas
+ - pandas_plink
+ - requests
+ - scikit-learn
+ - scipy
+ - seaborn
+ - statsmodels
+ - xgboost
