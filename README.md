@@ -6,10 +6,9 @@
 
 # How to Get Started with GenoML
 
-[![Build Status](https://travis-ci.org/GenoML/genoml_v2.svg?branch=master)](https://travis-ci.org/GenoML/genoml_v2)
 
 ### Introduction
-GenoML is an Automated Machine Learning (AutoML) for genomics data. In general, use a Linux or Mac with Python >3.5 for best results. **This repository is under active development!** 
+GenoML is an Automated Machine Learning (AutoML) for genomics data. In general, use a Linux or Mac with Python >3.5 for best results. **This repository and pip package are under active development!** 
 
 This README is a brief look into how to structure arguments and what arguments are available at each phase for the GenoML CLI. 
 
