@@ -1,0 +1,12 @@
+joblib
+matplotlib
+numpy
+tables
+pandas
+pandas_plink
+requests
+scikit-learn
+scipy
+seaborn
+statsmodels
+xgboost
