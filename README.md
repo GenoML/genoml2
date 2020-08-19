@@ -1,7 +1,7 @@
 # GenoML 
 
 <p align="center">
-  <img width="300" height="300" src="logo.png">
+  <img width="300" height="300" src="https://github.com/GenoML/genoml2/blob/master/logo.png">
 </p>
 
 # How to Get Started with GenoML
@@ -15,15 +15,15 @@ This README is a brief look into how to structure arguments and what arguments a
 ### Installing + Downloading Example Data 
 - Install this repository directly from GitHub (from source; master branch)
 
-`git clone https://github.com/GenoML/genoml_v2.git`
+`git clone https://github.com/GenoML/genoml2.git`
 
 - Install using pip
 
-`Coming Soon!`
+`pip install genoml2`
 
 - To install the `examples/` directory (~315 KB), you can use SVN (pre-installed on Macs)
 
-`svn export https://github.com/GenoML/genoml_v2.git/trunk/examples`
+`svn export https://github.com/GenoML/genoml2.git/trunk/examples`
 
 
 ### Table of Contents 
