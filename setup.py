@@ -31,7 +31,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://genoml.github.io/",
-    download_url="https://github.com/GenoML/genoml_v2/archive/v2.0.0.tar.gz",
+    download_url="https://github.com/GenoML/genoml_v2/archive/v2.0.0-beta.1.tar.gz",
     entry_points={
         'console_scripts':
             ['genoml=genoml.__main__:handle_main'],
@@ -41,7 +41,7 @@ setuptools.setup(
     classifiers=[
         "Development Status :: 4 - Beta",
         "Programming Language :: Python :: 3.6",
-        "License :: OSI Approved :: Apache Software License 2.0 (Apache-2.0)",
+        "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
