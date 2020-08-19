@@ -1,0 +1,3 @@
+[console_scripts]
+genoml = genoml.__main__:handle_main
+
