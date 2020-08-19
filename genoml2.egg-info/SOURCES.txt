@@ -30,9 +30,9 @@ genoml/preprocessing/featureselection.py
 genoml/preprocessing/harmonizing.py
 genoml/preprocessing/munging.py
 genoml/preprocessing/vif.py
-genoml_v2.egg-info/PKG-INFO
-genoml_v2.egg-info/SOURCES.txt
-genoml_v2.egg-info/dependency_links.txt
-genoml_v2.egg-info/entry_points.txt
-genoml_v2.egg-info/requires.txt
-genoml_v2.egg-info/top_level.txt
+genoml2.egg-info/PKG-INFO
+genoml2.egg-info/SOURCES.txt
+genoml2.egg-info/dependency_links.txt
+genoml2.egg-info/entry_points.txt
+genoml2.egg-info/requires.txt
+genoml2.egg-info/top_level.txt

@@ -22,8 +22,8 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="genoml_v2",
-    version="2.0.0-beta.1",
+    name="genoml2",
+    version="1.0.0-beta.1",
     maintainer="The GenoML Development Team",
     maintainer_email="genoml@googlegroups.com",
     description="GenoML is an automated machine learning tool that optimizes"
@@ -31,24 +31,26 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://genoml.github.io/",
-    download_url="https://github.com/GenoML/genoml_v2/archive/v2.0.0-beta.1.tar.gz",
+    download_url="https://github.com/GenoML/genoml2/archive/v1.0.0-beta.1.tar.gz",
     entry_points={
         'console_scripts':
             ['genoml=genoml.__main__:handle_main'],
     },
     packages=setuptools.find_packages(),
-    install_requires=[joblib, 
-    matplotlib,
-    numpy,
-    tables,
-    pandas,
-    pandas_plink,
-    requests,
-    scikit-learn,
-    scipy,
-    seaborn,
-    statsmodels,
-    xgboost],
+    install_requires=[
+        'joblib', 
+        'matplotlib',
+        'numpy',
+        'tables',
+        'pandas',
+        'pandas_plink',
+        'requests',
+        'scikit-learn',
+        'scipy',
+        'seaborn',
+        'statsmodels',
+        'xgboost',
+    ],
     classifiers=[
         "Development Status :: 4 - Beta",
         "Programming Language :: Python :: 3.6",
