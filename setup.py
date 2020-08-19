@@ -22,8 +22,8 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="genoml",
-    version="2.0.0b1",
+    name="genoml_v2",
+    version="2.0.0-beta1",
     maintainer="The GenoML Development Team",
     maintainer_email="genoml@googlegroups.com",
     description="GenoML is an automated machine learning tool that optimizes"
