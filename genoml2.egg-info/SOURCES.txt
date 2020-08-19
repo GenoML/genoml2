@@ -1,4 +1,6 @@
+MANIFEST.in
 README.md
+requirements.txt
 setup.cfg
 setup.py
 genoml/__init__.py

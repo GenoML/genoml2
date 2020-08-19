@@ -10,7 +10,7 @@ Download-URL: https://github.com/GenoML/genoml2/archive/v1.0.0-beta.1.tar.gz
 Description: # GenoML 
         
         <p align="center">
-          <img width="300" height="300" src="logo.png">
+          <img width="300" height="300" src="https://github.com/GenoML/genoml2/blob/master/logo.png">
         </p>
         
         # How to Get Started with GenoML
@@ -24,15 +24,15 @@ Description: # GenoML
         ### Installing + Downloading Example Data 
         - Install this repository directly from GitHub (from source; master branch)
         
-        `git clone https://github.com/GenoML/genoml_v2.git`
+        `git clone https://github.com/GenoML/genoml2.git`
         
         - Install using pip
         
-        `Coming Soon!`
+        `pip install genoml2`
         
         - To install the `examples/` directory (~315 KB), you can use SVN (pre-installed on Macs)
         
-        `svn export https://github.com/GenoML/genoml_v2.git/trunk/examples`
+        `svn export https://github.com/GenoML/genoml2.git/trunk/examples`
         
         
         ### Table of Contents 
