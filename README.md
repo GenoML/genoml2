@@ -8,7 +8,7 @@
 
 
 ### Introduction
-GenoML is an Automated Machine Learning (AutoML) for genomics data. In general, use a Linux or Mac with Python >3.5 for best results. **This repository and pip package are under active development!** 
+GenoML is an Automated Machine Learning (AutoML) for genomics data. In general, use a Linux or Mac with Python >3.5 for best results. **This [repository](https://github.com/GenoML/genoml2) and [pip package](https://pypi.org/project/genoml2/) are under active development!** 
 
 This README is a brief look into how to structure arguments and what arguments are available at each phase for the GenoML CLI. 
 
@@ -21,10 +21,11 @@ This README is a brief look into how to structure arguments and what arguments a
 
 `pip install genoml2`
 
-- To install the `examples/` directory (~315 KB), you can use SVN (pre-installed on Macs)
+- To install the `examples/` directory (~315 KB), you can use SVN (pre-installed on most Macs)
 
 `svn export https://github.com/GenoML/genoml2.git/trunk/examples`
 
+> Note: When you pip install this package, the examples/ folder is also downloaded! However, if  you still want to download the directory and SVN is not pre-installed, you can download it via Homebrew if you have that installed using `brew install svn` 
 
 ### Table of Contents 
 #### [0. (OPTIONAL) How to Set Up a Virtual Environment via Conda](#0)
