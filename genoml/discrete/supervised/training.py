@@ -178,7 +178,8 @@ class train:
             test_predictions = test_predictions[:, 1]
 
         fpr, tpr, thresholds = metrics.roc_curve(self.y_test, test_predictions)
-        roc_auc = metrics.auc(fpr, tpr)
+        #roc_auc = metrics.auc(fpr, tpr)
+        roc_auc = metrics.roc_auc_score(self.y_test, test_predictions)
 
         plt.figure()
         plt.plot(fpr, tpr, color='purple', label='ROC curve (area = %0.2f)' % roc_auc)
@@ -265,7 +266,7 @@ class train:
         if best_algo == 'LogisticRegression':
             algo = getattr(sklearn.linear_model, best_algo)()
 
-        elif  best_algo == 'SGDClassifier':
+        elif best_algo == 'SGDClassifier':
             algo = getattr(sklearn.linear_model, best_algo)(loss='modified_huber')
 
         elif (best_algo == 'RandomForestClassifier') or (best_algo == 'AdaBoostClassifier') or (best_algo == 'GradientBoostingClassifier') or  (best_algo == 'BaggingClassifier'):

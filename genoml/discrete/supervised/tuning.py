@@ -111,8 +111,9 @@ class tune():
                 hyperparameters = {"penalty": ["l1", "l2"], "C": stats.randint(1, 10)}
                 scoring_metric = metrics.make_scorer(metrics.roc_auc_score, needs_proba=True)
 
-            elif  best_algo == 'SGDClassifier':
-                hyperparameters = {'alpha': [1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3], "learning_rate": ["constant", "optimal", "invscaling", "adaptive"]}
+            # Addressing issue #14 - SGDClassifier gets eta < 0 bug at tune
+            elif best_algo == 'SGDClassifier':
+                hyperparameters = { 'alpha': [1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3], 'loss': ['log'], 'penalty': ['l2'], 'n_jobs': [-1] } 
                 scoring_metric = metrics.make_scorer(metrics.roc_auc_score, needs_proba=True)
 
             elif (best_algo == 'RandomForestClassifier') or (best_algo == 'AdaBoostClassifier') or (best_algo == 'GradientBoostingClassifier') or  (best_algo == 'BaggingClassifier'):
@@ -148,8 +149,9 @@ class tune():
                 hyperparameters = {"penalty": ["l1", "l2"], "C": stats.randint(1, 10)}
                 scoring_metric = metrics.make_scorer(metrics.balanced_accuracy_score, needs_proba=False)
 
-            elif  best_algo == 'SGDClassifier':
-                hyperparameters = {'alpha': [1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3], "learning_rate": ["constant", "optimal", "invscaling", "adaptive"]}
+            # Addressing issue #14 - SGDClassifier gets eta < 0 bug at tune
+            elif best_algo == 'SGDClassifier':
+                hyperparameters = { 'alpha': [1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3], 'loss': ['log'], 'penalty': ['l2'], 'n_jobs': [-1] } 
                 scoring_metric = metrics.make_scorer(metrics.balanced_accuracy_score, needs_proba=False)
 
             elif (best_algo == 'RandomForestClassifier') or (best_algo == 'AdaBoostClassifier') or (best_algo == 'GradientBoostingClassifier') or  (best_algo == 'BaggingClassifier'):
