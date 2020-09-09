@@ -61,7 +61,10 @@ class test:
         test_predictions = test_predictions[:, 1]
 
         fpr, tpr, thresholds = roc_curve(self.y_test, test_predictions)
-        roc_auc = auc(fpr, tpr)
+        
+        # Resolving issue #13 - ROC curve reporting to be consistent with performance metrics. 
+        #roc_auc = auc(fpr, tpr)
+        roc_auc = roc_auc_score(self.y_test, test_predictions)
 
         plt.figure()
         plt.plot(fpr, tpr, color='purple', label='All sample ROC curve (area = %0.2f)' % roc_auc + '.')
@@ -133,7 +136,10 @@ class test:
 
         test_predictions = self.loaded_model.predict_proba(self.X_test)
         test_predictions = test_predictions[:, 1]
-        rocauc = roc_auc_score(self.y_test, test_predictions)
+        
+        # Resolving issue #13 - ROC curve reporting to be consistent with performance metrics. 
+        # rocauc = roc_auc_score(self.y_test, test_predictions)
+        rocauc = self.roc_auc
         print("AUC: {:.4%}".format(rocauc))
 
         test_predictions = self.loaded_model.predict(self.X_test)
