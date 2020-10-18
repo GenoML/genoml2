@@ -89,11 +89,11 @@ def handle_harmonize():
 
 
 def handle_continuous_supervised_munge():
-    handle_endpoints("genoml continuous supervised munge",
+    handle_endpoints("genoml discrete supervised munge",
                      ["prefix", "impute", "geno", "skip_prune", "pheno", "addit",
                       "feature_selection", "gwas", "p", "vif", "iter",
-                      "ref_cols_harmonize"],
-                     functools.partial(munging.main, data_type="c"), 3)
+                      "ref_cols_harmonize", "umap_reduce", "target_columns", "confounders"],
+                      functools.partial(munging.main, data_type="c"), 3)
 
 
 def handle_continuous_supervised_train():
@@ -118,8 +118,8 @@ def handle_discrete_supervised_munge():
     handle_endpoints("genoml discrete supervised munge",
                      ["prefix", "impute", "geno", "skip_prune", "pheno", "addit",
                       "feature_selection", "gwas", "p", "vif", "iter",
-                      "ref_cols_harmonize"],
-                     functools.partial(munging.main, data_type="d"), 3)
+                      "ref_cols_harmonize", "umap_reduce", "target_columns", "confounders"],
+                      functools.partial(munging.main, data_type="d"), 3)
 
 
 def handle_discrete_supervised_train():
@@ -255,9 +255,9 @@ def add_default_flag(parser, flag_name):
                             required=True)
 
     elif flag_name == "pheno":
-        parser.add_argument("--pheno", type=str, default="lost",
+        parser.add_argument("--pheno", type=str, default=None,
                             help="Phenotype: (string file path). Path to CSV "
-                                 "phenotype file [default: lost].",
+                                 "phenotype file [default: None].",
                             required=True)
 
     elif flag_name == "geno":
@@ -269,7 +269,7 @@ def add_default_flag(parser, flag_name):
     elif flag_name == "skip_prune":
         parser.add_argument("--skip_prune", type=str, default="no",
                             help="[default: no].",
-                            required=False)
+                            choices=["no", "yes"], required=False)
                             
     elif flag_name == "addit":
         parser.add_argument("--addit", type=str, default=None,
@@ -281,7 +281,7 @@ def add_default_flag(parser, flag_name):
                             help="GWAS summary stats: (string file path). "
                                  "Path to CSV format external GWAS summary "
                                  "statistics containing at least the columns "
-                                 "SNP and P in the header [default: nope].")
+                                 "SNP and P in the header [default: None].")
 
     elif flag_name == "p":
         parser.add_argument("--p", type=float, default=0.001,
@@ -330,6 +330,25 @@ def add_default_flag(parser, flag_name):
                                  'input the path to the to the '
                                  '*_refColsHarmonize_toKeep.txt file '
                                  'generated at that step.')
+    
+    elif flag_name == "umap_reduce":
+        parser.add_argument('--umap_reduce', type=str, default="no",
+                            help = 'Would you like to reduce your dimensions with UMAP? [default: ', 
+                            choices=["no", "yes"], required=False)
+    #    if args.umap_reduce and (args.target_columns is None or args.confounders is None):
+    #        parser.error("Using the --umap_reduce option requires the --target_columns and --confounders options as well")
+
+    elif flag_name == "target_columns":
+        parser.add_argument('--target_columns', type=str, default=None,
+                            help = 'For UMAP reduction. A .txt file, one column, with a list of features '
+                            'to adjust (no header). These should correspond to features '
+                            'in the munged dataset', required=False)
+
+    elif flag_name == "confounders":
+        parser.add_argument('--confounders', type=str, default=None,
+                            help = 'For UMAP reduction. A .csv of confounders to adjust for with ID column and header.'
+                            'Numeric, with no missing data and the ID column '
+                            'is mandatory', required=False)
 
     else:
         raise Exception(f"Unknown flag: {flag_name}")
