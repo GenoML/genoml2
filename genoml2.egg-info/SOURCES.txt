@@ -28,6 +28,7 @@ genoml/discrete/supervised/training.py
 genoml/discrete/supervised/tuning.py
 genoml/misc/descriptions.json
 genoml/preprocessing/__init__.py
+genoml/preprocessing/adjuster.py
 genoml/preprocessing/featureselection.py
 genoml/preprocessing/harmonizing.py
 genoml/preprocessing/munging.py
