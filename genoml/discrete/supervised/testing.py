@@ -61,7 +61,6 @@ class test:
         test_predictions = test_predictions[:, 1]
 
         fpr, tpr, thresholds = roc_curve(self.y_test, test_predictions)
-        
         # Resolving issue #13 - ROC curve reporting to be consistent with performance metrics. 
         #roc_auc = auc(fpr, tpr)
         roc_auc = roc_auc_score(self.y_test, test_predictions)

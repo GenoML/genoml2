@@ -207,6 +207,21 @@ genoml discrete supervised munge \
 ```
 The `--feature_selection` flag uses extraTrees ([classifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.ExtraTreesClassifier.html) for discrete data; [regressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.ExtraTreesRegressor.html) for continuous data) to output a `*.approx_feature_importance.txt` file with the features most contributing to your model at the top. 
 
+Do you have additional covariates and confounders you would like to adjust for in the munging step prior to training your model? We use [Uniform Manifold Approximation and Projection for Dimension Reduction](https://umap-learn.readthedocs.io/en/latest/) (UMAP) to reduce your data into 2D, adjust, and exports a plot and an adjusted dataframe moving forward. This can be done by running the following: 
+```shell
+# Running GenoML munging on discreate data using PLINK binary files, a phenotype file, using UMAP to reduce dimensions and account for features, and running feature selection
+
+genoml discrete supervised munge \
+--prefix outputs/test_discrete_geno \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv \
+--addit examples/discrete/training_addit.csv \
+--umap_reduce yes \
+--target_columns examples/discrete/to_adjust.txt \
+--confounders examples/discrete/training_addit_confounder_example.csv \
+--feature_selection 50 
+```
+Here, the `--confounders` flag takes in a dataset of features that should be accounted for. This is a .csv file with the ID column and header included and is numeric with no missing data. **The ID column is mandatory.** The `--target_columns` flag takes in a .txt with a list of features (column names) you are adjusting by the confounders. 
 
 <a id="2"></a>
 ## 2. Training with GenoML

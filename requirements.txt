@@ -10,3 +10,4 @@ scipy
 seaborn
 statsmodels
 xgboost
+umap-learn

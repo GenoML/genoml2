@@ -20,7 +20,7 @@ import genoml.dependencies
 from genoml import preprocessing
 
 
-def main(prefix, impute, geno, skip_prune, pheno, addit, feature_selection, gwas, p, vif, iter, ref_cols_harmonize, data_type):
+def main(prefix, impute, geno, skip_prune, pheno, addit, feature_selection, gwas, p, vif, iter, ref_cols_harmonize, umap_reduce, target_columns, confounders, data_type):
     genoml.dependencies.check_dependencies()
 
     run_prefix = prefix
@@ -35,6 +35,9 @@ def main(prefix, impute, geno, skip_prune, pheno, addit, feature_selection, gwas
     vif_thresh = vif
     vif_iter = iter
     refColsHarmonize = ref_cols_harmonize
+    umap_reduce = umap_reduce
+    target_columns = target_columns
+    confounders = confounders
 
     # Print configurations
     print("")
@@ -55,6 +58,7 @@ def main(prefix, impute, geno, skip_prune, pheno, addit, feature_selection, gwas
     print(f"How many iterations of VIF filtering are you doing? {vif_iter}")
     print(
         f"The imputation method you picked is using the column {impute_type} to fill in any remaining NAs.")
+    print(f"Will you be adjusting additional features using UMAP dimensionality reduction? {umap_reduce}")
     print(
         "Give credit where credit is due, for this stage of analysis we use code from the great contributors to python packages: os, sys, argparse, numpy, pandas, joblib, math and time. We also use PLINK v1.9 from https://www.cog-genomics.org/plink/1.9/.")
     print("")
@@ -65,6 +69,12 @@ def main(prefix, impute, geno, skip_prune, pheno, addit, feature_selection, gwas
 
     # Process the PLINK inputs (for pruning)
     df = munger.plink_inputs()
+
+    # Run the UMAP dimension reduction 
+    if (umap_reduce == "yes"):
+        print(f"Beginning to reduce using UMAP...")
+        umap_df = preprocessing.adjuster(run_prefix, df, target_columns, confounders, umap_reduce)
+        df = umap_df.umap_reducer()
 
     # Run the feature selection using extraTrees
     if n_est > 0:
