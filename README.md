@@ -4,6 +4,8 @@
   <img width="300" height="300" src="https://github.com/GenoML/genoml2/blob/master/logo.png">
 </p>
 
+[![Downloads](https://static.pepy.tech/personalized-badge/genoml2?period=total&units=international_system&left_color=black&right_color=grey&left_text=Downloads)](https://pepy.tech/project/genoml2)
+
 # How to Get Started with GenoML
 
 
@@ -17,9 +19,13 @@ This README is a brief look into how to structure arguments and what arguments a
 
 `git clone https://github.com/GenoML/genoml2.git`
 
-- Install using pip
+- Install using pip or upgrade using pip
 
 `pip install genoml2`
+
+OR
+
+`pip install genoml2 --upgrade`
 
 - To install the `examples/` directory (~315 KB), you can use SVN (pre-installed on most Macs)
 
