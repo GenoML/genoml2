@@ -25,24 +25,27 @@ from matplotlib import style
 import seaborn as sns
 
 class adjuster:
-    def __init__(self, run_prefix, df, target_columns, confounders, umap_reduce):
+    def __init__(self, run_prefix, df, target_features, confounders, adjust_data, adjust_normalize, umap_reduce):
         self.run_prefix = run_prefix
         self.umap_reduce = umap_reduce
-        self.target_columns = target_columns
+        self.target_columns = target_features
         self.confounders = confounders
+        self.adjust_data = adjust_data
+        self.normalize_switch = adjust_normalize
         
         df = self.run_prefix + ".dataForML.h5"
         self.munged_data = df
 
-    def umap_reducer(self):
-        target_data_df = pd.read_hdf(self.munged_data, 'dataForML')
-        target_column_df = pd.read_csv(self.target_columns, names=['TARGETS'])
-        confounders_df = pd.read_csv(self.confounders)
+        self.target_data_df = pd.read_hdf(self.munged_data, 'dataForML')
+        self.target_column_df = pd.read_csv(self.target_columns, names=['TARGETS'])
+        self.confounders_df = pd.read_csv(self.confounders)
 
+    def umap_reducer(self):
+        
         if (self.umap_reduce == "yes"):
-            IDs = confounders_df['ID']
+            IDs = self.confounders_df['ID']
             IDs_df = pd.DataFrame(IDs) 
-            to_umap = confounders_df.drop(columns=['ID']) 
+            to_umap = self.confounders_df.drop(columns=['ID']) 
 
             reducer = umap.UMAP(random_state=153) 
             embedding = reducer.fit_transform(to_umap)
@@ -73,44 +76,49 @@ class adjuster:
             algo_out = self.runplot_out = self.run_prefix + '.umap_clustering.joblib'
             dump(exported_reducer, algo_out)
 
+            self.confounders_df = out_data
+
             print(f"The UMAP .joblib  file can be found here: {algo_out}")
+        
+        return self.confounders_df 
 
-            confounders_df = out_data
-            target_list = list(target_column_df['TARGETS'])
+    def normalize(self, confounders_df):
+        target_list = list(self.target_column_df['TARGETS'])
+        confounder_list = list(confounders_df.columns[1:])
+        columns_to_keep_list = list(self.target_data_df.columns)
 
-            confounder_list = list(confounders_df.columns[1:])
-            columns_to_keep_list = list(target_data_df.columns)
+        adjustments_df = self.target_data_df.merge(confounders_df, how='inner', on='ID', suffixes=['', '_y'])
 
-            adjustments_df = target_data_df.merge(confounders_df, how='inner', on='ID', suffixes=['', '_y'])
+        formula_for_confounders = ' + '.join(confounder_list)
 
-            formula_for_confounders = ' + '.join(confounder_list)
-            normalize_switch = "yes"
+        for target in target_list:
+            current_target = str(target)
+            print(f"Looking at the following feature: {current_target}")
+            
+            current_formula = current_target + " ~ " + formula_for_confounders
+            print(current_formula)
+            
+            target_model = smf.ols(formula=current_formula, data=adjustments_df).fit()
+            
+            if (self.normalize_switch == 'yes'):
+                adjustments_df['temp'] = pd.to_numeric(target_model.resid)
+                #print(type(adjustments_df['temp']))
+                mean_scalar = adjustments_df['temp'].mean()
+                sd_scalar = adjustments_df['temp'].std()
+                adjustments_df[current_target] = (adjustments_df['temp'] - mean_scalar)/sd_scalar
+                adjustments_df.drop(columns=['temp'], inplace=True)
+            else:
+                adjustments_df[current_target] = pd.to_numeric(target_model.resid)
 
-            if normalize_switch == "yes":
-                for target in target_list:
-                    current_target = str(target)
-                    print(f"Normalizing the following feature: {current_target}")
-                    
-                    current_formula = current_target + " ~ " + formula_for_confounders
-                    print(current_formula)
-                    
-                    target_model = smf.ols(formula=current_formula, data=adjustments_df).fit()
-                    
-                    if (normalize_switch == 'yes'):
-                        adjustments_df['temp'] = pd.to_numeric(target_model.resid)
-                        print(type(adjustments_df['temp']))
-                        mean_scalar = adjustments_df['temp'].mean()
-                        sd_scalar = adjustments_df['temp'].std()
-                        adjustments_df[current_target] = (adjustments_df['temp'] - mean_scalar)/sd_scalar
-                        adjustments_df.drop(columns=['temp'], inplace=True)
-                    else:
-                        adjustments_df[current_target] = pd.to_numeric(target_model.resid)
+        adjusted_df = adjustments_df[columns_to_keep_list]
 
-            adjusted_df = adjustments_df[columns_to_keep_list]
+        outfile_h5 = self.run_prefix + ".dataForML.h5"
+        adjusted_df.to_hdf(outfile_h5, key='dataForML', mode='w')
 
-            outfile_h5 = self.run_prefix + ".dataForML.h5"
-            adjusted_df.to_hdf(outfile_h5, key='dataForML', mode='w')
+        if (self.normalize_switch == 'yes'):
+            print(f"\n The adjusted dataframe following normalization can be found here: {outfile_h5}, your updated .dataForML file \n")
+        else:
+            print(f"\n The adjusted dataframe without normalization can be found here: {outfile_h5}, your updated .dataForML file \n")
 
-            print(f"The adjusted dataframe following UMAP reduction and normalization : {outfile_h5}")
 
         return adjusted_df

@@ -46,9 +46,9 @@ pip install .
 # Run GenoML 
 genoml
     # usage: genoml <command> [<args>]
-    #    continuous      TODO
-    #    discrete        TODO
-    #    harmonize       TODO
+        #    continuous      for processing continuous datatypes (ex: age at onset)
+        #    discrete        for processing discrete datatypes (ex: case vs. control status)
+        #    harmonize       for harmonizing incoming test datasets to use the same SNPs and reference alleles prior to munging, training, and testing
     # genoml: error: the following arguments are required: command
 
 ## MUNGING 

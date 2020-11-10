@@ -20,7 +20,7 @@ import genoml.dependencies
 from genoml import preprocessing
 
 
-def main(prefix, impute, geno, skip_prune, pheno, addit, feature_selection, gwas, p, vif, iter, ref_cols_harmonize, umap_reduce, target_columns, confounders, data_type):
+def main(prefix, impute, geno, skip_prune, r2_cutoff, pheno, addit, feature_selection, gwas, p, vif, iter, ref_cols_harmonize, umap_reduce, adjust_data, adjust_normalize, target_features, confounders, data_type):
     genoml.dependencies.check_dependencies()
 
     run_prefix = prefix
@@ -32,11 +32,14 @@ def main(prefix, impute, geno, skip_prune, pheno, addit, feature_selection, gwas
     n_est = feature_selection
     gwas_path = gwas
     p_gwas = p
+    r2_cutoff = r2_cutoff
     vif_thresh = vif
     vif_iter = iter
     refColsHarmonize = ref_cols_harmonize
     umap_reduce = umap_reduce
-    target_columns = target_columns
+    adjust_data = adjust_data
+    adjust_normalize = adjust_normalize
+    target_features = target_features
     confounders = confounders
 
     # Print configurations
@@ -49,6 +52,7 @@ def main(prefix, impute, geno, skip_prune, pheno, addit, feature_selection, gwas
         f"The output prefix for this run is {run_prefix} and will be appended to later runs of GenoML.")
     print(f"Working with genotype data? {geno_path}")
     print(f"Do you want GenoML to prune your SNPs for you? {prune_choice}")
+    print(f"The pruning threshold you've chosen is {r2_cutoff}")
     print(f"Working with additional predictors? {addit_path}")
     print(f"Where is your phenotype file? {pheno_path}")
     print(f"Any use for an external set of GWAS summary stats? {gwas_path}")
@@ -65,16 +69,22 @@ def main(prefix, impute, geno, skip_prune, pheno, addit, feature_selection, gwas
 
     # Run the munging script in genoml.preprocessing
     munger = preprocessing.munging(pheno_path=pheno_path, run_prefix=run_prefix, impute_type=impute_type, skip_prune=prune_choice,
-                     p_gwas=p_gwas, addit_path=addit_path, gwas_path=gwas_path, geno_path=geno_path, refColsHarmonize=refColsHarmonize)
+                     p_gwas=p_gwas, addit_path=addit_path, gwas_path=gwas_path, geno_path=geno_path, refColsHarmonize=refColsHarmonize, r2_cutoff=r2_cutoff)
 
     # Process the PLINK inputs (for pruning)
     df = munger.plink_inputs()
 
-    # Run the UMAP dimension reduction 
-    if (umap_reduce == "yes"):
-        print(f"Beginning to reduce using UMAP...")
-        umap_df = preprocessing.adjuster(run_prefix, df, target_columns, confounders, umap_reduce)
-        df = umap_df.umap_reducer()
+    # Run the UMAP dimension reduction/ adjuster 
+    if (adjust_data == "yes" or umap_reduce == "yes"):
+        adjuster = preprocessing.adjuster(run_prefix, df, target_features, confounders, adjust_data, adjust_normalize, umap_reduce)
+        reduced_df = adjuster.umap_reducer()
+        if (adjust_data == "yes"): 
+            print(f"\n You have chosen to adjust your data! \n")
+            if (adjust_normalize == "yes"):
+                print(f"\n You have also chosen to normalize your adjusted data \n")
+            else:
+                print(f"\n You have also chosen NOT to normalize your adjusted data \n")
+        df = adjuster.normalize(reduced_df)
 
     # Run the feature selection using extraTrees
     if n_est > 0:

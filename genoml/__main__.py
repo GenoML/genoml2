@@ -90,9 +90,10 @@ def handle_harmonize():
 
 def handle_continuous_supervised_munge():
     handle_endpoints("genoml discrete supervised munge",
-                     ["prefix", "impute", "geno", "skip_prune", "pheno", "addit",
+                     ["prefix", "impute", "geno", "skip_prune", "r2_cutoff", "pheno", "addit",
                       "feature_selection", "gwas", "p", "vif", "iter",
-                      "ref_cols_harmonize", "umap_reduce", "target_columns", "confounders"],
+                      "ref_cols_harmonize", "umap_reduce", "adjust_data",
+                      "adjust_normalize","target_features", "confounders"],
                       functools.partial(munging.main, data_type="c"), 3)
 
 
@@ -116,9 +117,10 @@ def handle_continuous_supervised_test():
 
 def handle_discrete_supervised_munge():
     handle_endpoints("genoml discrete supervised munge",
-                     ["prefix", "impute", "geno", "skip_prune", "pheno", "addit",
+                     ["prefix", "impute", "geno", "skip_prune", "r2_cutoff", "pheno", "addit",
                       "feature_selection", "gwas", "p", "vif", "iter",
-                      "ref_cols_harmonize", "umap_reduce", "target_columns", "confounders"],
+                      "ref_cols_harmonize", "umap_reduce", "adjust_data",
+                      "adjust_normalize","target_features", "confounders"],
                       functools.partial(munging.main, data_type="d"), 3)
 
 
@@ -270,6 +272,11 @@ def add_default_flag(parser, flag_name):
         parser.add_argument("--skip_prune", type=str, default="no",
                             help="[default: no].",
                             choices=["no", "yes"], required=False)
+
+    elif flag_name == "r2_cutoff":
+        parser.add_argument("--r2_cutoff", type=str, default="0.5",
+                            help="How strict would you like your pruning? [default: 0.5].",
+                            choices=["0.1", "0.2", "0.3", "0.4", "0.5"], required='--geno' in sys.argv)
                             
     elif flag_name == "addit":
         parser.add_argument("--addit", type=str, default=None,
@@ -333,22 +340,30 @@ def add_default_flag(parser, flag_name):
     
     elif flag_name == "umap_reduce":
         parser.add_argument('--umap_reduce', type=str, default="no",
-                            help = 'Would you like to reduce your dimensions with UMAP? [default: ', 
-                            choices=["no", "yes"], required=False)
-    #    if args.umap_reduce and (args.target_columns is None or args.confounders is None):
-    #        parser.error("Using the --umap_reduce option requires the --target_columns and --confounders options as well")
+                            help = 'Would you like to reduce your dimensions with UMAP? [default: no]. Must be run with --confounders flag if yes.', 
+                            choices=["no", "yes"], required='--confounders' in sys.argv and '--adjust_data' in sys.argv and '--adjust_normalize' in sys.argv)
 
-    elif flag_name == "target_columns":
-        parser.add_argument('--target_columns', type=str, default=None,
-                            help = 'For UMAP reduction. A .txt file, one column, with a list of features '
+    elif flag_name == "adjust_data":
+        parser.add_argument('--adjust_data', type=str, default="no",
+                            help = 'Would you like to adjust features and/or confounders in your data? [default: no]', 
+                            choices=["yes", "no"], required='--adjust_normalize' in sys.argv and '--target_features' in sys.argv or '--confounders' in sys.argv)
+
+    elif flag_name == "adjust_normalize":
+        parser.add_argument('--adjust_normalize', type=str, default="yes",
+                            help = 'Would you like to normalize the features and/or confounders you are adjusting for in your data? [default: yes]', 
+                            choices=["no", "yes"], required='--adjust_data' in sys.argv and '--target_features' in sys.argv or '--confounders' in sys.argv)
+
+    elif flag_name == "target_features":
+        parser.add_argument('--target_features', type=str, default=None,
+                            help = 'For adjusting data. A .txt file, one column, with a list of features '
                             'to adjust (no header). These should correspond to features '
-                            'in the munged dataset', required=False)
+                            'in the munged dataset', required='--adjust_data' in sys.argv and '--adjust_normalize' in sys.argv)
 
     elif flag_name == "confounders":
         parser.add_argument('--confounders', type=str, default=None,
-                            help = 'For UMAP reduction. A .csv of confounders to adjust for with ID column and header.'
+                            help = 'For adjusting data. A .csv of confounders to adjust for with ID column and header.'
                             'Numeric, with no missing data and the ID column '
-                            'is mandatory', required=False)
+                            'is mandatory', required='--adjust_data' in sys.argv and '--adjust_normalize' in sys.argv)
 
     else:
         raise Exception(f"Unknown flag: {flag_name}")
@@ -370,6 +385,7 @@ def handle_endpoints(command_name, flag_names, endpoint, level):
     utils.ContextScope._verbose = args.verbose
     args = [args.__dict__[name] for name in flag_names]
     args_string = ", ".join([f"{name}: {value if value else '[None]'}" for name, value in zip(flag_names, args)])
+
     with utils.ContextScope(f"Running {command_name}",
                             description="Args= " + args_string,
                             error=""):

@@ -24,7 +24,7 @@ from pandas_plink import read_plink1_bin
 import genoml.dependencies
 
 class munging:
-    def __init__(self, pheno_path, run_prefix="GenoML_data", impute_type="median", skip_prune="no", p_gwas=0.001, addit_path=None, gwas_path=None, geno_path=None, refColsHarmonize=None):
+    def __init__(self, pheno_path, run_prefix="GenoML_data", impute_type="median", skip_prune="no", p_gwas=0.001, addit_path=None, gwas_path=None, geno_path=None, refColsHarmonize=None, r2_cutoff="0.5"):
         self.pheno_path = pheno_path
         self.run_prefix = run_prefix
         
@@ -34,6 +34,8 @@ class munging:
         self.addit_path = addit_path
         self.gwas_path = gwas_path
         self.geno_path = geno_path
+
+        self.r2 = r2_cutoff
 
         self.skip_prune = skip_prune
         
@@ -86,9 +88,9 @@ class munging:
         if (self.geno_path != None):
             if (self.skip_prune == "no"):
             # Set the bashes
-                bash1a = f"{plink_exec} --bfile " + self.geno_path + " --indep-pairwise 1000 50 0.1"
+                bash1a = f"{plink_exec} --bfile " + self.geno_path + " --indep-pairwise 1000 50 " + self.r2
                 bash1b = f"{plink_exec} --bfile " + self.geno_path + " --extract " + self.run_prefix + \
-                    ".p_threshold_variants.tab" + " --indep-pairwise 1000 50 0.1"
+                    ".p_threshold_variants.tab" + " --indep-pairwise 1000 50 " + self.r2
             # may want to consider outputting temp_genos to dir in run_prefix
                 bash2 = f"{plink_exec} --bfile " + self.geno_path + \
                     " --extract plink.prune.in --make-bed --out temp_genos"
