@@ -276,7 +276,7 @@ def add_default_flag(parser, flag_name):
     elif flag_name == "r2_cutoff":
         parser.add_argument("--r2_cutoff", type=str, default="0.5",
                             help="How strict would you like your pruning? [default: 0.5].",
-                            choices=["0.1", "0.2", "0.3", "0.4", "0.5"], required='--geno' in sys.argv)
+                            choices=["0.1", "0.2", "0.3", "0.4", "0.5"], required=False)
                             
     elif flag_name == "addit":
         parser.add_argument("--addit", type=str, default=None,
