@@ -40,16 +40,17 @@ class test:
         print("")
 
         # Save out and drop the PHENO and sample ID columns 
-        y_test = self.df.PHENO
-        X_test = self.df.drop(columns=['PHENO'])
-        IDs_test = X_test.ID
-        X_test = X_test.drop(columns=['ID'])
+        df = self.df
+        y_test = df.PHENO
+        IDs_test= df.ID
+        X_test = df.drop(columns=['PHENO', 'ID'])
+
 
         # Save variables to use globally within the class 
         self.y_test = y_test
         self.X_test = X_test
         self.IDs_test = IDs_test
-
+ 
         return X_test
     
     def export_ROC(self):

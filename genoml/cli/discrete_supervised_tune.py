@@ -14,11 +14,12 @@
 # ==============================================================================
 
 import pandas as pd
+import numpy as np
 
 from genoml.discrete import supervised
 
 
-def main(run_prefix, metric_tune, max_iter, cv_count):
+def main(run_prefix, metric_tune, max_iter, cv_count, matchingCols):
     # TUNING
     # Create a dialogue with the user 
     print("Here is some basic info on the command you are about to run.")
@@ -34,6 +35,17 @@ def main(run_prefix, metric_tune, max_iter, cv_count):
 
     infile_h5 = run_prefix + ".dataForML.h5"
     df = pd.read_hdf(infile_h5, key = "dataForML")
+
+    # Addressing issue #12: 
+    if (matchingCols != None):
+        print(f"We are using the harmonized columns you provided here: {matchingCols}")
+        print(f"Note that you might have different/less features than before, given this was column list was harmonized between your reference and test dataset...")
+
+        with open(matchingCols, 'r') as matchingCols_file:
+                matching_column_names_list = matchingCols_file.read().splitlines()
+        
+        # Keep only the columns found in the file 
+        df = df[np.intersect1d(df.columns, matching_column_names_list)]
 
     best_algo_name_in = run_prefix + '.best_algorithm.txt'
     best_algo_df = pd.read_csv(best_algo_name_in, header=None, index_col=False)
@@ -69,6 +81,7 @@ def main(run_prefix, metric_tune, max_iter, cv_count):
 
     # Export the probabilites 
     model_tune.export_tune_hist_prob() 
+
 
     print("")
     print("End of tuning stage with GenoML.")

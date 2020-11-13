@@ -429,12 +429,17 @@ genoml discrete supervised train \
     # outputs/test_discrete_geno.trainedModel_withheldSample_probabilities.png
     # outputs/test_discrete_geno.training_withheldSamples_performanceMetrics.csv
 
+# OPTIONAL: TUNING YOUR RETRAINED REFERENCE MODEL ON INTERSECTING COLUMNS BETWEEN REFERENCE AND TEST
+genoml discrete supervised tune \
+--prefix outputs/test_discrete_geno \
+--matching_columns outputs/validation_test_discrete_geno.finalHarmonizedCols_toKeep.txt
 
 # 5. TEST RETRAINED REFERENCE MODEL ON UNSEEN DATA
 genoml discrete supervised test \
 --prefix outputs/validation_test_discrete_geno \
 --test_prefix outputs/validation_test_discrete_geno \
 --ref_model_prefix outputs/test_discrete_geno.trainedModel
+    # If testing a tuned model, change suffix from .trainedModel to .tunedModel
 # Files made: 
     # outputs/validation_test_discrete_geno.testedModel_allSample_predictions.csv
     # outputs/validation_test_discrete_geno.testedModel_allSample_probabilities.png

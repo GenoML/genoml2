@@ -55,6 +55,7 @@ snp160
 snp429
 snp159
 snp396
+snp374
 snp437
 snp486
 snp376
@@ -62,6 +63,8 @@ snp268
 snp255
 snp423
 snp250
+snp411
+snp194
 snp267
 snp424
 snp408
@@ -78,6 +81,7 @@ snp352
 snp38
 snp262
 snp441
+snp39
 snp307
 snp393
 snp133
@@ -115,6 +119,7 @@ snp325
 snp455
 snp418
 snp195
+snp210
 snp199
 snp109
 snp263
@@ -136,6 +141,7 @@ snp55
 snp56
 snp406
 snp47
+snp201
 snp313
 snp449
 snp49

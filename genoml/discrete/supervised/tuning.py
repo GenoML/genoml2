@@ -36,11 +36,10 @@ class tune():
         self.run_prefix = run_prefix
         self.max_iter = max_iter
         self.cv_count = cv_count
-       
+
         self.y_tune = df.PHENO
-        self.X_tune = df.drop(columns=['PHENO'])
-        self.IDs_tune = self.X_tune.ID
-        self.X_tune = self.X_tune.drop(columns=['ID'])
+        self.IDs_tune = df.ID
+        self.X_tune = df.drop(columns=['PHENO', 'ID'])
 
         best_algo_name_in = run_prefix + '.best_algorithm.txt'
         best_algo_df = pd.read_csv(best_algo_name_in, header=None, index_col=False)
@@ -197,9 +196,10 @@ class tune():
         print("RandomizedSearchCV took %.2f seconds for %d candidates"
             " parameter iterations." % ((time() - start), self.max_iter))
 
-        self.searchCVResults = rand_search.cv_results_
         self.rand_search = rand_search
+        self.searchCVResults = rand_search.cv_results_
         self.algo_tuned = rand_search.best_estimator_
+        
         return rand_search.cv_results_
 
     def report_tune(self):
@@ -290,7 +290,6 @@ class tune():
             algo_tuned = self.rand_search.best_estimator_
             
             ### Save it using joblib
-         
             algo_tuned_out = self.run_prefix + '.tunedModel.joblib'
             joblib.dump(algo_tuned, algo_tuned_out)
 
