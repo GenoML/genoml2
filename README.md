@@ -434,7 +434,7 @@ genoml discrete supervised tune \
 --prefix outputs/test_discrete_geno \
 --matching_columns outputs/validation_test_discrete_geno.finalHarmonizedCols_toKeep.txt
 
-# 5. TEST RETRAINED REFERENCE MODEL ON UNSEEN DATA
+# 5. TEST RETRAINED REFERENCE MODEL OR TUNED MODEL ON UNSEEN DATA
 genoml discrete supervised test \
 --prefix outputs/validation_test_discrete_geno \
 --test_prefix outputs/validation_test_discrete_geno \
