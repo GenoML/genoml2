@@ -160,12 +160,11 @@ class Munging(object):
         # Checking the imputation of non-genotype features
 
         # Saving out the proper HDF5 file
-        # dfs = [self.pheno_df, raw_df]
         if self.addit_path:
             addit_df = self.munge_additional_features()
             addit_df.to_hdf(self.output_datafile, key="addit")
 
-        # TODO: Can I get rid of this?
+        # TODO: Can I get rid of this? Why are we writing then reading??
         # if self.geno_path and self.addit_path:
         #     pheno = pd.read_hdf(self.output_datafile, key="pheno")
         #     geno = pd.read_hdf(self.output_datafile, key="geno")
@@ -182,51 +181,10 @@ class Munging(object):
         #     # merged = pd.merge(pheno, addit, on="ID", how="inner")
         merged = _merge_dfs([self.pheno_df, raw_df, addit_df], col_id="ID")
 
-        # Checking the reference column names flag
-        # If this is a step that comes after harmonize, then a .txt file with columns to keep should have been produced
-        # This is a list of column names from the reference dataset that the test dataset was harmonized against
-        # We want to compare apples to apples, so we will only keep the column names that match
-        if self.refColsHarmonize:
-            print("")
-            print(
-                f"Looks like you are munging after the harmonization step. Great! We will keep the columns generated from your reference dataset from that harmonize step that was exported to this file: {self.refColsHarmonize}"
-            )
-            print("")
-            with open(self.refColsHarmonize, "r") as refCols_file:
-                ref_column_names_list = refCols_file.read().splitlines()
+        self.merged = self.harmonize_refs(merged)
+        self.merged.to_hdf(self.output_datafile, key="dataForML")
 
-            # Keep the reference columns from the test dataset if found in test data
-            matching_cols = merged[
-                np.intersect1d(merged.columns, ref_column_names_list)
-            ]
-
-            # Make a list of final features that will be included in the model
-            # This will be used again when remunging the reference dataset
-            matching_cols_list = matching_cols.columns.values.tolist()
-
-            # Save out the final list
-            intersecting_cols_outfile = (
-                f"{self.run_prefix}.finalHarmonizedCols_toKeep.txt"
-            )
-
-            with open(intersecting_cols_outfile, "w") as filehandle:
-                for col in matching_cols_list:
-                    filehandle.write("%s\n" % col)
-
-            print(
-                f"A final list of harmonized columns between your reference and test dataset has been generated here: {intersecting_cols_outfile}"
-            )
-            print(
-                "Use this to re-train your reference dataset in order to move on to testing."
-            )
-
-            # Replace the dataframe variable with the matching options
-            merged = matching_cols
-
-        self.merged = merged
-        merged.to_hdf(self.output_datafile, key="dataForML")
-
-        features_list = merged.columns.values.tolist()
+        features_list = self.merged.columns.tolist()
 
         features_listpath = f"{self.run_prefix}.list_features.txt"
         with open(features_listpath, "w") as f:
@@ -332,6 +290,49 @@ class Munging(object):
         print("#" * 70)
         return addit_df
 
+    def harmonize_refs(self, merged_df) -> pd.DataFrame:
+        """Harmonizes data columns with an external reference file.??????????
+
+        > Checking the reference column names flag
+        > If this is a step that comes after harmonize, then a .txt file with columns
+        > to keep should have been produced. This is a list of column names from the
+        > reference dataset that the test dataset was harmonized against. We want to
+        > compare apples to apples, so we will only keep the column names that match.
+        """
+        if not self.refColsHarmonize:
+            return merged_df
+        print("")
+        print(
+            f"Looks like you are munging after the harmonization step. Great! We will keep the columns generated from your reference dataset from that harmonize step that was exported to this file: {self.refColsHarmonize}"
+        )
+        print("")
+        with open(self.refColsHarmonize, "r") as refCols_file:
+            ref_column_names_list = refCols_file.read().splitlines()
+
+        # Keep the reference columns from the test dataset if found in test data
+        matching_cols = merged_df[
+            np.intersect1d(merged_df.columns, ref_column_names_list)
+        ]
+
+        # Make a list of final features that will be included in the model
+        # This will be used again when remunging the reference dataset
+        matching_cols_list = matching_cols.columns.values.tolist()
+
+        # Save out the final list
+        intersecting_cols_outfile = f"{self.run_prefix}.finalHarmonizedCols_toKeep.txt"
+
+        with open(intersecting_cols_outfile, "w") as filehandle:
+            for col in matching_cols_list:
+                filehandle.write("%s\n" % col)
+
+        print(
+            "A final list of harmonized columns between your reference and test "
+            f"dataset has been generated here: {intersecting_cols_outfile}\n"
+            "Use this to re-train your reference dataset in order to move on to "
+            "testing."
+        )
+        return matching_cols
+
 
 def get_bash_scripts(
     skip_prune: str, geno_path: str, run_prefix: str, r2: Optional[str] = None
@@ -404,9 +405,9 @@ def _fill_impute_na(impute_type, df) -> pd.DataFrame:
 def _merge_dfs(dfs: List[pd.DataFrame], col_id: str) -> pd.DataFrame:
     merged = None
     for df in dfs:
-        if not df:
+        if df is None:
             continue
-        if not merged:
+        if merged is None:
             merged = df
         else:
             merged = pd.merge(merged, df, on=col_id, how="inner")
