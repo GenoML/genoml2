@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
+import pathlib
 import subprocess
 # Import the necessary packages
 from typing import List, Optional, Tuple
@@ -114,7 +115,10 @@ class Munging(object):
         addit_df = None
 
         if self.geno_path:
-            self._run_external_plink_commands()
+            # Shortcut for skipping crashes.
+            processed_file = pathlib.Path("temp_genos.bed")
+            if not processed_file.exists():
+                self._run_external_plink_commands()
             g = read_plink1_bin("temp_genos.bed")
             g_pruned = g.drop(
                 [
@@ -131,7 +135,7 @@ class Munging(object):
             )
 
             g_pruned = g_pruned.set_index({"sample": "iid", "variant": "snp"})
-            g_pruned.values = g_pruned.values.astype("int")
+            # g_pruned.values = g_pruned.values.astype("int")
 
             # swap pandas-plink genotype coding to match .raw format...more about that below:
 
@@ -160,9 +164,9 @@ class Munging(object):
             #    del raw_df.columns.name
 
             # now, remove temp_genos
-            bash_rm_temp = "rm temp_genos.*"
-            print(bash_rm_temp)
-            subprocess.run(bash_rm_temp, shell=True)
+            # bash_rm_temp = "rm temp_genos.*"
+            # print(bash_rm_temp)
+            # subprocess.run(bash_rm_temp, shell=True)
             # Checking the impute flag and execute
             # Currently only supports mean and median
             raw_df = _fill_impute_na(self.impute_type, raw_df)
