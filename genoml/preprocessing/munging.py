@@ -62,8 +62,10 @@ class Munging(object):
         # Raise an error and exit if the phenotype file is not properly formatted
         if not {"ID", "PHENO"}.issubset(self.pheno_df.columns):
             raise ValueError(
-                "Error: It doesn't look as though your phenotype file is properly formatted.\n"
-                "Did you check that the columns are 'ID' and 'PHENO' and that controls=0 and cases=1?"
+                "Error: It doesn't look as though your phenotype file is properly "
+                "formatted.\n"
+                "Did you check that the columns are 'ID' and 'PHENO' and that "
+                "controls=0 and cases=1?"
             )
 
         # Typecase to read in the ID column as a string and the PHENO as an integer
@@ -89,7 +91,8 @@ class Munging(object):
 
         if not geno_path:
             print(
-                "So no genotypes? Okay, we'll just use additional features provided for the predictions."
+                "So no genotypes? Okay, we'll just use additional features provided "
+                "for the predictions."
             )
         else:
             print("Exporting genotype data")
@@ -215,20 +218,24 @@ class Munging(object):
             outfile = self.run_prefix + ".p_threshold_variants.tab"
             snps_to_keep.to_csv(outfile, index=False, sep="\t")
             print(f"Your candidate variant list is right here: {outfile}.")
-            print(
-                f"A list of variants and the allele being counted in the dosages (usually the minor allele) can be found here: {self.run_prefix}.variants_and_alleles.tab"
-            )
-            for cmd in cmds_b:
-                subprocess.run(cmd, shell=True)
+            cmds = cmds_b
         else:
-            print(
-                f"A list of variants and the allele being counted in the dosages (usually the minor allele) can be found here: {self.run_prefix}.variants_and_alleles.tab"
-            )
-            for cmd in cmds_a:
-                subprocess.run(cmd, shell=True)
+            cmds = cmds_a
+        print(
+            "A list of variants and the allele being counted in the dosages "
+            "(usually the minor allele) can be found here: "
+            f"{self.run_prefix}.variants_and_alleles.tab"
+        )
+        for cmd in cmds:
+            subprocess.run(cmd, shell=True)
 
     def munge_additional_features(self) -> Optional[pd.DataFrame]:
-        """Munges additional features and cleans up statistically insignificant data."""
+        """Munges additional features and cleans up statistically insignificant data.
+
+        * Z-Scales the features.
+        * Remove any columns with a standard deviation of zero
+
+        """
         if not self.addit_path:
             return None
         addit_df = _fill_impute_na(self.impute_type, self.addit_df)
@@ -237,15 +244,13 @@ class Munging(object):
         cols = [col for col in addit_df.columns if not col == "ID"]
         addit_df.drop(labels="ID", axis=0, inplace=True)
 
-        # Z-scale the features
-        print("Now Z-scaling your non-genotype features...")
-
         # Remove any columns with a standard deviation of zero
         print(
-            "Removing any columns that have a standard deviation of 0 prior to Z-scaling..."
+            "Removing any columns that have a standard deviation of 0 prior to "
+            "Z-scaling..."
         )
-
-        if any(addit_df.std() == 0.0):
+        std = addit_df.std()
+        if any(std == 0.0):
             print(
                 "\n"
                 "Looks like there's at least one column with a standard deviation "
@@ -253,7 +258,7 @@ class Munging(object):
                 "\n"
             )
             addit_keep = addit_df.drop(
-                addit_df.std()[addit_df.std() == 0.0].index.values, axis=1
+                std[std == 0.0].index.values, axis=1
             )
             addit_keep_list = list(addit_keep.columns.values)
 
@@ -266,24 +271,26 @@ class Munging(object):
 
             cols = addit_keep_list
 
-        print()
+        # Z-scale the features
+        print("Now Z-scaling your non-genotype features...\n")
         for col in cols:
             if (addit_df[col].min() == 0.0) and (addit_df[col].max() == 1.0):
                 print(
-                    col,
-                    "is likely a binary indicator or a proportion and will not be scaled, just + 1 all the values of this variable and rerun to flag this column to be scaled.",
+                    f"{col} is likely a binary indicator or a proportion and will not "
+                    "be scaled, just + 1 all the values of this variable and rerun to "
+                    "flag this column to be scaled.",
                 )
             else:
                 addit_df[col] = (addit_df[col] - addit_df[col].mean()) / addit_df[
                     col
                 ].std(ddof=0)
 
-        print("")
         print(
-            "You have just Z-scaled your non-genotype features, putting everything on a numeric scale similar to genotypes."
-        )
-        print(
-            "Now your non-genotype features might look a little closer to zero (showing the first few lines of the left-most and right-most columns)..."
+            "\n"
+            "You have just Z-scaled your non-genotype features, putting everything on "
+            "a numeric scale similar to genotypes.\n"
+            "Now your non-genotype features might look a little closer to zero "
+            "(showing the first few lines of the left-most and right-most columns)..."
         )
         print("#" * 70)
         print(addit_df.describe())
@@ -301,11 +308,12 @@ class Munging(object):
         """
         if not self.refColsHarmonize:
             return merged_df
-        print("")
         print(
-            f"Looks like you are munging after the harmonization step. Great! We will keep the columns generated from your reference dataset from that harmonize step that was exported to this file: {self.refColsHarmonize}"
+            "\n"
+            f"Looks like you are munging after the harmonization step. Great! We will "
+            f"keep the columns generated from your reference dataset from that "
+            f"harmonize step that was exported to this file: {self.refColsHarmonize}\n"
         )
-        print("")
         with open(self.refColsHarmonize, "r") as refCols_file:
             ref_column_names_list = refCols_file.read().splitlines()
 
@@ -361,11 +369,8 @@ def get_bash_scripts(
     elif skip_prune == "yes":
         bash1a = f"{plink_exec} --bfile {geno_path}"
         bash1b = (
-            f"{plink_exec} --bfile "
-            + geno_path
-            + " --extract "
-            + run_prefix
-            + ".p_threshold_variants.tab"
+            f"{plink_exec} --bfile {geno_path} --extract "
+            f"{run_prefix}.p_threshold_variants.tab"
         )
         # may want to consider outputting temp_genos to dir in run_prefix
         bash2 = f"{plink_exec} --bfile {geno_path} --make-bed --out temp_genos"
@@ -389,9 +394,9 @@ def _fill_impute_na(impute_type, df) -> pd.DataFrame:
         df = df.fillna(df.median())
     print(
         "\n"
-        f"You have just imputed your genotype features, covering up NAs with "
+        "You have just imputed your genotype features, covering up NAs with "
         f"the column {impute_type} so that analyses don't crash due to "
-        f"missing data.\n"
+        "missing data.\n"
         "Now your genotype features might look a little better (showing the "
         "first few lines of the left-most and right-most columns)..."
     )
