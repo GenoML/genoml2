@@ -49,6 +49,7 @@ snp160	G
 snp429	G
 snp159	G
 snp396	G
+snp374	C
 snp437	G
 snp486	T
 snp376	A
@@ -56,6 +57,8 @@ snp268	C
 snp255	T
 snp423	C
 snp250	A
+snp411	T
+snp194	A
 snp267	C
 snp424	A
 snp408	G
@@ -72,6 +75,7 @@ snp352	G
 snp38	G
 snp262	C
 snp441	T
+snp39	T
 snp307	G
 snp393	T
 snp133	G
@@ -109,6 +113,7 @@ snp325	G
 snp455	C
 snp418	T
 snp195	A
+snp210	A
 snp199	G
 snp109	G
 snp263	G
@@ -130,6 +135,7 @@ snp55	T
 snp56	C
 snp406	T
 snp47	G
+snp201	G
 snp313	A
 snp449	G
 snp49	A

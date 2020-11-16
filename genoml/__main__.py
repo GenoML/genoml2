@@ -105,7 +105,7 @@ def handle_continuous_supervised_train():
 
 def handle_continuous_supervised_tune():
     handle_endpoints("genoml continuous supervised tune",
-                     ["prefix", "max_tune", "n_cv"],
+                     ["prefix", "max_tune", "n_cv", "matching_columns"],
                      continuous_supervised_tune.main, 3)
 
 
@@ -133,7 +133,7 @@ def handle_discrete_supervised_train():
 
 def handle_discrete_supervised_tune():
     handle_endpoints("genoml discrete supervised tune",
-                     ["prefix", "metric_tune", "max_tune", "n_cv"],
+                     ["prefix", "metric_tune", "max_tune", "n_cv", "matching_columns"],
                      discrete_supervised_tune.main, 3)
 
 
@@ -362,7 +362,7 @@ def add_default_flag(parser, flag_name):
     elif flag_name == "confounders":
         parser.add_argument('--confounders', type=str, default=None,
                             help = 'For adjusting data. A .csv of confounders to adjust for with ID column and header.'
-                            'Numeric, with no missing data and the ID column '
+                            'Numeric, with no missing data and the ID column'
                             'is mandatory', required='--adjust_data' in sys.argv and '--adjust_normalize' in sys.argv)
 
     else:

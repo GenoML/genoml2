@@ -1,8 +1,13 @@
 ID
 PHENO
+SEX_COV
+AGE
+UPSIT
+FAMILY_HISTORY
 snp410
 snp403
 snp164
+snp363
 snp439
 snp370
 snp389
@@ -39,6 +44,7 @@ snp499
 snp443
 snp488
 snp32
+snp33
 snp113
 snp242
 snp369
@@ -49,6 +55,7 @@ snp160
 snp429
 snp159
 snp396
+snp374
 snp437
 snp486
 snp376
@@ -56,6 +63,8 @@ snp268
 snp255
 snp423
 snp250
+snp411
+snp194
 snp267
 snp424
 snp408
@@ -72,6 +81,7 @@ snp352
 snp38
 snp262
 snp441
+snp39
 snp307
 snp393
 snp133
@@ -109,6 +119,7 @@ snp325
 snp455
 snp418
 snp195
+snp210
 snp199
 snp109
 snp263
@@ -128,7 +139,9 @@ snp293
 snp167
 snp55
 snp56
+snp406
 snp47
+snp201
 snp313
 snp449
 snp49
@@ -148,8 +161,10 @@ snp318
 snp166
 snp241
 snp315
+snp53
 snp91
 snp284
+snp280
 snp354
 snp46
 snp464
@@ -194,6 +209,7 @@ snp310
 snp298
 snp185
 snp61
+snp392
 snp452
 snp189
 snp62
@@ -218,6 +234,7 @@ snp63
 snp80
 snp161
 snp330
+snp316
 snp226
 snp246
 snp60
@@ -249,6 +266,7 @@ snp66
 snp111
 snp67
 snp187
+snp221
 snp149
 snp386
 snp240
@@ -262,6 +280,7 @@ snp68
 snp69
 snp106
 snp273
+snp481
 snp70
 snp230
 snp387
@@ -332,6 +351,9 @@ snp401
 snp291
 snp176
 snp487
+snp321
+snp171
+snp301
 snp9
 snp10
 snp173
@@ -361,6 +383,7 @@ snp425
 snp283
 snp222
 snp209
+snp14
 snp198
 snp233
 snp444
@@ -421,7 +444,9 @@ snp102
 snp214
 snp252
 snp25
+snp216
 snp26
+snp289
 snp132
 snp446
 snp311
