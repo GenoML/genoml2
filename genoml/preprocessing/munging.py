@@ -28,14 +28,14 @@ import genoml.dependencies
 class Munging(object):
     def __init__(
         self,
-        pheno_path,
+        pheno_path: str,
         run_prefix="GenoML_data",
         impute_type="median",
         skip_prune="no",
         p_gwas=0.001,
-        addit_path=None,
-        gwas_path=None,
-        geno_path=None,
+        addit_path: Optional[str] = None,
+        gwas_path: Optional[str] = None,
+        geno_path: Optional[str] = None,
         refColsHarmonize=None,
         r2_cutoff="0.5",
     ):
@@ -49,10 +49,6 @@ class Munging(object):
             )
         self.impute_type = impute_type
         self.p_gwas = p_gwas
-
-        self.addit_path = addit_path
-        self.gwas_path = gwas_path
-        self.geno_path = geno_path
 
         self.r2 = r2_cutoff
 
@@ -74,18 +70,19 @@ class Munging(object):
         self.pheno_df["ID"] = self.pheno_df["ID"].astype(str)
         self.pheno_df["PHENO"] = self.pheno_df["PHENO"].astype(int)
 
+        self.addit_path = addit_path
+        self.gwas_path = gwas_path
+        self.geno_path = geno_path
         if not addit_path:
-            print(
-                "No additional features as predictors? No problem, we'll stick to genotypes."
-            )
+            print("No additional non-genotypical features supplied.")
+            # "No additional features as predictors? No problem, we'll stick to genotypes."
             self.addit_df = None
         else:
             self.addit_df = pd.read_csv(addit_path, engine="c")
 
         if not gwas_path:
-            print(
-                "So you don't want to filter on P values from external GWAS? No worries, we don't usually either (if the dataset is large enough)."
-            )
+            print("No GWAS data supplied.")
+            # "So you don't want to filter on P values from external GWAS? No worries, we don't usually either (if the dataset is large enough)."
             self.gwas_df = None
         else:
             self.gwas_df = pd.read_csv(gwas_path, engine="c")
@@ -97,38 +94,17 @@ class Munging(object):
         else:
             print("Exporting genotype data")
 
+        self.output_datafile = self.run_prefix + ".dataForML.h5"
+        self.merged: Optional[pd.DataFrame] = None
+
     def plink_inputs(self):
         # Initializing some variables
-        addit_df = self.addit_df
-        pheno_df = self.pheno_df
-
-        outfile_h5 = self.run_prefix + ".dataForML.h5"
-        pheno_df.to_hdf(outfile_h5, key="pheno", mode="w")
+        self.pheno_df.to_hdf(self.output_datafile, key="pheno", mode="w")
         raw_df = None
+        addit_df = None
 
-        if self.geno_path is not None:
-            cmds_a, cmds_b = get_bash_scripts(
-                self.skip_prune, self.geno_path, self.run_prefix, self.r2
-            )
-            if self.gwas_path is not None:
-                p_thresh = self.p_gwas
-                gwas_df_reduced = self.gwas_df[["SNP", "p"]]
-                snps_to_keep = gwas_df_reduced.loc[(gwas_df_reduced["p"] <= p_thresh)]
-                outfile = self.run_prefix + ".p_threshold_variants.tab"
-                snps_to_keep.to_csv(outfile, index=False, sep="\t")
-                print(f"Your candidate variant list is right here: {outfile}.")
-                print(
-                    f"A list of variants and the allele being counted in the dosages (usually the minor allele) can be found here: {self.run_prefix}.variants_and_alleles.tab"
-                )
-                for cmd in cmds_b:
-                    subprocess.run(cmd, shell=True)
-            else:
-                print(
-                    f"A list of variants and the allele being counted in the dosages (usually the minor allele) can be found here: {self.run_prefix}.variants_and_alleles.tab"
-                )
-                for cmd in cmds_a:
-                    subprocess.run(cmd, shell=True)
-
+        if self.geno_path:
+            self._run_external_plink_commands()
             g = read_plink1_bin("temp_genos.bed")
             g_pruned = g.drop(
                 [
@@ -179,97 +155,38 @@ class Munging(object):
             subprocess.run(bash_rm_temp, shell=True)
             # Checking the impute flag and execute
             # Currently only supports mean and median
-            raw_df = _fill_na(self.impute_type, raw_df)
+            raw_df = _fill_impute_na(self.impute_type, raw_df)
+            raw_df.to_hdf(self.output_datafile, key="geno")
         # Checking the imputation of non-genotype features
 
-        if self.addit_path is not None:
-            addit_df = _fill_na(self.impute_type, addit_df)
-
-            # Remove the ID column
-            cols = [col for col in addit_df.columns if not col == "ID"]
-            addit_df = addit_df[[col for col in addit_df.columns if not col == "ID"]]
-
-            # Z-scale the features
-            print("Now Z-scaling your non-genotype features...")
-
-            # Remove any columns with a standard deviation of zero
-            print(
-                "Removing any columns that have a standard deviation of 0 prior to Z-scaling..."
-            )
-
-            if any(addit_df.std() == 0.0):
-                print(
-                    "\n"
-                    "Looks like there's at least one column with a standard deviation "
-                    "of 0. Let's remove that for you..."
-                    "\n"
-                )
-                addit_keep = addit_df.drop(
-                    addit_df.std()[addit_df.std() == 0.0].index.values, axis=1
-                )
-                addit_keep_list = list(addit_keep.columns.values)
-
-                addit_df = addit_df[addit_keep_list]
-
-                addit_keep_list.remove("ID")
-                removed_list = np.setdiff1d(cols, addit_keep_list)
-                for removed_column in range(len(removed_list)):
-                    print(f"The column {removed_list[removed_column]} was removed")
-
-                cols = addit_keep_list
-
-            print("")
-            for col in cols:
-                if (addit_df[col].min() == 0.0) and (addit_df[col].max() == 1.0):
-                    print(
-                        col,
-                        "is likely a binary indicator or a proportion and will not be scaled, just + 1 all the values of this variable and rerun to flag this column to be scaled.",
-                    )
-                else:
-                    addit_df[col] = (addit_df[col] - addit_df[col].mean()) / addit_df[
-                        col
-                    ].std(ddof=0)
-
-            print("")
-            print(
-                "You have just Z-scaled your non-genotype features, putting everything on a numeric scale similar to genotypes."
-            )
-            print(
-                "Now your non-genotype features might look a little closer to zero (showing the first few lines of the left-most and right-most columns)..."
-            )
-            print("#" * 70)
-            print(addit_df.describe())
-            print("#" * 70)
-
         # Saving out the proper HDF5 file
-        if self.geno_path is not None:
-            merged = raw_df.to_hdf(outfile_h5, key="geno")
+        # dfs = [self.pheno_df, raw_df]
+        if self.addit_path:
+            addit_df = self.munge_additional_features()
+            addit_df.to_hdf(self.output_datafile, key="addit")
 
-        if self.addit_path is not None:
-            merged = addit_df.to_hdf(outfile_h5, key="addit")
-
-        if (self.geno_path is not None) & (self.addit_path is not None):
-            pheno = pd.read_hdf(outfile_h5, key="pheno")
-            geno = pd.read_hdf(outfile_h5, key="geno")
-            addit = pd.read_hdf(outfile_h5, key="addit")
-            temp = pd.merge(pheno, addit, on="ID", how="inner")
-            merged = pd.merge(temp, geno, on="ID", how="inner")
-
-        if (self.geno_path is not None) & (self.addit_path is None):
-            pheno = pd.read_hdf(outfile_h5, key="pheno")
-            geno = pd.read_hdf(outfile_h5, key="geno")
-            merged = pd.merge(pheno, geno, on="ID", how="inner")
-
-        if (self.geno_path is None) & (self.addit_path is not None):
-            pheno = pd.read_hdf(outfile_h5, key="pheno")
-            addit = pd.read_hdf(outfile_h5, key="addit")
-            merged = pd.merge(pheno, addit, on="ID", how="inner")
+        # TODO: Can I get rid of this?
+        # if self.geno_path and self.addit_path:
+        #     pheno = pd.read_hdf(self.output_datafile, key="pheno")
+        #     geno = pd.read_hdf(self.output_datafile, key="geno")
+        #     addit = pd.read_hdf(self.output_datafile, key="addit")
+        #     temp = pd.merge(pheno, addit, on="ID", how="inner")
+        #     # merged = pd.merge(temp, geno, on="ID", how="inner")
+        # elif self.geno_path and not self.addit_path:
+        #     pheno = pd.read_hdf(self.output_datafile, key="pheno")
+        #     geno = pd.read_hdf(self.output_datafile, key="geno")
+        #     # merged = pd.merge(pheno, geno, on="ID", how="inner")
+        # elif not self.geno_path and self.addit_path:
+        #     pheno = pd.read_hdf(self.output_datafile, key="pheno")
+        #     addit = pd.read_hdf(self.output_datafile, key="addit")
+        #     # merged = pd.merge(pheno, addit, on="ID", how="inner")
+        merged = _merge_dfs([self.pheno_df, raw_df, addit_df], col_id="ID")
 
         # Checking the reference column names flag
         # If this is a step that comes after harmonize, then a .txt file with columns to keep should have been produced
         # This is a list of column names from the reference dataset that the test dataset was harmonized against
         # We want to compare apples to apples, so we will only keep the column names that match
-        if self.refColsHarmonize is not None:
+        if self.refColsHarmonize:
             print("")
             print(
                 f"Looks like you are munging after the harmonization step. Great! We will keep the columns generated from your reference dataset from that harmonize step that was exported to this file: {self.refColsHarmonize}"
@@ -289,7 +206,7 @@ class Munging(object):
 
             # Save out the final list
             intersecting_cols_outfile = (
-                self.run_prefix + ".finalHarmonizedCols_toKeep.txt"
+                f"{self.run_prefix}.finalHarmonizedCols_toKeep.txt"
             )
 
             with open(intersecting_cols_outfile, "w") as filehandle:
@@ -307,54 +224,133 @@ class Munging(object):
             merged = matching_cols
 
         self.merged = merged
-        merged.to_hdf(outfile_h5, key="dataForML")
+        merged.to_hdf(self.output_datafile, key="dataForML")
 
         features_list = merged.columns.values.tolist()
 
-        features_listpath = self.run_prefix + ".list_features.txt"
+        features_listpath = f"{self.run_prefix}.list_features.txt"
         with open(features_listpath, "w") as f:
             for feature in features_list:
                 f.write("%s\n" % feature)
 
         print(
-            f"An updated list of {len(features_list)} features, including ID and PHENO, that is in your munged dataForML.h5 file can be found here {features_listpath}"
-        )
-
-        print("")
-        print(
-            f"Your .dataForML file that has been fully munged can be found here: {outfile_h5}"
+            f"An updated list of {len(features_list)} features, including ID and PHENO,"
+            f" that is in your munged dataForML.h5 file can be found here "
+            f"{features_listpath}"
+            "\n"
+            f"Your .dataForML file that has been fully munged can be found here: "
+            f"{self.output_datafile}"
         )
 
         return merged
+
+    def _run_external_plink_commands(self) -> None:
+        if not self.geno_path:
+            return
+        cmds_a, cmds_b = get_bash_scripts(
+            self.skip_prune, self.geno_path, self.run_prefix, self.r2
+        )
+        if self.gwas_path:
+            p_thresh = self.p_gwas
+            gwas_df_reduced = self.gwas_df[["SNP", "p"]]
+            snps_to_keep = gwas_df_reduced.loc[(gwas_df_reduced["p"] <= p_thresh)]
+            outfile = self.run_prefix + ".p_threshold_variants.tab"
+            snps_to_keep.to_csv(outfile, index=False, sep="\t")
+            print(f"Your candidate variant list is right here: {outfile}.")
+            print(
+                f"A list of variants and the allele being counted in the dosages (usually the minor allele) can be found here: {self.run_prefix}.variants_and_alleles.tab"
+            )
+            for cmd in cmds_b:
+                subprocess.run(cmd, shell=True)
+        else:
+            print(
+                f"A list of variants and the allele being counted in the dosages (usually the minor allele) can be found here: {self.run_prefix}.variants_and_alleles.tab"
+            )
+            for cmd in cmds_a:
+                subprocess.run(cmd, shell=True)
+
+    def munge_additional_features(self) -> Optional[pd.DataFrame]:
+        """Munges additional features and cleans up statistically insignificant data."""
+        if not self.addit_path:
+            return None
+        addit_df = _fill_impute_na(self.impute_type, self.addit_df)
+
+        # Remove the ID column
+        cols = [col for col in addit_df.columns if not col == "ID"]
+        addit_df.drop(labels="ID", axis=0, inplace=True)
+
+        # Z-scale the features
+        print("Now Z-scaling your non-genotype features...")
+
+        # Remove any columns with a standard deviation of zero
+        print(
+            "Removing any columns that have a standard deviation of 0 prior to Z-scaling..."
+        )
+
+        if any(addit_df.std() == 0.0):
+            print(
+                "\n"
+                "Looks like there's at least one column with a standard deviation "
+                "of 0. Let's remove that for you..."
+                "\n"
+            )
+            addit_keep = addit_df.drop(
+                addit_df.std()[addit_df.std() == 0.0].index.values, axis=1
+            )
+            addit_keep_list = list(addit_keep.columns.values)
+
+            addit_df = addit_df[addit_keep_list]
+
+            addit_keep_list.remove("ID")
+            removed_list = np.setdiff1d(cols, addit_keep_list)
+            for removed_column in range(len(removed_list)):
+                print(f"The column {removed_list[removed_column]} was removed")
+
+            cols = addit_keep_list
+
+        print()
+        for col in cols:
+            if (addit_df[col].min() == 0.0) and (addit_df[col].max() == 1.0):
+                print(
+                    col,
+                    "is likely a binary indicator or a proportion and will not be scaled, just + 1 all the values of this variable and rerun to flag this column to be scaled.",
+                )
+            else:
+                addit_df[col] = (addit_df[col] - addit_df[col].mean()) / addit_df[
+                    col
+                ].std(ddof=0)
+
+        print("")
+        print(
+            "You have just Z-scaled your non-genotype features, putting everything on a numeric scale similar to genotypes."
+        )
+        print(
+            "Now your non-genotype features might look a little closer to zero (showing the first few lines of the left-most and right-most columns)..."
+        )
+        print("#" * 70)
+        print(addit_df.describe())
+        print("#" * 70)
+        return addit_df
 
 
 def get_bash_scripts(
     skip_prune: str, geno_path: str, run_prefix: str, r2: Optional[str] = None
 ) -> Tuple[List, List]:
+    """Gets the PLINK bash scripts"""
     plink_exec = genoml.dependencies.check_plink()
     if skip_prune == "no":
         # Set the bashes
-        bash1a = (
-            f"{plink_exec} --bfile " + geno_path + " --indep-pairwise 1000 50 " + r2
-        )
+        bash1a = f"{plink_exec} --bfile {geno_path} --indep-pairwise 1000 50 " + r2
         bash1b = (
-            f"{plink_exec} --bfile "
-            + geno_path
-            + " --extract "
-            + run_prefix
-            + ".p_threshold_variants.tab"
-            + " --indep-pairwise 1000 50 "
-            + r2
+            f"{plink_exec} --bfile {geno_path} --extract "
+            f"{run_prefix}.p_threshold_variants.tab --indep-pairwise 1000 50 {r2}"
         )
         # may want to consider outputting temp_genos to dir in run_prefix
         bash2 = (
-            f"{plink_exec} --bfile "
-            + geno_path
+            f"{plink_exec} --bfile {geno_path}"
             + " --extract plink.prune.in --make-bed --out temp_genos"
         )
-        bash3 = (
-            "cut -f 2,5 temp_genos.bim > " + run_prefix + ".variants_and_alleles.tab"
-        )
+        bash3 = f"cut -f 2,5 temp_genos.bim > {run_prefix}.variants_and_alleles.tab"
         bash4 = "rm plink.log"
         bash5 = "rm plink.prune.*"
         #    bash6 = "rm " + self.run_prefix + ".log"
@@ -362,7 +358,7 @@ def get_bash_scripts(
         cmds_a = [bash1a, bash2, bash3, bash4, bash5]
         cmds_b = [bash1b, bash2, bash3, bash4, bash5]
     elif skip_prune == "yes":
-        bash1a = f"{plink_exec} --bfile " + geno_path
+        bash1a = f"{plink_exec} --bfile {geno_path}"
         bash1b = (
             f"{plink_exec} --bfile "
             + geno_path
@@ -371,10 +367,8 @@ def get_bash_scripts(
             + ".p_threshold_variants.tab"
         )
         # may want to consider outputting temp_genos to dir in run_prefix
-        bash2 = f"{plink_exec} --bfile " + geno_path + " --make-bed --out temp_genos"
-        bash3 = (
-            "cut -f 2,5 temp_genos.bim > " + run_prefix + ".variants_and_alleles.tab"
-        )
+        bash2 = f"{plink_exec} --bfile {geno_path} --make-bed --out temp_genos"
+        bash3 = f"cut -f 2,5 temp_genos.bim > {run_prefix}.variants_and_alleles.tab"
         bash4 = "rm plink.log"
 
         # Set the bash command groups
@@ -387,7 +381,7 @@ def get_bash_scripts(
     return cmds_a, cmds_b
 
 
-def _fill_na(impute_type, df) -> pd.DataFrame:
+def _fill_impute_na(impute_type, df) -> pd.DataFrame:
     if impute_type.lower() == "mean":
         df = df.fillna(df.mean())
     elif impute_type.lower() == "median":
@@ -405,3 +399,15 @@ def _fill_na(impute_type, df) -> pd.DataFrame:
     print("#" * 70)
     print("")
     return df
+
+
+def _merge_dfs(dfs: List[pd.DataFrame], col_id: str) -> pd.DataFrame:
+    merged = None
+    for df in dfs:
+        if not df:
+            continue
+        if not merged:
+            merged = df
+        else:
+            merged = pd.merge(merged, df, on=col_id, how="inner")
+    return merged
