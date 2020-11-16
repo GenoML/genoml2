@@ -32,7 +32,7 @@ class Munging(object):
         run_prefix="GenoML_data",
         impute_type="median",
         skip_prune="no",
-        p_gwas=0.001,
+        p_gwas: float = 0.001,
         addit_path: Optional[str] = None,
         gwas_path: Optional[str] = None,
         geno_path: Optional[str] = None,
@@ -52,7 +52,14 @@ class Munging(object):
 
         self.r2 = r2_cutoff
 
-        self.skip_prune = skip_prune
+        if skip_prune == "no":
+            self.skip_prune = False
+        elif skip_prune == "yes":
+            self.skip_prune = True
+        else:
+            raise ValueError(
+                f'`skip_prune` should be one of "yes" or "no", not {skip_prune}'
+            )
 
         self.refColsHarmonize = refColsHarmonize
 
@@ -206,6 +213,7 @@ class Munging(object):
         return merged
 
     def _run_external_plink_commands(self) -> None:
+        """Runs the external plink commands from the command line."""
         if not self.geno_path:
             return
         cmds_a, cmds_b = get_bash_scripts(
@@ -234,7 +242,6 @@ class Munging(object):
 
         * Z-Scales the features.
         * Remove any columns with a standard deviation of zero
-
         """
         if not self.addit_path:
             return None
@@ -297,7 +304,7 @@ class Munging(object):
         print("#" * 70)
         return addit_df
 
-    def harmonize_refs(self, merged_df) -> pd.DataFrame:
+    def harmonize_refs(self, merged_df: pd.DataFrame) -> pd.DataFrame:
         """Harmonizes data columns with an external reference file.??????????
 
         > Checking the reference column names flag
@@ -329,9 +336,9 @@ class Munging(object):
         # Save out the final list
         intersecting_cols_outfile = f"{self.run_prefix}.finalHarmonizedCols_toKeep.txt"
 
-        with open(intersecting_cols_outfile, "w") as filehandle:
+        with open(intersecting_cols_outfile, "w") as f:
             for col in matching_cols_list:
-                filehandle.write("%s\n" % col)
+                f.write(f"{col}\n")
 
         print(
             "A final list of harmonized columns between your reference and test "
@@ -343,21 +350,21 @@ class Munging(object):
 
 
 def get_bash_scripts(
-    skip_prune: str, geno_path: str, run_prefix: str, r2: Optional[str] = None
+    skip_prune: bool, geno_path: str, run_prefix: str, r2: Optional[str] = None
 ) -> Tuple[List, List]:
-    """Gets the PLINK bash scripts"""
+    """Gets the PLINK bash scripts to be run from CLI."""
     plink_exec = genoml.dependencies.check_plink()
-    if skip_prune == "no":
+    if not skip_prune:
         # Set the bashes
-        bash1a = f"{plink_exec} --bfile {geno_path} --indep-pairwise 1000 50 " + r2
+        bash1a = f"{plink_exec} --bfile {geno_path} --indep-pairwise 1000 50 {r2}"
         bash1b = (
             f"{plink_exec} --bfile {geno_path} --extract "
             f"{run_prefix}.p_threshold_variants.tab --indep-pairwise 1000 50 {r2}"
         )
         # may want to consider outputting temp_genos to dir in run_prefix
         bash2 = (
-            f"{plink_exec} --bfile {geno_path}"
-            + " --extract plink.prune.in --make-bed --out temp_genos"
+            f"{plink_exec} --bfile {geno_path} --extract plink.prune.in --make-bed"
+            f" --out temp_genos"
         )
         bash3 = f"cut -f 2,5 temp_genos.bim > {run_prefix}.variants_and_alleles.tab"
         bash4 = "rm plink.log"
@@ -366,7 +373,7 @@ def get_bash_scripts(
         # Set the bash command groups
         cmds_a = [bash1a, bash2, bash3, bash4, bash5]
         cmds_b = [bash1b, bash2, bash3, bash4, bash5]
-    elif skip_prune == "yes":
+    else:
         bash1a = f"{plink_exec} --bfile {geno_path}"
         bash1b = (
             f"{plink_exec} --bfile {geno_path} --extract "
@@ -380,14 +387,11 @@ def get_bash_scripts(
         # Set the bash command groups
         cmds_a = [bash1a, bash2, bash3, bash4]
         cmds_b = [bash1b, bash2, bash3, bash4]
-    else:
-        raise ValueError(
-            f'`skip_prune` should be one of "yes" or "no", not {skip_prune}'
-        )
     return cmds_a, cmds_b
 
 
-def _fill_impute_na(impute_type, df) -> pd.DataFrame:
+def _fill_impute_na(impute_type: str, df: pd.DataFrame) -> pd.DataFrame:
+    """Imputes the NA fields for a dataframe."""
     if impute_type.lower() == "mean":
         df = df.fillna(df.mean())
     elif impute_type.lower() == "median":
