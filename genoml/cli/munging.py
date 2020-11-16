@@ -68,8 +68,8 @@ def main(prefix, impute, geno, skip_prune, r2_cutoff, pheno, addit, feature_sele
     print("")
 
     # Run the munging script in genoml.preprocessing
-    munger = preprocessing.munging(pheno_path=pheno_path, run_prefix=run_prefix, impute_type=impute_type, skip_prune=prune_choice,
-                     p_gwas=p_gwas, addit_path=addit_path, gwas_path=gwas_path, geno_path=geno_path, refColsHarmonize=refColsHarmonize, r2_cutoff=r2_cutoff)
+    munger = preprocessing.Munging(pheno_path=pheno_path, run_prefix=run_prefix, impute_type=impute_type, skip_prune=prune_choice,
+                                   p_gwas=p_gwas, addit_path=addit_path, gwas_path=gwas_path, geno_path=geno_path, refColsHarmonize=refColsHarmonize, r2_cutoff=r2_cutoff)
 
     # Process the PLINK inputs (for pruning)
     df = munger.plink_inputs()
