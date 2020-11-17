@@ -13,74 +13,95 @@
 # limitations under the License.
 # ==============================================================================
 
-import argparse
 import sys
 
 import genoml.dependencies
 from genoml import preprocessing
 
 
-def main(prefix, impute, geno, skip_prune, r2_cutoff, pheno, addit, feature_selection, gwas, p, vif, iter, ref_cols_harmonize, umap_reduce, adjust_data, adjust_normalize, target_features, confounders, data_type):
+def main(
+    run_prefix,
+    impute_type,
+    geno_path,
+    prune_choice,
+    r2_cutoff,
+    pheno_path,
+    addit_path,
+    n_est,
+    gwas_path,
+    p_gwas,
+    vif_thresh,
+    vif_iter,
+    ref_cols_harmonize,
+    umap_reduce,
+    adjust_data,
+    adjust_normalize,
+    target_features,
+    confounders,
+    data_type,
+):
     genoml.dependencies.check_dependencies()
 
-    run_prefix = prefix
-    impute_type = impute
-    geno_path = geno
-    prune_choice = skip_prune
-    pheno_path = pheno
-    addit_path = addit
-    n_est = feature_selection
-    gwas_path = gwas
-    p_gwas = p
-    r2_cutoff = r2_cutoff
-    vif_thresh = vif
-    vif_iter = iter
-    refColsHarmonize = ref_cols_harmonize
-    umap_reduce = umap_reduce
-    adjust_data = adjust_data
-    adjust_normalize = adjust_normalize
-    target_features = target_features
-    confounders = confounders
-
     # Print configurations
-    print("")
-    print("Here is some basic info on the command you are about to run.")
-    print("Python version info...")
-    print(sys.version)
-    print("CLI argument info...")
     print(
-        f"The output prefix for this run is {run_prefix} and will be appended to later runs of GenoML.")
-    print(f"Working with genotype data? {geno_path}")
-    print(f"Do you want GenoML to prune your SNPs for you? {prune_choice}")
-    print(f"The pruning threshold you've chosen is {r2_cutoff}")
-    print(f"Working with additional predictors? {addit_path}")
-    print(f"Where is your phenotype file? {pheno_path}")
-    print(f"Any use for an external set of GWAS summary stats? {gwas_path}")
-    print(
-        f"If you plan on using external GWAS summary stats for SNP filtering, we'll only keep SNPs at what P value? {p_gwas}")
-    print(f"How strong is your VIF filter? {vif_thresh}")
-    print(f"How many iterations of VIF filtering are you doing? {vif_iter}")
-    print(
-        f"The imputation method you picked is using the column {impute_type} to fill in any remaining NAs.")
-    print(f"Will you be adjusting additional features using UMAP dimensionality reduction? {umap_reduce}")
-    print(
-        "Give credit where credit is due, for this stage of analysis we use code from the great contributors to python packages: os, sys, argparse, numpy, pandas, joblib, math and time. We also use PLINK v1.9 from https://www.cog-genomics.org/plink/1.9/.")
-    print("")
+        "\n"
+        "Here is some basic info on the command you are about to run.\n"
+        "Python version info...\n"
+        f"{sys.version}\n"
+        "CLI argument info...\n"
+        f"The output prefix for this run is {run_prefix} and will be appended to later "
+        "runs of GenoML.\n"
+        f"Genotype Path: {geno_path}\n"
+        f"Plink pruning: {prune_choice}\n"
+        f"Pruning threshold: {r2_cutoff}\n"
+        f"Additional feature path: {addit_path}\n"
+        f"Phenotype path: {pheno_path}\n"
+        f"GWAS summary set path: {gwas_path}\n"
+        f"GWAS p value threshold: {p_gwas}\n"
+        f"Vif threshold strength: {vif_thresh}\n"
+        f"Vif iterations: {vif_iter}\n"
+        f"Imputation method to fill NAs: {impute_type}\n"
+        f"Will you be adjusting additional features using UMAP dimensionality "
+        f"reduction? {umap_reduce}\n"
+        "Give credit where credit is due, for this stage of analysis we use code "
+        "from the great contributors to python packages: os, sys, argparse, numpy, "
+        "pandas, joblib, math and time. We also use PLINK v1.9 "
+        "from https://www.cog-genomics.org/plink/1.9/.\n"
+        "\n"
+    )
 
     # Run the munging script in genoml.preprocessing
-    munger = preprocessing.Munging(pheno_path=pheno_path, run_prefix=run_prefix, impute_type=impute_type, skip_prune=prune_choice,
-                                   p_gwas=p_gwas, addit_path=addit_path, gwas_path=gwas_path, geno_path=geno_path, refColsHarmonize=refColsHarmonize, r2_cutoff=r2_cutoff)
+    munger = preprocessing.Munging(
+        pheno_path=pheno_path,
+        run_prefix=run_prefix,
+        impute_type=impute_type,
+        skip_prune=prune_choice,
+        p_gwas=p_gwas,
+        addit_path=addit_path,
+        gwas_path=gwas_path,
+        geno_path=geno_path,
+        refColsHarmonize=ref_cols_harmonize,
+        r2_cutoff=r2_cutoff,
+    )
 
     # Process the PLINK inputs (for pruning)
     df = munger.plink_inputs()
 
-    # Run the UMAP dimension reduction/ adjuster 
-    if (adjust_data == "yes" or umap_reduce == "yes"):
-        adjuster = preprocessing.adjuster(run_prefix, df, target_features, confounders, adjust_data, adjust_normalize, umap_reduce)
+    # Run the UMAP dimension reduction/ adjuster
+    if adjust_data == "yes" or umap_reduce == "yes":
+        adjuster = preprocessing.adjuster(
+            run_prefix,
+            df,
+            target_features,
+            confounders,
+            adjust_data,
+            adjust_normalize,
+            umap_reduce,
+        )
         reduced_df = adjuster.umap_reducer()
-        if (adjust_data == "yes"): 
+        if adjust_data == "yes":
             print(f"\n You have chosen to adjust your data! \n")
-            if (adjust_normalize == "yes"):
+            if adjust_normalize == "yes":
                 print(f"\n You have also chosen to normalize your adjusted data \n")
             else:
                 print(f"\n You have also chosen NOT to normalize your adjusted data \n")
@@ -88,7 +109,9 @@ def main(prefix, impute, geno, skip_prune, r2_cutoff, pheno, addit, feature_sele
 
     # Run the feature selection using extraTrees
     if n_est > 0:
-        featureSelection_df = preprocessing.featureselection(run_prefix, df, data_type, n_est)
+        featureSelection_df = preprocessing.featureselection(
+            run_prefix, df, data_type, n_est
+        )
         df = featureSelection_df.rank()
         featureSelection_df.export_data()
 
