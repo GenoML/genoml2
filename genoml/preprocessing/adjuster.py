@@ -38,8 +38,15 @@ class adjuster:
 
         self.target_data_df = pd.read_hdf(self.munged_data, 'dataForML')
         self.target_column_df = pd.read_csv(self.target_columns, names=['TARGETS'])
+
         self.confounders_df = pd.read_csv(self.confounders)
 
+        # Keep only intersecting feature names left in munged set (removed either because --gwas or std dev of 0 etc.)
+        target_data_list = self.target_data_df.columns
+        target_column_list = self.target_column_df['TARGETS'].tolist()
+        intersecting_list = list(set(target_data_list).intersection(set(target_column_list)))
+        self.target_column_df = pd.DataFrame(intersecting_list,columns=['TARGETS'])
+        
     def umap_reducer(self):
         
         if (self.umap_reduce == "yes"):
