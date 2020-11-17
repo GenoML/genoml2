@@ -141,7 +141,6 @@ class train:
         return self.log_table
 
     def results(self, metric_max):
-        self.metric_max = metric_max
 
         if metric_max == "AUC":
             best_performing_summary = self.log_table[self.log_table.AUC_Percent == self.log_table.AUC_Percent.max()]
