@@ -119,7 +119,7 @@ class Munging(object):
             processed_file = pathlib.Path("temp_genos.bed")
             if not processed_file.exists():
                 self._run_external_plink_commands()
-            g = read_plink1_bin("temp_genos.bed")
+            g = read_plink1_bin("temp_genos.bed", ref="a0")
             g_pruned = g.drop(
                 [
                     "fid",
@@ -151,11 +151,11 @@ class Munging(object):
             # C C   ->    0
             # 0 0   ->   NA
 
-            two_idx = g_pruned.values == 2
-            zero_idx = g_pruned.values == 0
-
-            g_pruned.values[two_idx] = 0
-            g_pruned.values[zero_idx] = 2
+            # two_idx = g_pruned.values == 2
+            # zero_idx = g_pruned.values == 0
+            #
+            # g_pruned.values[two_idx] = 0
+            # g_pruned.values[zero_idx] = 2
 
             g_pd = g_pruned.to_pandas()  # This is gonnabe too slow.
             g_pd.reset_index(inplace=True)
