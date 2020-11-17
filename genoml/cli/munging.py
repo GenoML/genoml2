@@ -86,6 +86,7 @@ def main(
 
     # Process the PLINK inputs (for pruning)
     df = munger.plink_inputs()
+    del munger
 
     # Run the UMAP dimension reduction/ adjuster
     if adjust_data == "yes" or umap_reduce == "yes":

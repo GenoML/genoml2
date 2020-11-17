@@ -111,7 +111,7 @@ class Munging(object):
     def plink_inputs(self):
         # Initializing some variables
         self.pheno_df.to_hdf(self.output_datafile, key="pheno", mode="w")
-        raw_df = None
+        # raw_df = None
         addit_df = None
 
         if self.geno_path:
@@ -120,7 +120,7 @@ class Munging(object):
             if not processed_file.exists():
                 self._run_external_plink_commands()
             g = read_plink1_bin("temp_genos.bed", ref="a0")
-            g_pruned = g.drop(
+            g = g.drop(
                 [
                     "fid",
                     "father",
@@ -134,7 +134,7 @@ class Munging(object):
                 ]
             )
 
-            g_pruned = g_pruned.set_index({"sample": "iid", "variant": "snp"})
+            g = g.set_index({"sample": "iid", "variant": "snp"})
             # g_pruned.values = g_pruned.values.astype("int")
 
             # swap pandas-plink genotype coding to match .raw format...more about that below:
@@ -157,9 +157,10 @@ class Munging(object):
             # g_pruned.values[two_idx] = 0
             # g_pruned.values[zero_idx] = 2
 
-            g_pd = g_pruned.to_pandas()  # This is gonnabe too slow.
-            g_pd.reset_index(inplace=True)
-            raw_df = g_pd.rename(columns={"sample": "ID"})
+            self.merged = g.to_pandas()  # This is gonnabe too slow.
+            del g
+            self.merged.reset_index(inplace=True)
+            self.merged = self.merged.rename(columns={"sample": "ID"}, inplace=True)
             #    del raw_df.index.name
             #    del raw_df.columns.name
 
@@ -169,14 +170,14 @@ class Munging(object):
             # subprocess.run(bash_rm_temp, shell=True)
             # Checking the impute flag and execute
             # Currently only supports mean and median
-            raw_df = _fill_impute_na(self.impute_type, raw_df)
-            raw_df.to_hdf(self.output_datafile, key="geno")
+            self.merged = _fill_impute_na(self.impute_type, self.merged)
+            # raw_df.to_hdf(self.output_datafile, key="geno")
         # Checking the imputation of non-genotype features
 
         # Saving out the proper HDF5 file
         if self.addit_path:
             addit_df = self.munge_additional_features()
-            addit_df.to_hdf(self.output_datafile, key="addit")
+            # addit_df.to_hdf(self.output_datafile, key="addit")
 
         # TODO: Can I get rid of this? Why are we writing then reading??
         # if self.geno_path and self.addit_path:
@@ -193,9 +194,10 @@ class Munging(object):
         #     pheno = pd.read_hdf(self.output_datafile, key="pheno")
         #     addit = pd.read_hdf(self.output_datafile, key="addit")
         #     # merged = pd.merge(pheno, addit, on="ID", how="inner")
-        merged = _merge_dfs([self.pheno_df, raw_df, addit_df], col_id="ID")
+        self.merged = _merge_dfs([self.pheno_df, self.merged, addit_df], col_id="ID")
+        del raw_df, addit_df
 
-        self.merged = self.harmonize_refs(merged)
+        self.merged = self.harmonize_refs(self.merged)
         self.merged.to_hdf(self.output_datafile, key="dataForML")
 
         features_list = self.merged.columns.tolist()
@@ -214,7 +216,7 @@ class Munging(object):
             f"{self.output_datafile}"
         )
 
-        return merged
+        return self.merged
 
     def _run_external_plink_commands(self) -> None:
         """Runs the external plink commands from the command line."""
