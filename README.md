@@ -64,6 +64,8 @@ pip install -r requirements.txt
             # brew install gcc@7
         # conda install -c conda-forge xgboost 
         # pip install xgboost==0.90
+    # If issues installing umap 
+        # pip install umap-learn 
 
 ## MISC
 # To deactivate the virtual environment
