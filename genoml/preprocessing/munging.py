@@ -128,7 +128,7 @@ class munging:
         
             if (self.skip_prune == "yes"):
                 bash1a = f"{plink_exec} --bfile " + self.geno_path 
-                bash1b = f"{plink_exec} --bfile " + self.geno_path + " --extract " + self.run_prefix + ".p_threshold_variants.tab"
+                bash1b = f"{plink_exec} --bfile " + self.geno_path + " --extract " + self.run_prefix + ".p_threshold_variants.tab" + " --make-bed --out temp_genos"
             # may want to consider outputting temp_genos to dir in run_prefix
                 bash2 = f"{plink_exec} --bfile " + self.geno_path + " --make-bed --out temp_genos"
                 bash3 = "cut -f 2,5 temp_genos.bim > " + self.run_prefix + ".variants_and_alleles.tab"
@@ -136,7 +136,7 @@ class munging:
 
             # Set the bash command groups
                 cmds_a = [bash1a, bash2, bash3, bash4]
-                cmds_b = [bash1b, bash2, bash3, bash4]
+                cmds_b = [bash1b, bash3, bash4]
 
                 if (self.gwas_path != None) & (self.geno_path != None):
                     p_thresh = self.p_gwas
