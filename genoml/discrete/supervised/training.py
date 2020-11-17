@@ -56,6 +56,7 @@ class train:
         self.rfe_df = None
         self.test_predictions = None
         self.test_predicted_cases = None
+        self.metric_max = None
 
         # Methods to be used (Leaving all algorithms for now)
         self.algorithms = [
@@ -103,7 +104,7 @@ class train:
             # Store resulting predictions on test set (probabilities and cases)
             self.test_predictions = self.algo.predict_proba(self.X_test)
             self.test_predicted_cases = self.algo.predict(self.X_test)
-            
+
             roc_auc = metrics.roc_auc_score(self.y_test, self.test_predictions[:, 1])
             print("AUC: {:.4%}".format(roc_auc))
 
@@ -143,27 +144,31 @@ class train:
     def results(self, metric_max):
 
         if metric_max == "AUC":
-            best_performing_summary = self.log_table[self.log_table.AUC_Percent == self.log_table.AUC_Percent.max()]
-            best_algo = best_performing_summary.at[0, 'Algorithm']
+            best_performing_summary = self.log_table[
+                self.log_table.AUC_Percent == self.log_table.AUC_Percent.max()
+            ]
+            self.best_algo = best_performing_summary.at[0, 'Algorithm']
 
         if metric_max == "Balanced_Accuracy":
             best_performing_summary = self.log_table[
-                self.log_table.Balanced_Accuracy_Percent == self.log_table.Balanced_Accuracy_Percent.max()]
-            best_algo = best_performing_summary.at[0, 'Algorithm']
+                self.log_table.Balanced_Accuracy_Percent == self.log_table.Balanced_Accuracy_Percent.max()
+            ]
+            self.best_algo = best_performing_summary.at[0, 'Algorithm']
 
         if metric_max == "Sensitivity":
             best_performing_summary = self.log_table[self.log_table.Sensitivity == self.log_table.Sensitivity.max()]
-            best_algo = best_performing_summary.at[0, 'Algorithm']
+            self.best_algo = best_performing_summary.at[0, 'Algorithm']
 
         if metric_max == "Specificity":
             best_performing_summary = self.log_table[self.log_table.Specificity == self.log_table.Specificity.max()]
-            best_algo = best_performing_summary.at[0, 'Algorithm']
+            self.best_algo = best_performing_summary.at[0, 'Algorithm']
 
         # If, for some reason, algorithms report the exact same score, only choose the first one so things don't crash
-        if isinstance(best_algo, list):
-            best_algo = best_algo[0]
+        if isinstance(self.best_algo, list):
+            self.best_algo = self.best_algo[0]
 
-        self.best_algo = best_algo
+        # Store chosen metric
+        self.metric_max = metric_max
 
         return self.best_algo
 
@@ -205,7 +210,7 @@ class train:
 
     def export_prob_hist(self):
         # Exporting withheld test data
-        
+
         test_case_probs_df = pd.DataFrame(self.test_predictions[:, 1])
         test_predicted_cases_df = pd.DataFrame(self.test_predicted_cases)
         y_test_df = pd.DataFrame(self.y_test)
