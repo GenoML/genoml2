@@ -89,6 +89,6 @@ def main(prefix, metric_max, prob_hist, auc, matchingCols):
     model.export_prob_hist()
 
     # Save out the proper algorithm
-    model.save_results(prefix, algorithmResults = True, bestAlgorithm = True)
+    model.save_results(algorithmResults=True, bestAlgorithm = True)
 
     print("Thank you for training with GenoML!")
