@@ -23,6 +23,10 @@ class featureselection:
         self.featureRanks = None
         self.n_est = n_est
         self.data_type = data_type
+        
+        # Double check there are no NAs in the dataset before proceeding
+        remove_cols = df.columns[df.isna().any()].tolist()
+        df.drop(remove_cols, axis=1, inplace=True)
 
         self.y = df['PHENO']
         self.X = df.drop(columns=['PHENO'])
