@@ -126,8 +126,7 @@ def handle_discrete_supervised_munge():
 
 def handle_discrete_supervised_train():
     handle_endpoints("genoml discrete supervised train",
-                     ["prefix", "metric_max", "prob_hist", "auc",
-                      "matching_columns"],
+                     ["prefix", "metric_max", "matching_columns"],
                      discrete_supervised_train.main, 3)
 
 
