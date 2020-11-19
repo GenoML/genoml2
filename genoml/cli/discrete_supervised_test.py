@@ -43,7 +43,7 @@ def main(prefix, test_prefix, refModel_prefix):
     loaded_model = joblib.load(infile_model)
 
     # Pass the arguments to the class 
-    test = supervised.test(df, loaded_model, run_prefix)
+    test = supervised.Test(df, loaded_model, run_prefix)
 
     # Prep and show the dataframe
     test.prep_df()
@@ -51,18 +51,14 @@ def main(prefix, test_prefix, refModel_prefix):
     # Export the ROC
     test.export_ROC()
 
-    # Export the tested data 
-    test.export_tested_data()
-
     # Export the histograms
     test.export_histograms()
 
     # Export the additional summary stats
-    test.additional_sumstats()
+    test.additional_summary_stats()
 
     # Thank the user
     print("")
     print("Let's shut everything down, thanks for testing your model with GenoML!")
     print("")
-
     
