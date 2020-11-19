@@ -15,4 +15,4 @@
 
 from genoml.discrete.supervised.training import Train
 from genoml.discrete.supervised.tuning import Tune
-from genoml.discrete.supervised.testing import test
+from genoml.discrete.supervised.testing import Test
