@@ -272,7 +272,6 @@ class Tune:
         Construct, save, and print predictions for the tuning samples.
         """
         
-        # I am not sure why this is being done. Why not on test set instead?
         tune_case_probs = self.algo_tuned.predict_proba(self.X_tune)[:, 1]
         tune_case_probs_df = pd.DataFrame(tune_case_probs)
 
