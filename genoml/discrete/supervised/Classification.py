@@ -6,56 +6,62 @@ from scipy import stats
 import seaborn as sns
 
 
-class Classification:
+class RazorClassifier:
     """
     This class trains, tunes, and tests a logistic regression and XGBoost classifier on a given dataset.
     """
+
     def __init__(
             self,
-            df: pd.DataFrame()):
+            df: pd.DataFrame,
+            max_iter=50,
+            cv_count=5
+    ):
         # Features matrix
+
+        df.index = df["ID"]
+        df = df.drop("ID")
         X = df.drop(columns=['PHENO'])
         # PHENO Vector
-        y = df.PHENO
-        # Split the data: 80% to train set, 20% to test set
-        X_train, X_test, y_train, self.y_test = model_selection.train_test_split(X, y,
-                                                                                      test_size=0.2,
-                                                                                      random_state=42)
-        self.IDs_test = X_test.ID
-        # Split the data: 60% to train set, 20% to validation set
-        X_train, X_val, self.y_train, self.y_val= model_selection.train_test_split(X_train, y_train,
-                                                                                             test_size=0.25,
-                                                                                             random_state=42)
-        self.X_train = X_train.drop(columns=['ID'])
-        self.X_test = X_test.drop(columns=['ID'])
-        self.X_val = X_val.drop(columns=['ID'])
-        self.log_reg = linear_model.LogisticRegression(solver='lbfgs')
-        self.xgb = xgboost.XGBClassifier()
+        y = df['PHENO']
+        # Split the data: 70% to train set, 30% to test set
+        self.X_train, self.X_test, self.y_train, self.y_test = model_selection.train_test_split(X, y,
+                                                                                                test_size=0.3,
+                                                                                                random_state=42)
+        self.IDs_test = self.X_test.ID
         self.hyperparameters = dict({'LogisticRegression': {"penalty": ['l1', 'l2'], "C": stats.randint(1, 10)},
                                      'XGBClassifier': {"max_depth": stats.randint(1, 100),
                                                        "learning_rate": stats.uniform(0, 1),
                                                        "n_estimators": stats.randint(1, 100),
                                                        "gamma": stats.uniform(0, 1)}})
+        self.log_reg = None
+        self.xgb = None
+        self.max_iter = max_iter
+        self.cv_count = cv_count
 
-
-    def fit(self, algorithm):
+    def fit_tune(self):
         """
         Fits given algorithm to the training set.
         """
-        return algorithm.fit(self.X_train, self.y_train)
+        log_reg = linear_model.LogisticRegression(solver='lbfgs')
+        xgb = xgboost.XGBClassifier()
+        self.log_reg = self.tune(log_reg)
+        self.xgb = self.tune(xgb)
 
-    def tune(self, fitted_algorithm, max_iter=50, cv_count=5):
+    def tune(self, fitted_algorithm):
         """
-        Tunes Hyperparameters for given algorithm with respect to performance metric (AUC) on validation set.
-        Iterates until convergence a maximum number of max_iter times.
+        Perform randomized search to find optimal hyperparameters.
         """
-        name = fitted_algorithm.__class__.__name__
+        if isinstance(fitted_algorithm, xgboost.XGBCLassifier()):
+            hyperparameters = self.hyperparameters['XGBClassifier']
+        else:
+            hyperparameters = self.hyperparameters['LogisticRegression']
         scoring_metric = metrics.make_scorer(metrics.roc_auc_score, needs_proba=True)
         random_search = model_selection.RandomizedSearchCV(estimator=fitted_algorithm,
-                                                              param_distributions=self.hyperparameters[name],
-                                                              scoring=scoring_metric, n_iter=max_iter,
-                                                              cv=cv_count, n_jobs=-1, random_state=153, verbose=0)
-        random_search.fit(self.X_val, self.y_val)
+                                                           param_distributions=hyperparameters,
+                                                           scoring=scoring_metric, n_iter=self.max_iter,
+                                                           cv=self.cv_count, n_jobs=-1, random_state=153, verbose=0)
+        random_search.fit(self.X_train, self.y_train)
         return random_search.best_estimator_
 
     def test(self, tuned_algorithm):
@@ -91,7 +97,7 @@ class Classification:
         specificity = TN / (TN + FP)
         PPV = TP / (TP + FP)
         NPV = TN / (TN + FN)
-        metrics_names =  ["AUC_Percent", "Accuracy_Percent",
+        metrics_names = ["AUC_Percent", "Accuracy_Percent",
                          "Balanced_Accuracy_Percent", "Log_Loss", "Sensitivity",
                          "Specificity", "PPV", "NPV"]
         metrics_results = [roc_auc, accuracy, balanced_accuracy_score, ll, sensitivity, specificity, PPV, NPV]
@@ -101,8 +107,8 @@ class Classification:
         """
         Plot and save ROC curve.
         """
-        fpr, tpr, thresholds = metrics.roc_curve(self.y_test, predicted_probabilities[:,1])
-        roc_auc = metrics.roc_auc_score(self.y_test, predicted_probabilities[:,1])
+        fpr, tpr, thresholds = metrics.roc_curve(self.y_test, predicted_probabilities[:, 1])
+        roc_auc = metrics.roc_auc_score(self.y_test, predicted_probabilities[:, 1])
         # Plot ROC curve
         plt.figure()
         plt.plot(fpr, tpr, color='purple', label='All sample ROC curve (area = %0.2f)' % roc_auc + '.')
@@ -143,6 +149,6 @@ class Classification:
         histogram = sns.FacetGrid(tested_data, hue="CASE_REPORTED", palette=["cyan", "purple"], legend_out=True)
         histogram = (histogram.map(sns.distplot, "CASE_PROBABILITY", hist=True, rug=False))
         histogram.add_legend()
-        #Save graph on given path
+        # Save graph on given path
         plot_out = path + 'histogram.png'
         histogram.savefig(plot_out, dpi=600)
