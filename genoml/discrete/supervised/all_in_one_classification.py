@@ -43,19 +43,22 @@ class RazorClassifier:
         """
         Fits given algorithm to the training set.
         """
-        log_reg = linear_model.LogisticRegression(solver='lbfgs')
+        log_reg = linear_model.LogisticRegression()
         xgb = xgboost.XGBClassifier()
         self.log_reg = self.tune(log_reg)
         self.xgb = self.tune(xgb)
+        return self.log_reg, self.xgb
 
     def tune(self, fitted_algorithm):
         """
         Perform randomized search to find optimal hyperparameters.
         """
-        if isinstance(fitted_algorithm, xgboost.XGBCLassifier()):
+        if isinstance(fitted_algorithm, xgboost.XGBCLassifier):
             hyperparameters = self.hyperparameters['XGBClassifier']
-        else:
+        elif isinstance(fitted_algorithm, linear_model.LogisticRegression):
             hyperparameters = self.hyperparameters['LogisticRegression']
+        else:
+            raise ValueError('The given model is not supported by this function')
         scoring_metric = metrics.make_scorer(metrics.roc_auc_score, needs_proba=True)
         random_search = model_selection.RandomizedSearchCV(estimator=fitted_algorithm,
                                                            param_distributions=hyperparameters,
@@ -103,7 +106,7 @@ class RazorClassifier:
         metrics_results = [roc_auc, accuracy, balanced_accuracy_score, ll, sensitivity, specificity, PPV, NPV]
         return dict(zip(metrics_names, metrics_results))
 
-    def ROC_curve(self, predicted_probabilities, path):
+    def ROC_curve(self, predicted_probabilities, path=None):
         """
         Plot and save ROC curve.
         """
@@ -119,8 +122,10 @@ class RazorClassifier:
         plt.ylabel('True Positive Rate')
         plt.title('Receiver Operating Characteristic (ROC) - Test Dataset')
         plt.legend(loc="lower right")
+        plt.show()
         # Save ROC curve
-        plt.savefig(path + 'ROC.png', dpi=600)
+        if path:
+            plt.savefig(path + 'ROC.png', dpi=600)
 
     def tested_data(self, predicted_probabilities, predicted_classes):
         """
@@ -141,7 +146,7 @@ class RazorClassifier:
         test_out.columns = ['INDEX', 'ID', "CASE_REPORTED", "CASE_PROBABILITY", "CASE_PREDICTED"]
         return test_out.drop(columns=['INDEX'])
 
-    def histogram(self, predicted_probabilities, predicted_classes, path):
+    def histogram(self, predicted_probabilities, predicted_classes, path=None):
         """
         Save estimated distribution.
         """
@@ -150,5 +155,6 @@ class RazorClassifier:
         histogram = (histogram.map(sns.distplot, "CASE_PROBABILITY", hist=True, rug=False))
         histogram.add_legend()
         # Save graph on given path
-        plot_out = path + 'histogram.png'
-        histogram.savefig(plot_out, dpi=600)
+        if path:
+            plot_out = path + 'histogram.png'
+            histogram.savefig(plot_out, dpi=600)
