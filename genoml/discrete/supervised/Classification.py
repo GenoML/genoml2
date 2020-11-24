@@ -5,6 +5,7 @@ import xgboost
 from scipy import stats
 import seaborn as sns
 
+
 class Classification:
     """
     This class trains, tunes, and tests a logistic regression and XGBoost classifier on a given dataset.
