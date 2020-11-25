@@ -4,13 +4,14 @@ from sklearn import linear_model, metrics, model_selection
 import xgboost
 from scipy import stats
 import seaborn as sns
+from typing import Tuple, NoReturn, Optional
+from sklearn.base import ClassifierMixin
 
 
 class RazorClassifier:
     """
     This class trains, tunes, and tests a logistic regression and XGBoost classifier on a given dataset.
     """
-
     def __init__(
             self,
             df: pd.DataFrame,
@@ -20,7 +21,7 @@ class RazorClassifier:
         # Features matrix
 
         df.index = df["ID"]
-        df = df.drop("ID")
+        df = df.drop(columns=["ID"])
         X = df.drop(columns=['PHENO'])
         # PHENO Vector
         y = df['PHENO']
@@ -28,7 +29,7 @@ class RazorClassifier:
         self.X_train, self.X_test, self.y_train, self.y_test = model_selection.train_test_split(X, y,
                                                                                                 test_size=0.3,
                                                                                                 random_state=42)
-        self.IDs_test = self.X_test.ID
+        self.IDs_test = self.X_test.index
         self.hyperparameters = dict({'LogisticRegression': {"penalty": ['l1', 'l2'], "C": stats.randint(1, 10)},
                                      'XGBClassifier': {"max_depth": stats.randint(1, 100),
                                                        "learning_rate": stats.uniform(0, 1),
@@ -39,7 +40,7 @@ class RazorClassifier:
         self.max_iter = max_iter
         self.cv_count = cv_count
 
-    def fit_tune(self):
+    def fit_tune(self) -> Tuple[ClassifierMixin, ClassifierMixin]:
         """
         Fits given algorithm to the training set.
         """
@@ -49,11 +50,11 @@ class RazorClassifier:
         self.xgb = self.tune(xgb)
         return self.log_reg, self.xgb
 
-    def tune(self, fitted_algorithm):
+    def tune(self, fitted_algorithm: ClassifierMixin) -> ClassifierMixin:
         """
         Perform randomized search to find optimal hyperparameters.
         """
-        if isinstance(fitted_algorithm, xgboost.XGBCLassifier):
+        if isinstance(fitted_algorithm, xgboost.XGBClassifier):
             hyperparameters = self.hyperparameters['XGBClassifier']
         elif isinstance(fitted_algorithm, linear_model.LogisticRegression):
             hyperparameters = self.hyperparameters['LogisticRegression']
@@ -67,7 +68,7 @@ class RazorClassifier:
         random_search.fit(self.X_train, self.y_train)
         return random_search.best_estimator_
 
-    def test(self, tuned_algorithm):
+    def test(self, tuned_algorithm: ClassifierMixin) -> Tuple[list, list]:
         """
         Returns predictions of the tuned algorithm on the test set.
         """
@@ -75,14 +76,16 @@ class RazorClassifier:
         predicted_classes = tuned_algorithm.predict(self.X_test)
         return predicted_probabilities, predicted_classes
 
-    def metrics_table(self, predicted_probabilities, predicted_classes):
+    def metrics_table(self, predicted_probabilities: list,
+                      predicted_classes: list) -> pd.DataFrame:
         """
         Returns data frame with the algorithm's performance metrics.
         """
         results = self.computeMetrics(predicted_probabilities, predicted_classes)
         return pd.DataFrame.from_dict(results, orient='index')
 
-    def computeMetrics(self, predicted_probabilities, predicted_classes):
+    def computeMetrics(self, predicted_probabilities: list,
+                       predicted_classes: list) -> dict:
         """
         This function calculates the relevant metrics to test
         the classification algorithms' performances.
@@ -106,7 +109,8 @@ class RazorClassifier:
         metrics_results = [roc_auc, accuracy, balanced_accuracy_score, ll, sensitivity, specificity, PPV, NPV]
         return dict(zip(metrics_names, metrics_results))
 
-    def ROC_curve(self, predicted_probabilities, path=None):
+    def ROC_curve(self, predicted_probabilities: list,
+                  path: Optional[str] = None) -> NoReturn:
         """
         Plot and save ROC curve.
         """
@@ -125,9 +129,11 @@ class RazorClassifier:
         plt.show()
         # Save ROC curve
         if path:
-            plt.savefig(path + 'ROC.png', dpi=600)
+            plot_out = path + 'ROC.png'
+            plt.savefig(plot_out, dpi=600)
 
-    def tested_data(self, predicted_probabilities, predicted_classes):
+    def tested_data(self, predicted_probabilities: list,
+                    predicted_classes: list) -> NoReturn:
         """
         return table with predicted values
         """
@@ -146,14 +152,17 @@ class RazorClassifier:
         test_out.columns = ['INDEX', 'ID', "CASE_REPORTED", "CASE_PROBABILITY", "CASE_PREDICTED"]
         return test_out.drop(columns=['INDEX'])
 
-    def histogram(self, predicted_probabilities, predicted_classes, path=None):
+    def histogram(self, predicted_probabilities: list,
+                  predicted_classes: list,
+                  path: Optional[str] = None) -> NoReturn:
         """
         Save estimated distribution.
         """
         tested_data = self.tested_data(predicted_probabilities, predicted_classes)
         histogram = sns.FacetGrid(tested_data, hue="CASE_REPORTED", palette=["cyan", "purple"], legend_out=True)
-        histogram = (histogram.map(sns.distplot, "CASE_PROBABILITY", hist=True, rug=False))
         histogram.add_legend()
+        histogram = (histogram.map(sns.distplot, "CASE_PROBABILITY", hist=True, rug=False))
+        plt.show()
         # Save graph on given path
         if path:
             plot_out = path + 'histogram.png'
