@@ -138,28 +138,45 @@ class train:
 
     def results(self, metric_max):
         self.metric_max = metric_max 
+        metric_keys = {
+            'AUC': 'AUC_Percent',
+            'Balanced_Accuracy': 'Balanced_Accuracy_Percent',
+            'Sensitivity': 'Sensitivity',
+            'Specificity': 'Specificity'
+        }
+        sorted_table = self.log_table.sort_values(metric_keys[self.metric_max], ascending=False)
 
-        if(metric_max == "AUC"):
-            best_performing_summary = self.log_table[self.log_table.AUC_Percent == self.log_table.AUC_Percent.max()]
-            best_algo = best_performing_summary.at[0,'Algorithm']
-        
-        if(metric_max == "Balanced_Accuracy"):
-            best_performing_summary = self.log_table[self.log_table.Balanced_Accuracy_Percent == self.log_table.Balanced_Accuracy_Percent.max()]
-            best_algo = best_performing_summary.at[0,'Algorithm']
-        
-        if(metric_max == "Sensitivity"):
-            best_performing_summary = self.log_table[self.log_table.Sensitivity == self.log_table.Sensitivity.max()]
-            best_algo = best_performing_summary.at[0,'Algorithm']           
-        
-        if(metric_max == "Specificity"):
-            best_performing_summary = self.log_table[self.log_table.Specificity == self.log_table.Specificity.max()]
-            best_algo = best_performing_summary.at[0,'Algorithm']
-        
+        # Drop those that have an accuracy less than 50%
+        sorted_table = sorted_table[sorted_table['AUC_Percent'] > 50]
+
+        # Drop those that have a balanced accuracy less than 50%
+        sorted_table = sorted_table[sorted_table['Balanced_Accuracy_Percent'] > 50]
+
+        # Drop those with sensitivity 0 or 1
+        sorted_table = sorted_table[(sorted_table['Sensitivity'] != 0.0) & (sorted_table['Sensitivity'] != 1.0)]
+
+        # Drop those with specificity 0 or 1
+        sorted_table = sorted_table[(sorted_table['Specificity'] != 0.0) & (sorted_table['Specificity'] != 1.0)]
+
+        # Reset the index so that we can access the best algorithm at index 0
+        sorted_table = sorted_table.reset_index()
+
+        # Get the row with the best algorithm
+        self.best_performing_summary = sorted_table.iloc[0]
+
+        # Get the best algorithm
+        best_algo = sorted_table.at[0, 'Algorithm']
+
+        # Get the best algorithm's AUC for the plot later
+        roc_auc_str = sorted_table.at[0, 'AUC_Percent'] 
+
         # If, for some reason, algorithms report the exact same score, only choose the first one so things don't crash
         if isinstance(best_algo, list):
             best_algo = best_algo[0]
-        
+
         self.best_algo = best_algo
+        roc_auc = float(roc_auc_str)*0.01
+        self.roc_auc = roc_auc
 
         return best_algo
 
@@ -168,21 +185,17 @@ class train:
         plot_out = self.run_prefix + '.trainedModel_withheldSample_ROC.png'
 
         # Issue #24: RandomForestClassifier is finicky - can't recalculate moving forward like the other 
-        if(self.best_algo == 'RandomForestClassifier'):
-            test_predictions = self.test_predictions
-            self.test_predictions = test_predictions
-            test_predictions = test_predictions[:, 1]
-        else:
-            test_predictions = self.algo.predict_proba(self.X_test)
-            self.test_predictions = test_predictions
-            test_predictions = test_predictions[:, 1]
+
+        test_predictions = self.algo.predict_proba(self.X_test)
+        self.test_predictions = test_predictions
+        test_predictions = test_predictions[:, 1]
 
         fpr, tpr, thresholds = metrics.roc_curve(self.y_test, test_predictions)
         #roc_auc = metrics.auc(fpr, tpr)
-        roc_auc = metrics.roc_auc_score(self.y_test, test_predictions)
+        #roc_auc = metrics.roc_auc_score(self.y_test, test_predictions)
 
         plt.figure()
-        plt.plot(fpr, tpr, color='purple', label='ROC curve (area = %0.2f)' % roc_auc)
+        plt.plot(fpr, tpr, color='purple', label='ROC curve (area = %0.2f)' % self.roc_auc)
         plt.plot([0, 1], [0, 1], color='cyan', linestyle='--', label='Chance (area = %0.2f)' % 0.5)
         plt.xlim([0.0, 1.0])
         plt.ylim([0.0, 1.05])
@@ -307,7 +320,7 @@ class train:
         acc = metrics.accuracy_score(self.y_test, test_predictions)
         print("Accuracy: {:.4%}".format(acc))
 
-        test_predictions = algo.predict(self.X_test)
+        ##test_predictions = algo.predict(self.X_test)
         balacc = metrics.balanced_accuracy_score(self.y_test, test_predictions)
         print("Balanced Accuracy: {:.4%}".format(balacc))
 
@@ -331,6 +344,8 @@ class train:
         if(algorithmResults):
             log_table = self.log_table
             log_outfile = self.run_prefix + '.training_withheldSamples_performanceMetrics.csv'
+            print(f"""A complete table of the performance metrics can be found at {log_outfile}
+            Note that any models that were overfit (if AUC or Balanced Accuracy was 50% or less, or sensitivity/specificity were 1 or 0) were not considered when nominating the best algorithm.""")
 
             print(f"This table below is also logged as {log_outfile} and is in your current working directory...")
             print("#"*70)
