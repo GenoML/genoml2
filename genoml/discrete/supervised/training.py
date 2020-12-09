@@ -152,6 +152,10 @@ class train:
         # Drop those that have a balanced accuracy less than 50%
         sorted_table = sorted_table[sorted_table['Balanced_Accuracy_Percent'] > 50]
 
+        # Calculate the delta between sensitivity and specificity, and drop those greater than 0.85
+        sorted_table['SENS_SPEC_DELTA'] = sorted_table['Sensitivity'].sub(sorted_table['Specificity'], axis = 0).abs()
+        sorted_table = sorted_table[sorted_table['SENS_SPEC_DELTA'] < 0.85]
+
         # Drop those with sensitivity 0 or 1
         sorted_table = sorted_table[(sorted_table['Sensitivity'] != 0.0) & (sorted_table['Sensitivity'] != 1.0)]
 
@@ -159,7 +163,12 @@ class train:
         sorted_table = sorted_table[(sorted_table['Specificity'] != 0.0) & (sorted_table['Specificity'] != 1.0)]
 
         # Reset the index so that we can access the best algorithm at index 0
-        sorted_table = sorted_table.reset_index()
+        sorted_table = sorted_table.reset_index(drop=True)
+
+        # If for some reason ALL the algorithms are overfit...
+        if sorted_table.empty:
+            print('It seems as though all the algorithms are over-fit in some way or another... We will report the best algorithm based on your chosen metric instead and use that moving forward.')
+            sorted_table = self.log_table.sort_values(metric_keys[self.metric_max], ascending=False)
 
         # Get the row with the best algorithm
         self.best_performing_summary = sorted_table.iloc[0]
@@ -179,7 +188,6 @@ class train:
         self.roc_auc = roc_auc
 
         return best_algo
-
 
     def AUC(self, save = False):
         plot_out = self.run_prefix + '.trainedModel_withheldSample_ROC.png'
