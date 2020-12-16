@@ -189,6 +189,7 @@ class train:
 
         return best_algo
 
+
     def AUC(self, save = False):
         plot_out = self.run_prefix + '.trainedModel_withheldSample_ROC.png'
 
@@ -268,18 +269,36 @@ class train:
         print(train_out.head())
         print("#"*70)
 
-        # Export historgrams of probabilities
+        # Export histograms of probabilities
         genoML_colors = ["cyan","purple"]
 
-        g = sns.FacetGrid(train_out, hue="CASE_REPORTED", palette=genoML_colors, legend_out=True,)
-        g = (g.map(sns.distplot, "CASE_PROBABILITY", hist=True, rug=False))
-        g.add_legend()
+        g = sns.FacetGrid(train_out, # Dataframe
+                        row="CASE_REPORTED", # Define the rows of the plot
+                        hue="CASE_REPORTED", # Define the colorcode, usually same as rows
+                        aspect=5, # Aspect * height = width
+                        height=3, # Height of each subplot
+                        palette=genoML_colors, # GenoML colors for binary classes, let's make a scale for when this is applied to multiclass.
+                        )
 
-        plot_out = self.run_prefix + '.trainedModel_withheldSample_probabilities.png'
+        g.map(sns.kdeplot, "CASE_PROBABILITY", shade=True, alpha=.5, lw=1.5) # Keeps the x axis flexible.
+        #g.map(sns.kdeplot, "CASE_PROBABILITY", shade=True, alpha=.5, lw=1.5).set(xlim=(0, None)) # Always starts at 0, autoscales high end of X.
+        #g.map(sns.kdeplot, "CASE_PROBABILITY", shade=True, alpha=.5, lw=1.5).set(xlim=(0, 1)) # Use this if you always want 0-1 x axis.
+
+        def label(x, color, label):
+            ax = plt.gca() # Build axes
+            ax.text(0.001, 0.9, # Place the text
+                    label, # Drop the label
+                    fontweight="bold", color=color, size=20, # Format text
+                    ha="left", va="center", # Align the text
+                    transform=ax.transAxes) # Transform the axes
+
+        g.map(label, "CASE_PROBABILITY") # The function counts as a plotting object!
+
+        g.set_titles("") # Drop repetitive plotting
+        plot_out = self.run_prefix + '.trainedModel_withheldSample_probabilities.png' 
         g.savefig(plot_out, dpi=600)
+        print(f"We are also exporting probability density plots to the file {plot_out} this is a plot of the probability distributions of being a case, stratified by case and control status in the withheld test samples.")
 
-        print("")
-        print("We are also exporting probability density plots to the file", plot_out, "this is a plot of the probability distributions of being a case, stratified by case and control status in the withheld test samples.")
 
     def export_model(self):
         best_algo = self.best_algo
