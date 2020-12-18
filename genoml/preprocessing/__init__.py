@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from genoml.preprocessing.munging import munging
+from genoml.preprocessing.munging import Munging
 from genoml.preprocessing.vif import vif
 from genoml.preprocessing.featureselection import featureselection
 from genoml.preprocessing.harmonizing import harmonizing
