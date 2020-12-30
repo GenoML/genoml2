@@ -272,31 +272,21 @@ class train:
         # Export histograms of probabilities
         genoML_colors = ["cyan","purple"]
 
-        g = sns.FacetGrid(train_out, # Dataframe
-                        row="CASE_REPORTED", # Define the rows of the plot
-                        hue="CASE_REPORTED", # Define the colorcode, usually same as rows
-                        aspect=5, # Aspect * height = width
-                        height=3, # Height of each subplot
-                        palette=genoML_colors, # GenoML colors for binary classes, let's make a scale for when this is applied to multiclass.
-                        )
+        # Using the withheld sample data 
+        to_plot_df = test_out
+        to_plot_df['percent_probability'] = to_plot_df['CASE_PROBABILITY']*100
+        to_plot_df['Probability (%)'] = to_plot_df['percent_probability'].round(decimals=0)
+        to_plot_df['Reported Status'] = to_plot_df['CASE_REPORTED']
+        to_plot_df['Predicted Status'] = to_plot_df['CASE_PREDICTED']
 
-        g.map(sns.kdeplot, "CASE_PROBABILITY", shade=True, alpha=.5, lw=1.5) # Keeps the x axis flexible.
-        #g.map(sns.kdeplot, "CASE_PROBABILITY", shade=True, alpha=.5, lw=1.5).set(xlim=(0, None)) # Always starts at 0, autoscales high end of X.
-        #g.map(sns.kdeplot, "CASE_PROBABILITY", shade=True, alpha=.5, lw=1.5).set(xlim=(0, 1)) # Use this if you always want 0-1 x axis.
+        to_plot_df.describe()
 
-        def label(x, color, label):
-            ax = plt.gca() # Build axes
-            ax.text(0.001, 0.9, # Place the text
-                    label, # Drop the label
-                    fontweight="bold", color=color, size=20, # Format text
-                    ha="left", va="center", # Align the text
-                    transform=ax.transAxes) # Transform the axes
+        # Start plotting
+        sns.displot(data=to_plot_df, x="Probability (%)", hue="Predicted Status", col="Reported Status", kde=True, palette=genoML_colors, alpha=0.2)
 
-        g.map(label, "CASE_PROBABILITY") # The function counts as a plotting object!
-
-        g.set_titles("") # Drop repetitive plotting
         plot_out = self.run_prefix + '.trainedModel_withheldSample_probabilities.png' 
-        g.savefig(plot_out, dpi=600)
+        plt.savefig(plot_out, dpi=300)
+
         print(f"We are also exporting probability density plots to the file {plot_out} this is a plot of the probability distributions of being a case, stratified by case and control status in the withheld test samples.")
 
 
