@@ -40,17 +40,16 @@ class test:
         print("")
 
         # Save out and drop the PHENO and sample ID columns 
-        df = self.df
-        y_test = df.PHENO
-        IDs_test= df.ID
-        X_test = df.drop(columns=['PHENO', 'ID'])
-
+        y_test = self.df.PHENO
+        X_test = self.df.drop(columns=['PHENO'])
+        IDs_test = X_test.ID
+        X_test = X_test.drop(columns=['ID'])
 
         # Save variables to use globally within the class 
         self.y_test = y_test
         self.X_test = X_test
         self.IDs_test = IDs_test
- 
+
         return X_test
     
     def export_ROC(self):
@@ -62,9 +61,7 @@ class test:
         test_predictions = test_predictions[:, 1]
 
         fpr, tpr, thresholds = roc_curve(self.y_test, test_predictions)
-        # Resolving issue #13 - ROC curve reporting to be consistent with performance metrics. 
-        #roc_auc = auc(fpr, tpr)
-        roc_auc = roc_auc_score(self.y_test, test_predictions)
+        roc_auc = auc(fpr, tpr)
 
         plt.figure()
         plt.plot(fpr, tpr, color='purple', label='All sample ROC curve (area = %0.2f)' % roc_auc + '.')
@@ -113,14 +110,21 @@ class test:
         return test_out
     
     def export_histograms(self):
+        # Colors
         genoML_colors = ["cyan","purple"]
 
-        g = sns.FacetGrid(self.test_out, hue="CASE_REPORTED", palette=genoML_colors, legend_out=True,)
-        g = (g.map(sns.distplot, "CASE_PROBABILITY", hist=True, rug=False))
-        g.add_legend()
+        # Using the withheld sample data 
+        to_plot_df = self.test_out
+        to_plot_df['percent_probability'] = to_plot_df['CASE_PROBABILITY']*100
+        to_plot_df['Probability (%)'] = to_plot_df['percent_probability'].round(decimals=0)
+        to_plot_df['Reported Status'] = to_plot_df['CASE_REPORTED']
+        to_plot_df['Predicted Status'] = to_plot_df['CASE_PREDICTED']
+
+        # Start plotting
+        sns.displot(data=to_plot_df, x="Probability (%)", hue="Predicted Status", col="Reported Status", kde=True, palette=genoML_colors, alpha=0.2)
 
         plot_out = self.run_prefix + '.testedModel_allSample_probabilities.png'
-        g.savefig(plot_out, dpi=600)
+        plt.savefig(plot_out, dpi=300)
 
         print("")
         print(f"We are also exporting probability density plots to the file {plot_out} this is a plot of the probability distributions of being a case, stratified by case and control status for all samples.")
@@ -136,10 +140,7 @@ class test:
 
         test_predictions = self.loaded_model.predict_proba(self.X_test)
         test_predictions = test_predictions[:, 1]
-        
-        # Resolving issue #13 - ROC curve reporting to be consistent with performance metrics. 
-        # rocauc = roc_auc_score(self.y_test, test_predictions)
-        rocauc = self.roc_auc
+        rocauc = roc_auc_score(self.y_test, test_predictions)
         print("AUC: {:.4%}".format(rocauc))
 
         test_predictions = self.loaded_model.predict(self.X_test)

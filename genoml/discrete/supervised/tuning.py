@@ -338,6 +338,7 @@ class tune():
 
         tune_outfile = self.run_prefix + '.tunedModel_allSample_Predictions.csv'
         tune_out.to_csv(tune_outfile, index=False)
+        self.tune_out = tune_out
 
         print("")
         print(f"Preview of the exported predictions for the tuning samples which is naturally overfit and exported as {tune_outfile} in the similar format as in the initial training phase of GenoML.")
@@ -346,14 +347,23 @@ class tune():
         print("#"*70)
     
     def export_tune_hist_prob(self):
+        # Export histograms of probabilities
         genoML_colors = ["cyan","purple"]
 
-        sns_plot = sns.FacetGrid(self.tune_out, hue="CASE_REPORTED", palette=genoML_colors, legend_out=True)
-        sns_plot = (sns_plot.map(sns.distplot, "CASE_PROBABILITY", hist=True, rug=False))
-        sns_plot.add_legend()
+        # Using the withheld sample data 
+        to_plot_df = self.tune_out
+        to_plot_df['percent_probability'] = to_plot_df['CASE_PROBABILITY']*100
+        to_plot_df['Probability (%)'] = to_plot_df['percent_probability'].round(decimals=0)
+        to_plot_df['Reported Status'] = to_plot_df['CASE_REPORTED']
+        to_plot_df['Predicted Status'] = to_plot_df['CASE_PREDICTED']
 
-        plot_out = self.run_prefix + '.tunedModel_allSample_probabilities.png'
-        sns_plot.savefig(plot_out, dpi=600)
+        to_plot_df.describe()
 
-        print("")
+        # Start plotting
+        sns.displot(data=to_plot_df, x="Probability (%)", hue="Predicted Status", col="Reported Status", kde=True, palette=genoML_colors, alpha=0.2)
+
+        plot_out = self.run_prefix + '.tunedModel_allSample_probabilities.png' 
+        plt.savefig(plot_out, dpi=300)
+
         print(f"We are also exporting probability density plots to the file {plot_out} this is a plot of the probability distributions of being a case, stratified by case and control status for all samples.")
+        
