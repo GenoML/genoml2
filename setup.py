@@ -23,7 +23,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="genoml2",
-    version="1.0.0-beta.9",
+    version="1.0.0-beta.10",
     maintainer="The GenoML Development Team",
     maintainer_email="genoml@googlegroups.com",
     description="GenoML is an automated machine learning tool that optimizes"
