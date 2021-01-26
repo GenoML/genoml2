@@ -1,0 +1,96 @@
+{
+  "check_dependencies_Plink": {
+    "title": "Checking plink",
+    "description": "",
+    "error": ""
+  },
+  "check_dependencies": {
+    "title": "Dependency Check",
+    "description": "",
+    "end": true,
+    "error": ""
+  },
+  "cli/continuous_supervised_train": {
+    "title": "GenoML",
+    "description": "Continuous Supervised Train",
+    "end": true,
+    "error": ""
+  },
+  "cli/continuous_supervised_train/info": {
+    "title": "Basic Info",
+    "description": "Here is some basic info on the command you are about to run.\nPython version info:\n{python_version}\n\nWorking with dataset from previous data munging efforts at:\n\t{prefix}",
+    "error": ""
+  },
+  "cli/continuous_supervised_train/input": {
+    "title": "Reading Input File: {path}",
+    "description": "",
+    "error": ""
+  },
+  "cli/continuous_supervised_train/matching_columns_path": {
+    "title": "",
+    "description": "Looks like you are retraining your reference file. We are using the harmonized columns you provided here: {matching_columns_path}\nNote that you might have different/less features than before, given this was harmonized between training and test dataset, and might mean your model now performs worse...",
+    "error": ""
+  },
+  "continuous/supervised/training/Train/summary": {
+    "title": "Input Data Summary",
+    "description": "Your data looks like this (showing the first few lines of the left-most and right-most columns)...\n\n{data}",
+    "error": ""
+  },
+  "continuous/supervised/training/Train/compete": {
+    "title": "Compete the algorithms",
+    "description": "Now let's compete these algorithms!\nWe'll update you as each algorithm runs, then summarize at the end.\nHere we test each algorithm under default settings using the same training and test datasets derived from a 70% training and 30% testing split of your data.\nFor each algorithm, we will output the following metrics...\nAlgorithm name, hoping that's pretty self-explanatory. Plenty of resources on these common ML algorithms at https://scikit-learn.org and https://xgboost.readthedocs.io/.\nexplained_variance_score, this is the variance explained by the model per algorithm (scale from 0 to 1 with 1 being completely explained).\nmean_squared_error, this is the mean squared error from regression loss.\nmedian_absolute_error, median absolute error from regression loss.\nr2_score, standard r2 metric from linear regression (coefficient of determination), remember, this can be negative if your model is really bad.\nWe also log the runtimes per algorithm.\n\nAlgorithm summaries incoming...",
+    "end": true,
+    "error": ""
+  },
+  "continuous/supervised/training/Train/compete/algorithm": {
+    "title": "{name}",
+    "description": "",
+    "error": ""
+  },
+  "continuous/supervised/training/Train/compete/algorithm/results": {
+    "title": "{name} Results",
+    "description": "{results}",
+    "error": ""
+  },
+  "continuous/supervised/training/Train/compete/algorithm/best": {
+    "title": "Best Algorithm: {algorithm}",
+    "description": "There are occasionally slight fluctuations in model performance on the same withheld samples.\n{metrics}",
+    "error": ""
+  },
+  "continuous/supervised/training/Train/export_model": {
+    "title": "Exporting Model: {output_path}",
+    "description": "this model has been saved as {output_path} for later use and can be found in your working directory.",
+    "end": true,
+    "error": ""
+  },
+  "continuous/supervised/training/Train/save_algorithm_results": {
+    "title": "Saving Algorithm Results: {output_path}",
+    "description": "This table below is also logged as {output_path} and is in your current working directory...\n\n{data}",
+    "end": true,
+    "error": ""
+  },
+  "continuous/supervised/training/Train/save_best_algorithm": {
+    "title": "Saving Best Algorithm: {output_path}",
+    "description": "Based on your withheld samples, the algorithm with the highest explained variance score is the {best_algorithm}... let's save that model name for you on {output_path}.",
+    "end": true,
+    "error": ""
+  },
+  "continuous/supervised/training/Train/export_predictions/test_data": {
+    "title": "Saving Prediction on Test Data: {output_path}",
+    "description": "Preview of the exported predictions for the withheld test data that has been exported as {output_path} these are pretty straight forward.\nThey generally include the sample ID, the previously reported phenotype and the predicted phenotype from that algorithm,\n\n{data}",
+    "end": true,
+    "error": ""
+  },
+  "continuous/supervised/training/Train/export_predictions/train_data": {
+    "title": "Saving Prediction on Train Data: {output_path}",
+    "description": "Preview of the exported predictions for the training samples which is naturally overfit and exported as {output_path} in the similar format as in the withheld test dataset that was just exported.\n\n{data}",
+    "end": true,
+    "error": ""
+  },
+  "continuous/supervised/training/Train/export_predictions/plot": {
+    "title": "Saving Regression Plot: {output_path}",
+    "description": "Here is a quick summary of the regression comparing PHENO_REPORTED ~ PHENO_PREDICTED in the withheld test data...\n{data}\n...always good to see the P for the predictor.\n\nWe are also exporting a regression plot for you here {output_path} this is a graphical representation of the difference between the reported and predicted phenotypes in the withheld test data for the best performing algorithm.",
+    "end": true,
+    "error": ""
+  }
+}
