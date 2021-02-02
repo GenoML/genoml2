@@ -6,7 +6,7 @@
 
 [![Downloads](https://static.pepy.tech/personalized-badge/genoml2?period=total&units=international_system&left_color=black&right_color=grey&left_text=Downloads)](https://pepy.tech/project/genoml2)
 
-> Updated 16 Dec 2020: Latest Release on pip! v1.0.0.beta.9 
+> Updated 26 Jan 2020: Latest Release on pip! v1.0.0.beta.10 
 
 # How to Get Started with GenoML
 
