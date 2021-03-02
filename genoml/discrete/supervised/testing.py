@@ -22,12 +22,13 @@ import sklearn
 import sys
 import xgboost
 import numpy as np
+from numpy import argmax
 from time import time
 from sklearn.metrics import accuracy_score, balanced_accuracy_score, log_loss, roc_auc_score, confusion_matrix, roc_curve, auc
 
 class test:
     def __init__(self, df, loaded_model, run_prefix):
-        self.df = df 
+        self.df = df # Generated from the harmonized test_prefix .h5 file 
         self.run_prefix = run_prefix
         self.loaded_model = loaded_model
     
@@ -55,16 +56,19 @@ class test:
     def export_ROC(self):
         
         # Define the output prefix  
-        plot_out = self.run_prefix + '.testedModel_allSample_ROC.png'
+        plot_out = self.run_prefix + '.testedModel_validationCohort_allCasesControls_ROC.png'
 
+        # Test the loaded model on validation cohort 
         test_predictions = self.loaded_model.predict_proba(self.X_test)
+        self.test_predictions = test_predictions
         test_predictions = test_predictions[:, 1]
 
         fpr, tpr, thresholds = roc_curve(self.y_test, test_predictions)
-        roc_auc = auc(fpr, tpr)
+        roc_auc = roc_auc_score(self.y_test, test_predictions)
+
 
         plt.figure()
-        plt.plot(fpr, tpr, color='purple', label='All sample ROC curve (area = %0.2f)' % roc_auc + '.')
+        plt.plot(fpr, tpr, color='purple', label='ROC curve (area = %0.2f)' % roc_auc)
         plt.plot([0, 1], [0, 1], color='cyan', linestyle='--', label='Chance (area = %0.2f)' % 0.5)
         plt.xlim([0.0, 1.0])
         plt.ylim([0.0, 1.05])
@@ -86,6 +90,8 @@ class test:
         test_predicteds_probs = self.loaded_model.predict_proba(self.X_test)
         test_case_probs = test_predicteds_probs[:, 1]
         test_predicted_cases = self.loaded_model.predict(self.X_test)
+        self.test_predicteds_probs = test_predicteds_probs
+        self.test_predicted_cases = test_predicted_cases
 
         test_case_probs_df = pd.DataFrame(test_case_probs)
         test_predicted_cases_df = pd.DataFrame(test_predicted_cases)
@@ -96,7 +102,7 @@ class test:
         test_out.columns=['INDEX','ID',"CASE_REPORTED","CASE_PROBABILITY","CASE_PREDICTED"]
         test_out = test_out.drop(columns=['INDEX'])
 
-        test_outfile = self.run_prefix + '.testedModel_allSample_predictions.csv'
+        test_outfile = self.run_prefix + '.testedModel_validationCohort_allCasesControls_predictions.csv'
         test_out.to_csv(test_outfile, index=False)
 
         print("")
@@ -113,7 +119,6 @@ class test:
         # Colors
         genoML_colors = ["cyan","purple"]
 
-        # Using the withheld sample data 
         to_plot_df = self.test_out
         to_plot_df['percent_probability'] = to_plot_df['CASE_PROBABILITY']*100
         to_plot_df['Probability (%)'] = to_plot_df['percent_probability'].round(decimals=0)
@@ -123,7 +128,7 @@ class test:
         # Start plotting
         sns.displot(data=to_plot_df, x="Probability (%)", hue="Predicted Status", col="Reported Status", kde=True, palette=genoML_colors, alpha=0.2)
 
-        plot_out = self.run_prefix + '.testedModel_allSample_probabilities.png'
+        plot_out = self.run_prefix + '.testedModel_validationCohort_allCasesControls_probabilities.png'
         plt.savefig(plot_out, dpi=300)
 
         print("")
@@ -138,20 +143,15 @@ class test:
         print("Some additional summary stats logging from your application of your model to the test dataset.")
         print("")
 
-        test_predictions = self.loaded_model.predict_proba(self.X_test)
-        test_predictions = test_predictions[:, 1]
-        rocauc = roc_auc_score(self.y_test, test_predictions)
-        print("AUC: {:.4%}".format(rocauc))
+        print("AUC: {:.4%}".format(self.roc_auc)) # Pull the ROC from above, the same one in the plot
 
-        test_predictions = self.loaded_model.predict(self.X_test)
-        acc = accuracy_score(self.y_test, test_predictions)
+        acc = accuracy_score(self.y_test, self.test_predicted_cases)
         print("Accuracy: {:.4%}".format(acc))
 
-        test_predictions = self.loaded_model.predict(self.X_test)
-        balacc = balanced_accuracy_score(self.y_test, test_predictions)
+        balacc = balanced_accuracy_score(self.y_test, self.test_predicted_cases)
         print("Balanced Accuracy: {:.4%}".format(balacc))
             
-        CM = confusion_matrix(self.y_test, test_predictions)
+        CM = confusion_matrix(self.y_test, self.test_predicted_cases)
         TN = CM[0][0]
         FN = CM[1][0]
         TP = CM[1][1]
@@ -161,20 +161,19 @@ class test:
         PPV = TP/(TP+FP)
         NPV = TN/(TN+FN)
         
-        test_predictions = self.loaded_model.predict_proba(self.X_test)
-        ll = log_loss(self.y_test, test_predictions)
+        ll = log_loss(self.y_test, self.test_predicteds_probs)
         print("Log Loss: {:.4}".format(ll))
 
         log_cols=["AUC_Percent", "Accuracy_Percent", "Balanced_Accuracy_Percent", "Log_Loss", "Sensitivity", "Specificity", "PPV", "NPV"]
         log_table = pd.DataFrame(columns=log_cols)
-        log_entry = pd.DataFrame([[rocauc*100, acc*100, balacc*100, ll, sensitivity, specificity, PPV, NPV]], columns=log_cols)
+        log_entry = pd.DataFrame([[self.roc_auc*100, acc*100, balacc*100, ll, sensitivity, specificity, PPV, NPV]], columns=log_cols)
         log_table = log_table.append(log_entry)
         
         print("")
         print("#"*70)
         print("")
 
-        log_outfile = self.run_prefix + '.testedModel_allSamples_performanceMetrics.csv'
+        log_outfile = self.run_prefix + '.testedModel_validationCohort_allCasesControls_performanceMetrics.csv'
 
         print(f"This table below is also logged as {log_outfile} and is in your current working directory...")
         print("#"*70)
@@ -188,3 +187,4 @@ class test:
         self.log_table = log_table
 
         return log_table
+    
