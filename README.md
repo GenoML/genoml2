@@ -12,7 +12,7 @@
 
 
 ### Introduction
-GenoML is an Automated Machine Learning (AutoML) for genomics data. In general, use a Linux or Mac with Python >3.5 for best results. **This [repository](https://github.com/GenoML/genoml2) and [pip package](https://pypi.org/project/genoml2/) are under active development!** 
+[GenoML (**Geno**mics + **M**achine **L**earning)](https://genoml.com) is an automated Machine Learning (autoML) for genomics data. In general, use a Linux or Mac with Python >3.5 for best results. **This [repository](https://github.com/GenoML/genoml2) and [pip package](https://pypi.org/project/genoml2/) are under active development!** 
 
 This README is a brief look into how to structure arguments and what arguments are available at each phase for the GenoML CLI. 
 
@@ -110,7 +110,8 @@ Be sure to have your files formatted the same as the examples, key points being:
 - **0=controls and 1=case** in your phenotype file
 - Your phenotype file consisting **only** of the "ID" and "PHENO" columns
 - Your sample IDs matching across all files
-- Your sample IDs not consisting with only integers (add a prefix or suffix to all sample IDs ensuring they are alphanumeric if this is the case prior to running GenoML)  
+- Your sample IDs not consisting with only integers (add a prefix or suffix to all sample IDs ensuring they are alphanumeric if this is the case prior to running GenoML)
+- Please avoid the use of characters like commas, semi-colons, etc. in the column headers (it is Python after all!)  
 
 > *Note:* The following examples are for discrete data, but if you substitute following commands with `continuous` instead of discrete, you can preprocess your continuous data!
 
