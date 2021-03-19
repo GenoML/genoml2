@@ -16,6 +16,10 @@
 
 This README is a brief look into how to structure arguments and what arguments are available at each phase for the GenoML CLI. 
 
+If you are using GenoML for your own work, please cite the following papers: 
+- Makarious, M. B., Leonard, H. L., Vitale, D., Iwaki, H., Saffo, D., Sargent, L., ... & Faghri, F. (2021). GenoML: Automated Machine Learning for Genomics. arXiv preprint arXiv:2103.03221
+- Makarious, M. B., Leonard, H. L., Vitale, D., Iwaki, H., Sargent, L., Dadu, A., ... & Nalls, M. A. (2021). Multi-Modality Machine Learning Predicting Parkinson’s Disease. bioRxiv.
+
 ### Installing + Downloading Example Data 
 - Install this repository directly from GitHub (from source; master branch)
 
