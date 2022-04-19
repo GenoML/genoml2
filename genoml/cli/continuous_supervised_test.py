@@ -42,7 +42,7 @@ def main(prefix, test_prefix, refModel_prefix):
     infile_h5 = test_prefix + ".dataForML.h5"
     df = pd.read_hdf(infile_h5, key="dataForML")
 
-    infile_model = refModel_prefix + ".joblib"
+    infile_model = refModel_prefix + ".trainedModel" ".joblib"
     loaded_model = joblib.load(infile_model)
 
     # Pass the arguments to the class 
