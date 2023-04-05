@@ -169,6 +169,7 @@ class train:
         if sorted_table.empty:
             print('It seems as though all the algorithms are over-fit in some way or another... We will report the best algorithm based on your chosen metric instead and use that moving forward.')
             sorted_table = self.log_table.sort_values(metric_keys[self.metric_max], ascending=False)
+            sorted_table = sorted_table.reset_index(drop=True)
 
         # Get the row with the best algorithm
         self.best_performing_summary = sorted_table.iloc[0]
