@@ -208,9 +208,12 @@ class munging:
             if impute_type not in impute_list:
                 return "The 2 types of imputation currently supported are 'mean' and 'median'"
             elif impute_type.lower() == "mean":
-                raw_df = raw_df.fillna(raw_df.mean())
+                numeric_means = raw_df.select_dtypes(include=[np.number]).median()
+                raw_df = raw_df.fillna(numeric_means)
             elif impute_type.lower() == "median":
-                raw_df = raw_df.fillna(raw_df.median())
+                numeric_medians = raw_df.select_dtypes(include=[np.number]).median()
+                raw_df = raw_df.fillna(numeric_medians)
+
             print("")
             print(
                 f"You have just imputed your genotype features, covering up NAs with the column {impute_type} so that analyses don't crash due to missing data.")
@@ -226,9 +229,12 @@ class munging:
             if impute_type not in impute_list:
                 return "The 2 types of imputation currently supported are 'mean' and 'median'"
             elif impute_type.lower() == "mean":
-                addit_df = addit_df.fillna(addit_df.mean())
+                numeric_means = addit_df.select_dtypes(include=[np.number]).mean()
+                addit_df = addit_df.fillna(numeric_means)
             elif impute_type.lower() == "median":
-                addit_df = addit_df.fillna(addit_df.median())
+                numeric_medians = addit_df.select_dtypes(include=[np.number]).median()
+                addit_df = addit_df.fillna(numeric_medians)
+
             print("")
             print(
                 f"You have just imputed your non-genotype features, covering up NAs with the column {impute_type} so that analyses don't crash due to missing data.")

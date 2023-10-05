@@ -167,7 +167,7 @@ class test:
         log_cols=["AUC_Percent", "Accuracy_Percent", "Balanced_Accuracy_Percent", "Log_Loss", "Sensitivity", "Specificity", "PPV", "NPV"]
         log_table = pd.DataFrame(columns=log_cols)
         log_entry = pd.DataFrame([[self.roc_auc*100, acc*100, balacc*100, ll, sensitivity, specificity, PPV, NPV]], columns=log_cols)
-        log_table = log_table.append(log_entry)
+        log_table = log_table._append(log_entry)
         
         print("")
         print("#"*70)

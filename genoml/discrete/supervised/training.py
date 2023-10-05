@@ -127,7 +127,7 @@ class train:
             print("Runtime in seconds: {:.4}".format(elapsed_time))
 
             log_entry = pd.DataFrame([[name, rocauc*100, acc*100, balacc*100, ll, sensitivity, specificity, PPV, NPV, elapsed_time]], columns=log_cols)
-            log_table = log_table.append(log_entry)
+            log_table = log_table._append(log_entry)
 
         print("#"*70)
         print("")

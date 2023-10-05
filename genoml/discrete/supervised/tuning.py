@@ -220,7 +220,7 @@ class tune():
                 print("Parameters: {0}".format(results['params'][candidate]))
                 print("")
                 top10_log_entry = pd.DataFrame([[i, results['mean_test_score'][candidate], results['std_test_score'][candidate], results['params'][candidate]]], columns=top10_log_cols)
-                top10_log_table = top10_log_table.append(top10_log_entry)
+                top10_log_table = top10_log_table._append(top10_log_entry)
 
         log_outfile = self.run_prefix + '.tunedModel_top10Iterations_Summary.csv'
         top10_log_table.to_csv(log_outfile, index=False)
@@ -261,7 +261,7 @@ class tune():
         summary_CV_log_cols = ["Mean_CV_Score_Baseline", "Standard_Dev_CV_Score_Baseline", "Min_CV_Score_Baseline", "Max_CV_Score_Baseline", "Mean_CV_Score_BestTuned", "Standard_Dev_CV_Score_BestTuned", "Min_CV_Score_BestTuned", "Max_CV_Score_BestTuned"]
         summary_CV_log_table = pd.DataFrame(columns=summary_CV_log_cols)
         summary_CV_log_entry = pd.DataFrame([[cv_baseline.mean(), cv_baseline.std(), cv_baseline.min(), cv_baseline.max(), cv_tuned.mean(), cv_tuned.std(), cv_tuned.min(), cv_tuned.max()]], columns=summary_CV_log_cols)
-        summary_CV_log_table = summary_CV_log_table.append(summary_CV_log_entry)
+        summary_CV_log_table = summary_CV_log_table._append(summary_CV_log_entry)
         log_outfile = self.run_prefix + '.tunedModel_CV_Summary.csv'
         summary_CV_log_table.to_csv(log_outfile, index=False)
 
