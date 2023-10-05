@@ -255,7 +255,7 @@ class munging:
             # Remove any columns with a standard deviation of zero
             print(f"Removing any columns that have a standard deviation of 0 prior to Z-scaling...")
             
-            if any(addit_df.std() == 0.0):
+            if any(addit_df[cols].std() == 0.0):
                 print("")
                 print(f"Looks like there's at least one column with a standard deviation of 0. Let's remove that for you...")
                 print("") 
