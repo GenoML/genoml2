@@ -11,4 +11,3 @@ seaborn
 statsmodels
 xgboost
 umap-learn
-tensorflow
