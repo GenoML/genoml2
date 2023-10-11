@@ -208,7 +208,7 @@ class munging:
             if impute_type not in impute_list:
                 return "The 2 types of imputation currently supported are 'mean' and 'median'"
             elif impute_type.lower() == "mean":
-                numeric_means = raw_df.select_dtypes(include=[np.number]).median()
+                numeric_means = raw_df.select_dtypes(include=[np.number]).mean()
                 raw_df = raw_df.fillna(numeric_means)
             elif impute_type.lower() == "median":
                 numeric_medians = raw_df.select_dtypes(include=[np.number]).median()
