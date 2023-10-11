@@ -89,7 +89,7 @@ def handle_harmonize():
 
 
 def handle_continuous_supervised_munge():
-    handle_endpoints("genoml discrete supervised munge",
+    handle_endpoints("genoml continuous supervised munge",
                      ["prefix", "impute", "geno", "skip_prune", "r2_cutoff", "pheno", "addit",
                       "feature_selection", "gwas", "p", "vif", "iter",
                       "ref_cols_harmonize", "umap_reduce", "adjust_data",
