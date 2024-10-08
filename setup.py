@@ -15,15 +15,12 @@
 
 import setuptools
 
-# Read the requirements from the requirements.txt file
 with open('requirements.txt') as file:
-    requires = [line.strip() for line in file if not line.startswith('#') and line.strip()]
+    requires = [line.strip() for line in file if not line.startswith('#')]
 
-# Read the long description from the README.md file
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-# Setup function
 setuptools.setup(
     name="genoml2",
     version="1.0.0-beta.11",
@@ -40,13 +37,13 @@ setuptools.setup(
             ['genoml=genoml.__main__:handle_main'],
     },
     packages=setuptools.find_packages(),
-    install_requires=requires,  # Use the requires list from the requirements.txt file
+    install_requires=requires,
     classifiers=[
         "Development Status :: 4 - Beta",
-        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.6",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.9',
+    python_requires='>=3.6',
     package_data={'genoml': ['misc/*']},
 )
