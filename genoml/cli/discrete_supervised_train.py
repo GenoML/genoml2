@@ -16,7 +16,7 @@
 import sys
 import numpy as np
 import pandas as pd
-
+from pathlib import Path
 from genoml.discrete import supervised
 
 
@@ -36,7 +36,7 @@ def main(prefix, metric_max, prob_hist, auc, matchingCols):
 
     # Specify prefix and dataframe variables to be passed into class
     run_prefix = prefix
-    infile_h5 = run_prefix + ".dataForML.h5"
+    infile_h5 = Path(run_prefix).joinpath("Munge").joinpath("dataForML.h5")
     df = pd.read_hdf(infile_h5, key = "dataForML")
 
     if (matchingCols != None):
@@ -82,13 +82,13 @@ def main(prefix, metric_max, prob_hist, auc, matchingCols):
     # Export the results 
     model.export_model()
 
-    # Export the AUC     
-    model.AUC(save=True)
+    # Export the ROC and precision-recall plots
+    model.plot_results(save=True)
 
-    # Export the probability histograms
-    model.export_prob_hist()
+    # Export the probability histograms and data tables.
+    model.export_prediction_data()
 
     # Save out the proper algorithm
-    model.save_results(prefix, algorithmResults = True, bestAlgorithm = True)
+    model.save_results(algorithm_results=True, best_algorithm=True)
 
     print("Thank you for training with GenoML!")

@@ -13,11 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 
-import sys
+from genoml.discrete import supervised
 import joblib
 import pandas as pd
-
-from genoml.discrete import supervised
+from pathlib import Path
+import sys
 
 def main(prefix, test_prefix, refModel_prefix):
     print("")
@@ -35,30 +35,25 @@ def main(prefix, test_prefix, refModel_prefix):
     print("")
 
     # Specify prefix and dataframe variables to be passed into class
-    run_prefix = prefix
-    infile_h5 = test_prefix + ".dataForML.h5"
-    df = pd.read_hdf(infile_h5, key = "dataForML")
-
-    infile_model = refModel_prefix + ".joblib"
+    infile_h5 = Path(prefix).joinpath("Munge").joinpath("dataForML.h5")
+    infile_model = Path(prefix).joinpath("Tune").joinpath("tunedModel.joblib")
     loaded_model = joblib.load(infile_model)
 
-    # Pass the arguments to the class 
-    test = supervised.test(df, loaded_model, run_prefix)
+    # Pass the arguments to the class
+    df = pd.read_hdf(infile_h5, key="dataForML")
+    test = supervised.test(df, loaded_model, prefix)
 
     # Prep and show the dataframe
     test.prep_df()
 
-    # Export the ROC
-    test.export_ROC()
+    # Export the ROC and precision-recall plots
+    test.plot_results(save=True)
 
-    # Export the tested data 
-    test.export_tested_data()
-
-    # Export the histograms
-    test.export_histograms()
+    # Export the probability histograms and data tables.
+    test.export_prediction_data()
 
     # Export the additional summary stats
-    test.additional_sumstats()
+    #test.additional_sumstats()
 
     # Thank the user
     print("")
