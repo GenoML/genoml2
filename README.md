@@ -39,6 +39,10 @@ OR
 
 > Note: When you pip install this package, the examples/ folder is also downloaded! However, if  you still want to download the directory and SVN is not pre-installed, you can download it via Homebrew if you have that installed using `brew install svn` 
 
+### CHANGELOG
+- 8-OCT-2024: Big changes to output file structure, so now output files go in subdirectories named for each step, and prefixes are not required. `README` updated to reflect these changes.
+
+
 ### Table of Contents 
 #### [0. (OPTIONAL) How to Set Up a Virtual Environment via Conda](#0)
 #### [1. Munging with GenoML](#1)
@@ -124,7 +128,7 @@ If you would like to munge just with genotypes (in PLINK binary format), the sim
 # Running GenoML munging on discrete data using PLINK genotype binary files and a phenotype file 
 
 genoml discrete supervised munge \
---prefix outputs/test_discrete_geno \
+--prefix outputs \
 --geno examples/discrete/training \
 --pheno examples/discrete/training_pheno.csv
 ```
@@ -134,7 +138,7 @@ If you would like to control the pruning stringency in genotypes:
 # Running GenoML munging on discrete data using PLINK genotype binary files and a phenotype file 
 
 genoml discrete supervised munge \
---prefix outputs/test_discrete_geno \
+--prefix outputs \
 --geno examples/discrete/training \
 --r2_cutoff 0.3 \
 --pheno examples/discrete/training_pheno.csv
@@ -145,7 +149,7 @@ You can choose to skip pruning your SNPs at this stage by changing the `--skip_p
 # Running GenoML munging on discrete data using PLINK genotype binary files and a phenotype file 
 
 genoml discrete supervised munge \
---prefix outputs/test_discrete_geno \
+--prefix outputs \
 --geno examples/discrete/training \
 --skip_prune yes \
 --pheno examples/discrete/training_pheno.csv
@@ -156,7 +160,7 @@ You can choose to impute on `mean` or `median` by modifying the `--impute` flag,
 # Running GenoML munging on discrete data using PLINK genotype binary files and a phenotype file and specifying impute
 
 genoml discrete supervised munge \
---prefix outputs/test_discrete_geno \
+--prefix outputs \
 --geno examples/discrete/training \
 --pheno examples/discrete/training_pheno.csv \
 --impute mean
@@ -167,7 +171,7 @@ If you suspect collinear variables, and think this will be a problem for trainin
 # Running GenoML munging on discrete data using PLINK genotype binary files and a phenotype file while using VIF to remove multicollinearity 
 
 genoml discrete supervised munge \
---prefix outputs/test_discrete_geno \
+--prefix outputs \
 --geno examples/discrete/training \
 --pheno examples/discrete/training_pheno.csv \
 --vif 5 \
@@ -182,7 +186,7 @@ Well, what if you had GWAS summary statistics handy, and would like to just use 
 # Running GenoML munging on discrete data using PLINK genotype binary files, a phenotype file, and a GWAS summary statistics file 
 
 genoml discrete supervised munge \
---prefix outputs/test_discrete_geno \
+--prefix outputs \
 --geno examples/discrete/training \
 --pheno examples/discrete/training_pheno.csv \
 --gwas examples/discrete/example_GWAS.csv
@@ -194,7 +198,7 @@ genoml discrete supervised munge \
 # Running GenoML munging on discrete data using PLINK genotype binary files, a phenotype file, and a GWAS summary statistics file with a p-value cut-off 
 
 genoml discrete supervised munge \
---prefix outputs/test_discrete_geno \
+--prefix outputs \
 --geno examples/discrete/training \
 --pheno examples/discrete/training_pheno.csv \
 --gwas examples/discrete/example_GWAS.csv \
@@ -205,7 +209,7 @@ Do you have additional data you would like to incorporate? Perhaps clinical, dem
 # Running GenoML munging on discrete data using PLINK genotype binary files, a phenotype file, and an addit file
 
 genoml discrete supervised munge \
---prefix outputs/test_discrete_geno \
+--prefix outputs \
 --geno examples/discrete/training \
 --pheno examples/discrete/training_pheno.csv \
 --addit examples/discrete/training_addit.csv
@@ -215,7 +219,7 @@ You also have the option of not using PLINK binary files if you would like to ju
 # Running GenoML munging on discrete data using PLINK genotype binary files, a phenotype file, and an addit file
 
 genoml discrete supervised munge \
---prefix outputs/test_discrete_geno \
+--prefix outputs \
 --pheno examples/discrete/training_pheno.csv \
 --addit examples/discrete/training_addit.csv
 ```
@@ -225,7 +229,7 @@ Are you interested in selecting and ranking your features? If so, you can use th
 # Running GenoML munging on discrete data using PLINK genotype binary files, a phenotype file, and running feature selection 
 
 genoml discrete supervised munge \
---prefix outputs/test_discrete_geno \
+--prefix outputs \
 --geno examples/discrete/training \
 --pheno examples/discrete/training_pheno.csv \
 --addit examples/discrete/training_addit.csv \
@@ -244,7 +248,7 @@ To reduce your data prior to adjusting, use the `--umap_reduce yes` flag. This f
 # Running GenoML munging on discreate data using PLINK binary files, a phenotype file, using UMAP to reduce dimensions and account for features, and running feature selection
 
 genoml discrete supervised munge \
---prefix outputs/test_discrete_geno \
+--prefix outputs \
 --geno examples/discrete/training \
 --pheno examples/discrete/training_pheno.csv \
 --addit examples/discrete/training_addit.csv \
@@ -267,12 +271,12 @@ Training with GenoML competes a number of different algorithms and outputs the b
 - `mode`:  would you like to `munge`, `train`, `tune`, or `test` your model?
 - `--prefix` : Where would you like your outputs to be saved?
 
-The most basic command to train your model looks like the following, it looks for the `*.dataForML` file that was generated in the munging step: 
+The most basic command to train your model looks like the following, it looks for the `dataForML` file that was generated in the munging step: 
 ```shell
 # Running GenoML supervised training after munging on discrete data
 
 genoml discrete supervised train \
---prefix outputs/test_discrete_geno
+--prefix outputs
 ```
 
 If you would like to determine the best competing algorithm by something other than the AUC, you can do so by changing the `--metric_max` flag (Options include `AUC`, `Balanced_Accuracy`, `Sensitivity`, and `Specificity`) :
@@ -280,7 +284,7 @@ If you would like to determine the best competing algorithm by something other t
 # Running GenoML supervised training after munging on discrete data and specifying the metric to maximize by 
 
 genoml discrete supervised train \
---prefix outputs/test_discrete_geno \
+--prefix outputs \
 --metric_max Sensitivity
 ```
 > *Note:* The `--metric_max` flag is only available for discrete datasets.
@@ -293,7 +297,7 @@ The most basic command to tune your model looks like the following, it looks for
 # Running GenoML supervised tuning after munging and training on discrete data
 
 genoml discrete supervised tune \
---prefix outputs/test_discrete_geno
+--prefix outputs
 ```
 
 If you are interested in changing the number of iterations the tuning process goes through by modifying `--max_tune` *(default is 50)*, or the number of cross-validations by modifying `--n_cv` *(default is 5)*, this is what the command would look like: 
@@ -301,7 +305,7 @@ If you are interested in changing the number of iterations the tuning process go
 # Running GenoML supervised tuning after munging and training on discrete data, modifying the number of iterations and cross-validations 
 
 genoml discrete supervised tune \
---prefix outputs/test_discrete_geno \
+--prefix outputs \
 --max_tune 10 --n_cv 3
 ```
 
@@ -310,7 +314,7 @@ If you are interested in tuning on another metric other than AUC *(default is AU
 # Running GenoML supervised tuning after munging and training on discrete data, modifying the metric to tune by
 
 genoml discrete supervised tune \
---prefix outputs/test_discrete_geno \
+--prefix outputs \
 --metric_tune Balanced_Accuracy
 ```
 
@@ -337,8 +341,8 @@ Using GenoML for both your reference dataset and then your validation dataset, t
 
 **Required** arguments for harmonizing with GenoML are the following: 
 - `--test_geno_prefix` : What is the prefix of your validation dataset PLINK binaries?
-- `--test_prefix`: What do you want the output to be named?
-- `--ref_model_prefix`:  What is the name of the previously GenoML-munged dataset you would like to use as your reference dataset? (Without the `.dataForML.h5` suffix)
+- `--test_prefix`: What is the path to your output directory?
+- `--ref_model_prefix`:  What is the output directory containing the previously GenoML-munged dataset you would like to use as your reference dataset? (This is generated at `outputs/Munge`)
 - `--training_snps_alleles` : What are the SNPs and alleles you would like to use? (This is generated at the end of your previously-GenoML munged dataset with the suffix `variants_and_alleles.tab`)
 
 To harmonize your incoming validation dataset to match the SNPs and alleles to your reference dataset, the command would look like the following:
@@ -348,30 +352,32 @@ To harmonize your incoming validation dataset to match the SNPs and alleles to y
 
 genoml harmonize \
 --test_geno_prefix examples/discrete/validation \
---test_prefix outputs/validation_test_discrete_geno \
---ref_model_prefix outputs/test_discrete_geno \
---training_snps_alleles outputs/test_discrete_geno.variants_and_alleles.tab
+--test_prefix outputs \
+--ref_model_prefix outputs \
+--training_snps_alleles outputs/Munge/variants_and_alleles.tab
 ```
 
 This step will generate: 
-- a `*_refColsHarmonize_toKeep.txt` file of columns to keep for the next step 
-- `*_refSNPs_andAlleles.*` PLINK binary files (.bed, .bim, and .fam) that have the SNPs and alleles match your reference dataset
+- a `refColsHarmonize_toKeep.txt` file of columns to keep for the next step 
+- `refSNPs_andAlleles.*` PLINK binary files (.bed, .bim, and .fam) that have the SNPs and alleles match your reference dataset
+- Files are located at `outputs/Harmonize/`
 
 Now that you have harmonized your validation dataset to your reference dataset, you can now munge using a command similar to the following:
 ```shell
 # Running GenoML munge after GenoML harmonize
 
-genoml discrete supervised munge --prefix outputs/validation_test_discrete_geno \
---geno outputs/validation_test_discrete_geno_refSNPs_andAlleles \
+genoml discrete supervised munge 
+--prefix outputs \
+--geno outputs/Harmonize/refSNPs_andAlleles \
 --pheno examples/discrete/validation_pheno.csv \
 --addit examples/discrete/validation_addit.csv \
---ref_cols_harmonize outputs/validation_test_discrete_geno_refColsHarmonize_toKeep.txt
+--ref_cols_harmonize outputs/Harmonize/refColsHarmonize_toKeep.txt
 ```
-All munging options discussed above are available at this step, the only difference here is you will add the `--ref_cols_harmonize` flag to include the `*.refColsHarmonize_toKeep.txt` file generated at the end of harmonizing to only keep the same columns that the reference dataset had. 
+All munging options discussed above are available at this step, the only difference here is you will add the `--ref_cols_harmonize` flag to include the `refColsHarmonize_toKeep.txt` file generated at the end of harmonizing to only keep the same columns that the reference dataset had. 
 
 After munging and training your reference model and harmonizing and munging your unseen test data, **you will retrain your reference model to include only matching features**. Given the nature of ML algorithms, you cannot test a model on a set of data that does not have identical features. 
 
-To retrain your model appropriately, after munging your test data with the `--ref_cols_harmonize ` flag, a final columns list will be generated at `*.finalHarmonizedCols_toKeep.txt`. This includes all the features that match between your unseen test data and your reference model. Use the `--matching_columns` flag when retraining your reference model to use the appropriate features.
+To retrain your model appropriately, after munging your test data with the `--ref_cols_harmonize ` flag, a final columns list will be generated at `outputs/Munge/finalHarmonizedCols_toKeep.txt`. This includes all the features that match between your unseen test data and your reference model. Use the `--matching_columns` flag when retraining your reference model to use the appropriate features.
 
 When retraining of the reference model is complete, you are ready to test!
 
@@ -379,81 +385,81 @@ A step-by-step guide on how to achieve this is listed below:
 ```shell
 # 0. MUNGE THE REFERENCE DATASET
 genoml discrete supervised munge \
---prefix outputs/test_discrete_geno \
+--prefix outputs \
 --geno examples/discrete/training \
 --pheno examples/discrete/training_pheno.csv
 # Files made: 
-    # outputs/test_discrete_geno.dataForML.h5
-    # outputs/test_discrete_geno.list_features.txt
-    # outputs/test_discrete_geno.variants_and_alleles.tab
+    # outputs/Munge/dataForML.h5
+    # outputs/Munge/list_features.txt
+    # outputs/Munge/variants_and_alleles.tab
 
 # 1. TRAIN THE REFERENCE DATASET
 genoml discrete supervised train \
---prefix outputs/test_discrete_geno
+--prefix outputs
 # Files made: 
-    # outputs/test_discrete_geno.best_algorithm.txt
-    # outputs/test_discrete_geno.trainedModel.joblib
-    # outputs/test_discrete_geno.trainedModel_trainingSample_Predictions.csv
-    # outputs/test_discrete_geno.trainedModel_withheldSample_Predictions.csv
-    # outputs/test_discrete_geno.trainedModel_withheldSample_ROC.png
-    # outputs/test_discrete_geno.trainedModel_withheldSample_probabilities.png
-    # outputs/test_discrete_geno.training_withheldSamples_performanceMetrics.csv
+    # outputs/Train/best_algorithm.txt
+    # outputs/Train/trainedModel.joblib
+    # outputs/Train/trainedModel_trainingSample_Predictions.csv
+    # outputs/Train/trainedModel_withheldSample_Predictions.csv
+    # outputs/Train/trainedModel_withheldSample_ROC.png
+    # outputs/Train/trainedModel_withheldSample_probabilities.png
+    # outputs/Train/training_withheldSamples_performanceMetrics.csv
 
 # 2. HARMONIZE TEST DATASET IF USING PLINK/GENOTYPES
 genoml harmonize \
 --test_geno_prefix examples/discrete/validation \
---test_prefix outputs/validation_test_discrete_geno \
---ref_model_prefix outputs/test_discrete_geno \
---training_snps_alleles outputs/test_discrete_geno.variants_and_alleles.tab
+--test_prefix outputs \
+--ref_model_prefix outputs \
+--training_snps_alleles outputs/Harmonize/variants_and_alleles.tab
 # Files made: 
-    # outputs/validation_test_discrete_geno.refColsHarmonize_toKeep.txt
-    # outputs/validation_test_discrete_geno.refSNPs_andAlleles.bed
-    # outputs/validation_test_discrete_geno.refSNPs_andAlleles.bim
-    # outputs/validation_test_discrete_geno.refSNPs_andAlleles.fam
+    # outputs/Harmonize/refColsHarmonize_toKeep.txt
+    # outputs/Harmonize/refSNPs_andAlleles.bed
+    # outputs/Harmonize/refSNPs_andAlleles.bim
+    # outputs/Harmonize/refSNPs_andAlleles.fam
 
 # 3. MUNGE THE TEST DATASET ON REFERENCE MODEL COLUMNS
 genoml discrete supervised munge \
---prefix outputs/validation_test_discrete_geno \
---geno outputs/validation_test_discrete_geno.refSNPs_andAlleles \
+--prefix outputs \
+--geno outputs/Harmonize/refSNPs_andAlleles \
 --pheno examples/discrete/validation_pheno.csv \
 --addit examples/discrete/validation_addit.csv \
---ref_cols_harmonize outputs/validation_test_discrete_geno.refColsHarmonize_toKeep.txt
+--ref_cols_harmonize outputs/Harmonize/refColsHarmonize_toKeep.txt
 # Files made: 
-    # outputs/validation_test_discrete_geno.finalHarmonizedCols_toKeep.txt
-    # outputs/validation_test_discrete_geno.list_features.txt
-    # outputs/test_discrete_geno.variants_and_alleles.tab
-    # outputs/validation_test_discrete_geno.dataForML.h5
+    # outputs/Munge/finalHarmonizedCols_toKeep.txt
+    # outputs/Munge/list_features.txt
+    # outputs/Munge/variants_and_alleles.tab
+    # outputs/Munge/dataForML.h5
 
 # 4. RETRAIN REFERENCE MODEL ON INTERSECTING COLUMNS BETWEEN REFERENCE AND TEST
 genoml discrete supervised train \
---prefix outputs/test_discrete_geno \
---matching_columns outputs/validation_test_discrete_geno.finalHarmonizedCols_toKeep.txt
+--prefix outputs \
+--matching_columns outputs/Munge/finalHarmonizedCols_toKeep.txt
 # Note: This replaces the trained model you made in step 1! 
 # Files made: 
-    # outputs/test_discrete_geno.best_algorithm.txt
-    # outputs/test_discrete_geno.trainedModel.joblib
-    # outputs/test_discrete_geno.trainedModel_trainingSample_Predictions.csv
-    # outputs/test_discrete_geno.trainedModel_withheldSample_Predictions.csv
-    # outputs/test_discrete_geno.trainedModel_withheldSample_ROC.png
-    # outputs/test_discrete_geno.trainedModel_withheldSample_probabilities.png
-    # outputs/test_discrete_geno.training_withheldSamples_performanceMetrics.csv
+    # outputs/Train/best_algorithm.txt
+    # outputs/Train/trainedModel.joblib
+    # outputs/Train/trainedModel_trainingSample_Predictions.csv
+    # outputs/Train/trainedModel_withheldSample_Predictions.csv
+    # outputs/Train/trainedModel_withheldSample_ROC.png
+    # outputs/Train/trainedModel_withheldSample_probabilities.png
+    # outputs/Train/training_withheldSamples_performanceMetrics.csv
 
 # OPTIONAL: TUNING YOUR RETRAINED REFERENCE MODEL ON INTERSECTING COLUMNS BETWEEN REFERENCE AND TEST
 genoml discrete supervised tune \
 --prefix outputs/test_discrete_geno \
---matching_columns outputs/validation_test_discrete_geno.finalHarmonizedCols_toKeep.txt
+--matching_columns outputs/Munge/finalHarmonizedCols_toKeep.txt
 
 # 5. TEST RETRAINED REFERENCE MODEL OR TUNED MODEL ON UNSEEN DATA
 genoml discrete supervised test \
---prefix outputs/validation_test_discrete_geno \
---test_prefix outputs/validation_test_discrete_geno \
---ref_model_prefix outputs/test_discrete_geno.trainedModel
-    # If testing a tuned model, change suffix from .trainedModel to .tunedModel
+--prefix outputs \
+--test_prefix outputs \
+--ref_model_prefix outputs/Train/trainedModel
+    # If testing a tuned model, change path from `*/Train/trainedModel` to `*/Tune/tunedModel`
 # Files made: 
-    # outputs/validation_test_discrete_geno.testedModel_allSample_predictions.csv
-    # outputs/validation_test_discrete_geno.testedModel_allSample_probabilities.png
-    # outputs/validation_test_discrete_geno.testedModel_allSample_ROC.png
-    # outputs/validation_test_discrete_geno.testedModel_allSamples_performanceMetrics.csv
+    # outputs/Test/testedModel_allSample_predictions.csv
+    # outputs/Test/testedModel_allSample_probabilities.png
+    # outputs/Test/testedModel_allSample_ROC.png
+    # outputs/Test/testedModel_allSamples_performanceMetrics.csv
 ```
 
 > *Note:* When munging the test dataset on the reference model columns using the --ref_cols_harmonize, be sure not to include the --feature_selection flag, as you have already specified the columns to keep moving forward.

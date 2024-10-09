@@ -40,6 +40,11 @@ class munging:
     ):
         self.pheno_path = pheno_path
 
+        # make output directory if not already there
+        path = Path(run_prefix)
+        if not path.is_dir():
+            path.mkdir()
+            
         path = Path(run_prefix).joinpath("Munge")
         if not path.is_dir():
             path.mkdir()
