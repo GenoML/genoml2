@@ -446,7 +446,7 @@ genoml discrete supervised train \
 
 # OPTIONAL: TUNING YOUR RETRAINED REFERENCE MODEL ON INTERSECTING COLUMNS BETWEEN REFERENCE AND TEST
 genoml discrete supervised tune \
---prefix outputs/test_discrete_geno \
+--prefix outputs \
 --matching_columns outputs/Munge/finalHarmonizedCols_toKeep.txt
 
 # 5. TEST RETRAINED REFERENCE MODEL OR TUNED MODEL ON UNSEEN DATA

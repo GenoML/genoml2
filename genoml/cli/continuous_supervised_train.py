@@ -17,7 +17,7 @@ import sys
 
 import numpy as np
 import pandas as pd
-
+from pathlib import Path
 from genoml import utils
 from genoml.continuous import supervised
 
@@ -28,7 +28,7 @@ def main(run_prefix, export_predictions, matching_columns_path):
     utils.DescriptionLoader.print("cli/continuous_supervised_train/info",
                                   python_version=sys.version, prefix=run_prefix)
 
-    input_path = run_prefix + ".dataForML.h5"
+    input_path = Path(run_prefix).joinpath("Munge").joinpath("dataForML.h5")
     with utils.DescriptionLoader.context(
             "cli/continuous_supervised_train/input", path=input_path):
         df = pd.read_hdf(input_path, key="dataForML")
