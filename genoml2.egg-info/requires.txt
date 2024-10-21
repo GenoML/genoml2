@@ -9,4 +9,5 @@ scikit-learn
 scipy
 seaborn
 statsmodels
-xgboost
+xgboost==2.0.3
+umap-learn

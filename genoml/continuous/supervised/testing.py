@@ -13,23 +13,20 @@
 # limitations under the License.
 # ==============================================================================
 
-# Import the necessary packages 
-import joblib
-import matplotlib.pyplot as plt
+# Import the necessary packages
 import pandas as pd
+from pathlib import Path
 import seaborn as sns
-import sklearn
-import sys
-import xgboost
-import numpy as np
-from time import time
 import statsmodels.formula.api as sm
 from sklearn.metrics import explained_variance_score, mean_squared_error, median_absolute_error, r2_score
 
 class test:
     def __init__(self, df, loaded_model, run_prefix):
         self.df = df 
-        self.run_prefix = run_prefix
+        path = Path(run_prefix).joinpath("Test")
+        if not path.is_dir():
+            path.mkdir()
+        self.run_prefix = path
         self.loaded_model = loaded_model
 
     def prep_df(self):
@@ -85,13 +82,13 @@ class test:
         print("R^2 score: {:.4}".format(r2s))
             
         log_entry = pd.DataFrame([[evs, mse, mae, r2s]], columns=log_cols)
-        log_table = log_table.append(log_entry)
+        log_table = log_table._append(log_entry)
 
         print("#"*70)
 
         print("")
 
-        log_outfile = self.run_prefix + '.testedModel_allSamples_performanceMetrics.csv'
+        log_outfile = self.run_prefix.joinpath('testedModel_allSamples_performanceMetrics.csv')
 
         print("")
         print(f"This table below is also logged as {log_outfile} and is in your current working directory...")
@@ -116,7 +113,7 @@ class test:
         test_out.columns=["INDEX","ID","PHENO_REPORTED","PHENO_PREDICTED"]
         test_out = test_out.drop(columns=["INDEX"])
 
-        test_outfile = self.run_prefix + '.testedModel_allSample_predictions.csv'
+        test_outfile = self.run_prefix.joinpath('testedModel_allSample_predictions.csv')
         test_out.to_csv(test_outfile, index=False)
 
         print("")
@@ -135,7 +132,7 @@ class test:
 
         sns_plot = sns.regplot(data=self.test_out, y="PHENO_REPORTED", x="PHENO_PREDICTED", scatter_kws={"color": "cyan"}, line_kws={"color": "purple"})
 
-        plot_out = self.run_prefix + '.testedModel_allSamples_regressionPlot.png'
+        plot_out = self.run_prefix.joinpath('testedModel_allSamples_regressionPlot.png')
         sns_plot.figure.savefig(plot_out, dpi=600)
 
         print("")
@@ -149,7 +146,7 @@ class test:
         fitted = reg_model.fit()
         print(fitted.summary())
 
-        fitted_out = self.run_prefix + 'testedModel_allSamples_regressionSummary.csv'
+        fitted_out = self.run_prefix.joinpath('testedModel_allSamples_regressionSummary.csv')
         
         with open(fitted_out, 'w') as fh:
             fh.write(fitted.summary().as_csv())

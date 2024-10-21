@@ -20,6 +20,7 @@ import sys
 import joblib
 import pandas as pd
 from pandas_plink import read_plink1_bin
+from pathlib import Path
 
 # Define the munging class
 import genoml.dependencies
@@ -29,12 +30,15 @@ class harmonizing:
         
         # Initializing the variables we will use 
         self.test_geno_prefix = test_geno_prefix
-        self.test_out_prefix = test_out_prefix
         self.ref_model_prefix = ref_model_prefix
         self.training_SNPs = training_SNPs
+        test_out_prefix = Path(test_out_prefix).joinpath("Harmonize")
+        if not test_out_prefix.is_dir():
+            test_out_prefix.mkdir()
+        self.test_out_prefix = test_out_prefix
 
-        infile_h5 = ref_model_prefix + ".dataForML.h5"
-        self.df = pd.read_hdf(infile_h5, key = "dataForML")
+        infile_h5 = Path(ref_model_prefix).joinpath("Munge").joinpath("dataForML.h5")
+        self.df = pd.read_hdf(infile_h5, key="dataForML")
 
     def generate_new_PLINK(self):        
         # Show first few lines of the dataframe
@@ -56,10 +60,10 @@ class harmonizing:
         self.X_test = X_test
         self.IDs_test = IDs_test
 
-        # Read in the column of SNPs from the SNP+Allele file read in 
+        # Read in the column of SNPs from the SNP+Allele file read in
         snps_alleles_df = pd.read_csv(self.training_SNPs, header=None)
         snps_only = snps_alleles_df.iloc[:, 0]
-        snps_temp = self.test_out_prefix + '.SNPS_only_toKeep_temp.txt'
+        snps_temp = str(self.test_out_prefix.joinpath('SNPS_only_toKeep_temp.txt'))
         snps_only.to_csv(snps_temp, header=None, index=False)
 
         print(f"A temporary file of SNPs from your reference dataset to keep in your testing dataset has been exported here: {snps_temp}")
@@ -69,7 +73,7 @@ class harmonizing:
 
         # Creating outfile with SNPs
         # Force the allele designations based on the reference dataset
-        plink_outfile = self.test_out_prefix + ".refSNPs_andAlleles"
+        plink_outfile = str(self.test_out_prefix.joinpath("refSNPs_andAlleles"))
         
         print("")
         print(f"Now we will create PLINK binaries where the reference SNPS and alleles will be based off of your file here: {self.training_SNPs}")
@@ -142,7 +146,7 @@ class harmonizing:
         ref_columns_list = self.df.columns.values.tolist()
 
         # Write out the columns to a text file we will use in munge later 
-        ref_cols_outfile = self.test_out_prefix + ".refColsHarmonize_toKeep.txt"
+        ref_cols_outfile = self.test_out_prefix.joinpath("refColsHarmonize_toKeep.txt")
 
         with open(ref_cols_outfile, 'w') as filehandle:
             for col in ref_columns_list:

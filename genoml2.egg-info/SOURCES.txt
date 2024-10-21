@@ -1,3 +1,4 @@
+LICENSE
 MANIFEST.in
 README.md
 requirements.txt
@@ -22,6 +23,7 @@ genoml/continuous/supervised/testing.py
 genoml/continuous/supervised/training.py
 genoml/continuous/supervised/tuning.py
 genoml/discrete/__init__.py
+genoml/discrete/utils.py
 genoml/discrete/supervised/__init__.py
 genoml/discrete/supervised/testing.py
 genoml/discrete/supervised/training.py
