@@ -410,7 +410,7 @@ genoml harmonize \
 --test_geno_prefix examples/discrete/validation \
 --test_prefix outputs \
 --ref_model_prefix outputs \
---training_snps_alleles outputs/Harmonize/variants_and_alleles.tab
+--training_snps_alleles outputs/Munge/variants_and_alleles.tab
 # Files made: 
     # outputs/Harmonize/refColsHarmonize_toKeep.txt
     # outputs/Harmonize/refSNPs_andAlleles.bed
