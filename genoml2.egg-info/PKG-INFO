@@ -1,11 +1,13 @@
 Metadata-Version: 2.1
 Name: genoml2
-Version: 1.0.0b11
+Version: 1.0.1
 Summary: GenoML is an automated machine learning tool that optimizes basic machine learning pipelines for genomic data.
 Home-page: https://genoml.github.io/
-Download-URL: https://github.com/GenoML/genoml2/archive/v1.0.0-beta.11.tar.gz
 Maintainer: The GenoML Development Team
 Maintainer-email: genoml@googlegroups.com
+License: UNKNOWN
+Download-URL: https://github.com/GenoML/genoml2/archive/v1.0.1.tar.gz
+Platform: UNKNOWN
 Classifier: Development Status :: 4 - Beta
 Classifier: Programming Language :: Python :: 3.6
 Classifier: License :: OSI Approved :: Apache Software License
@@ -13,19 +15,6 @@ Classifier: Operating System :: OS Independent
 Requires-Python: >=3.6
 Description-Content-Type: text/markdown
 License-File: LICENSE
-Requires-Dist: joblib
-Requires-Dist: matplotlib
-Requires-Dist: numpy
-Requires-Dist: tables
-Requires-Dist: pandas
-Requires-Dist: pandas_plink
-Requires-Dist: requests
-Requires-Dist: scikit-learn
-Requires-Dist: scipy
-Requires-Dist: seaborn
-Requires-Dist: statsmodels
-Requires-Dist: xgboost==2.0.3
-Requires-Dist: umap-learn
 
 # GenoML 
 
@@ -69,7 +58,7 @@ OR
 > Note: When you pip install this package, the examples/ folder is also downloaded! However, if  you still want to download the directory and SVN is not pre-installed, you can download it via Homebrew if you have that installed using `brew install svn` 
 
 ### CHANGELOG
-- 9-OCT-2024: Big changes to output file structure, so now output files go in subdirectories, and prefixes are not required. `README` updated to reflect these changes.
+- 8-OCT-2024: Big changes to output file structure, so now output files go in subdirectories named for each step, and prefixes are not required. `README` updated to reflect these changes.
 
 
 ### Table of Contents 
@@ -139,7 +128,7 @@ Munging with GenoML will, at minimum, do the following:
 - `data` : Is the data `continuous` or `discrete`?
 - `method`: Do you want to use `supervised` or `unsupervised` machine learning? *(unsupervised currently under development)*
 - `mode`:  would you like to `munge`, `train`, `tune`, or `test` your model?
-- `--prefix` : What is the path to the directory where you would like your outputs to be saved?
+- `--prefix` : Where would you like your outputs to be saved?
 - `--pheno` : Where is your phenotype file? This file only has 2 columns, ID in one, and PHENO in the other (0 for controls and 1 for cases)
 
 
@@ -300,7 +289,7 @@ Training with GenoML competes a number of different algorithms and outputs the b
 - `mode`:  would you like to `munge`, `train`, `tune`, or `test` your model?
 - `--prefix` : Where would you like your outputs to be saved?
 
-The most basic command to train your model looks like the following, it looks for the `*.dataForML` file that was generated in the munging step: 
+The most basic command to train your model looks like the following, it looks for the `dataForML` file that was generated in the munging step: 
 ```shell
 # Running GenoML supervised training after munging on discrete data
 
@@ -371,7 +360,7 @@ Using GenoML for both your reference dataset and then your validation dataset, t
 **Required** arguments for harmonizing with GenoML are the following: 
 - `--test_geno_prefix` : What is the prefix of your validation dataset PLINK binaries?
 - `--test_prefix`: What is the path to your output directory?
-- `--ref_model_prefix`:  What is the path to the previously GenoML-munged dataset you would like to use as your reference dataset? (This is generated at the end of your previously-GenoML munged dataset at `outputs/Munge/dataForML.h5`)
+- `--ref_model_prefix`:  What is the output directory containing the previously GenoML-munged dataset you would like to use as your reference dataset? (This is generated at `outputs/Munge`)
 - `--training_snps_alleles` : What are the SNPs and alleles you would like to use? (This is generated at the end of your previously-GenoML munged dataset with the suffix `variants_and_alleles.tab`)
 
 To harmonize your incoming validation dataset to match the SNPs and alleles to your reference dataset, the command would look like the following:
@@ -475,7 +464,7 @@ genoml discrete supervised train \
 
 # OPTIONAL: TUNING YOUR RETRAINED REFERENCE MODEL ON INTERSECTING COLUMNS BETWEEN REFERENCE AND TEST
 genoml discrete supervised tune \
---prefix outputs/test_discrete_geno \
+--prefix outputs \
 --matching_columns outputs/Munge/finalHarmonizedCols_toKeep.txt
 
 # 5. TEST RETRAINED REFERENCE MODEL OR TUNED MODEL ON UNSEEN DATA
@@ -483,7 +472,7 @@ genoml discrete supervised test \
 --prefix outputs \
 --test_prefix outputs \
 --ref_model_prefix outputs/Train/trainedModel
-    # If testing a tuned model, change path from `/Train/trainedModel` to `/Tune/tunedModel`
+    # If testing a tuned model, change path from `*/Train/trainedModel` to `*/Tune/tunedModel`
 # Files made: 
     # outputs/Test/testedModel_allSample_predictions.csv
     # outputs/Test/testedModel_allSample_probabilities.png
@@ -507,3 +496,5 @@ Planned experimental features include, but are not limited to:
 -  Cross-silo checks for genetic duplicates
 -  Outlier detection
 -  ...?
+
+
