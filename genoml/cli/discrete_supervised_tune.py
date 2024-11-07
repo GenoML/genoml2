@@ -15,7 +15,7 @@
 
 import pandas as pd
 import numpy as np
-
+from pathlib import Path
 from genoml.discrete import supervised
 
 
@@ -33,7 +33,7 @@ def main(run_prefix, metric_tune, max_iter, cv_count, matchingCols):
 
     print("")
 
-    infile_h5 = run_prefix + ".dataForML.h5"
+    infile_h5 = Path(run_prefix).joinpath("Munge").joinpath("dataForML.h5")
     df = pd.read_hdf(infile_h5, key = "dataForML")
 
     # Addressing issue #12: 
@@ -47,7 +47,7 @@ def main(run_prefix, metric_tune, max_iter, cv_count, matchingCols):
         # Keep only the columns found in the file 
         df = df[np.intersect1d(df.columns, matching_column_names_list)]
 
-    best_algo_name_in = run_prefix + '.best_algorithm.txt'
+    best_algo_name_in = Path(run_prefix).joinpath("Train").joinpath('best_algorithm.txt')#run_prefix + 'best_algorithm.txt'
     best_algo_df = pd.read_csv(best_algo_name_in, header=None, index_col=False)
     best_algo = str(best_algo_df.iloc[0,0])
 
@@ -55,33 +55,14 @@ def main(run_prefix, metric_tune, max_iter, cv_count, matchingCols):
     print(f"From previous analyses in the training phase, we've determined that the best algorithm for this application is {best_algo}... so let's tune it up and see what gains we can make!")
 
     # Tuning 
-    ## This calls on the functions made in the tune class (tuning.py) at the genoml.discrete.supervised 
     model_tune = supervised.tune(df, run_prefix, max_iter, cv_count)
-    
-    # Returns algo, hyperparameters, and scoring_metric
-    model_tune.select_tuning_parameters(metric_tune) 
-    
-    # Randomized search with CV to tune
-    model_tune.apply_tuning_parameters() 
-    
-    # Summary of the top 10 iterations of the hyperparameter tune
+    model_tune.select_tuning_parameters(metric_tune)
+    model_tune.apply_tuning_parameters()
     model_tune.report_tune()
-
-    # Summary of the cross-validation 
     model_tune.summarize_tune()
-
-    # Compares tuned performance to baseline to 
     model_tune.compare_performance()
-
-    # Export the ROC curve 
-    # model_tune.ROC()
-
-    # Export the newly tuned predictions 
-    model_tune.export_tuned_data()
-
-    # Export the probabilites 
-    model_tune.export_tune_hist_prob() 
-
+    model_tune.plot_results(save=True)
+    model_tune.export_prediction_data()
 
     print("")
     print("End of tuning stage with GenoML.")

@@ -15,6 +15,7 @@
 
 import joblib
 import pandas as pd
+from pathlib import Path
 import seaborn as sns
 import statsmodels.formula.api as sm
 import xgboost
@@ -41,8 +42,12 @@ class train:
         x_train = x_train.drop(columns=['ID'])
         x_test = x_test.drop(columns=['ID'])
 
+        path = Path(run_prefix).joinpath("Train")
+        if not path.is_dir():
+            path.mkdir()
+
         self._df = df
-        self._run_prefix = run_prefix
+        self._run_prefix = path
         self._x_train = x_train
         self._x_test = x_test
         self._y_train = y_train
@@ -124,7 +129,7 @@ class train:
         return str.join("\n", rows)
 
     def export_model(self):
-        output_path = self._run_prefix + '.trainedModel.joblib'
+        output_path = self._run_prefix.joinpath('trainedModel.joblib')
         with utils.DescriptionLoader.context("continuous/supervised/training/Train/export_model",
                                              output_path=output_path):
             joblib.dump(self._best_algorithm, output_path)
@@ -134,7 +139,7 @@ class train:
 
         train_predicted_values = self._best_algorithm.predict(self._x_train)
         results = pd.DataFrame(zip(self._ids_train, self._y_train, train_predicted_values), columns=output_columns)
-        output_path = self._run_prefix + '.trainedModel_trainingSample_Predictions.csv'
+        output_path = self._run_prefix.joinpath('trainedModel_trainingSample_Predictions.csv')
 
         with utils.DescriptionLoader.context("continuous/supervised/training/Train/export_predictions/train_data",
                                              output_path=output_path, data=results.head()):
@@ -142,13 +147,13 @@ class train:
 
         test_predicted_values = self._best_algorithm.predict(self._x_test)
         results = pd.DataFrame(zip(self._ids_test, self._y_test, test_predicted_values), columns=output_columns)
-        output_path = self._run_prefix + '.trainedModel_withheldSample_Predictions.csv'
+        output_path = self._run_prefix.joinpath('trainedModel_withheldSample_Predictions.csv')
 
         with utils.DescriptionLoader.context("continuous/supervised/training/Train/export_predictions/test_data",
                                              output_path=output_path, data=results.head()):
             results.to_csv(output_path, index=False)
 
-        output_path = self._run_prefix + '.trainedModel_withheldSample_regression.png'
+        output_path = self._run_prefix.joinpath('trainedModel_withheldSample_regression.png')
         reg_model = sm.ols(formula='PHENO_REPORTED ~ PHENO_PREDICTED', data=results)
         fitted = reg_model.fit()
         with utils.DescriptionLoader.context("continuous/supervised/training/Train/export_predictions/plot",
@@ -159,14 +164,14 @@ class train:
             sns_plot.figure.savefig(output_path, dpi=600)
 
     def save_algorithm_results(self, output_prefix):
-        output_path = output_prefix + '.training_withheldSamples_performanceMetrics.csv'
+        output_path = self._run_prefix.joinpath('training_withheldSamples_performanceMetrics.csv')
         with utils.DescriptionLoader.context("continuous/supervised/training/Train/save_algorithm_results",
                                              output_path=output_path,
                                              data=self.log_table.describe()):
             self.log_table.to_csv(output_path, index=False)
 
     def save_best_algorithm(self, output_prefix):
-        output_path = output_prefix + '.best_algorithm.txt'
+        output_path = self._run_prefix.joinpath('best_algorithm.txt')
         with utils.DescriptionLoader.context("continuous/supervised/training/Train/save_best_algorithm",
                                              output_path=output_path, best_algorithm=self._best_algorithm_name):
             with open(output_path, 'w') as fp:
