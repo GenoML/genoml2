@@ -13,10 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 
-from genoml.preprocessing.munging import munging
-from genoml.preprocessing.vif import vif
-from genoml.preprocessing.featureselection import featureselection
-from genoml.preprocessing.harmonizing import harmonizing
-from genoml.preprocessing.adjuster import adjuster
+import genoml.preprocessing.main as preprocessing
+from genoml.preprocessing.adjuster import Adjuster
+from genoml.preprocessing.featureselection import FeatureSelection
+from genoml.preprocessing.harmonizing import Harmonize
+from genoml.preprocessing.munging import Munge
+from genoml.preprocessing.vif import VIF
 
 __all__ = []

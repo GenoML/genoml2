@@ -13,119 +13,115 @@
 # limitations under the License.
 # ==============================================================================
 
-import pandas as pd
-import numpy as np
-import statsmodels.api as sm 
-import statsmodels.formula.api as smf
-import statistics
-import umap.umap_ as umap
-from joblib import dump, load 
+# Import the necessary packages
 import matplotlib.pyplot as plt
-from matplotlib import style
-import seaborn as sns
+import pandas as pd
+import pickle
+import statsmodels.formula.api as smf
+import umap.umap_ as umap
+from joblib import dump
 
-class adjuster:
-    def __init__(self, run_prefix, df, target_features, confounders, adjust_data, adjust_normalize, umap_reduce):
+
+class Adjuster:
+    def __init__(self, run_prefix, df_merged, target_features, confounders, adjust_normalize, umap_reduce):
         self.run_prefix = run_prefix
         self.umap_reduce = umap_reduce
-        self.target_columns = target_features
         self.confounders = confounders
-        self.adjust_data = adjust_data
-        self.normalize_switch = adjust_normalize
+        self.normalize = adjust_normalize
+        self.df_merged = df_merged
+
+        self.df_confounders = pd.read_csv(self.confounders, sep=None, encoding="utf-8-sig")
+        self.df_confounders = self.df_confounders.merge(self.df_merged[["ID"]], on="ID")
+
+        if type(target_features) == list:
+            self.targets = target_features
+            self.targets.sort()
+        else:
+            with open(target_features, "r") as f:
+                self.targets = list(set([str(line.strip()) for line in f if str(line.strip()) in self.df_merged.columns]))
+                self.targets.sort()
+
+        print(f"\nYou have chosen to adjust your data! \n")
+        print(f"You have also chosen{' NOT' if not adjust_normalize else ''} to normalize your adjusted data \n")
         
-        df = self.run_prefix + ".dataForML.h5"
-        self.munged_data = df
 
-        self.target_data_df = pd.read_hdf(self.munged_data, 'dataForML')
-        self.target_column_df = pd.read_csv(self.target_columns, names=['TARGETS'])
+    def umap_reducer(self, dataset_type, reducer=None):
+        if self.umap_reduce:
+            ids = self.df_confounders["ID"]
+            to_umap = self.df_confounders.drop(columns=["ID"])
 
-        self.confounders_df = pd.read_csv(self.confounders)
+            if reducer is None:
+                reducer = umap.UMAP(random_state=153)
+                reducer = reducer.fit(to_umap)
+            embedding = reducer.transform(to_umap)
+            self.df_confounders = pd.DataFrame({
+                "ID": ids.values,
+                "UMAP_embedding1": embedding[:, 0],
+                "UMAP_embedding2": embedding[:, 1]
+            })
 
-        # Keep only intersecting feature names left in munged set (removed either because --gwas or std dev of 0 etc.)
-        target_data_list = self.target_data_df.columns
-        target_column_list = self.target_column_df['TARGETS'].tolist()
-        intersecting_list = list(set(target_data_list).intersection(set(target_column_list)))
-        self.target_column_df = pd.DataFrame(intersecting_list,columns=['TARGETS'])
-        
-    def umap_reducer(self):
-        
-        if (self.umap_reduce == "yes"):
-            IDs = self.confounders_df['ID']
-            IDs_df = pd.DataFrame(IDs) 
-            to_umap = self.confounders_df.drop(columns=['ID']) 
-
-            reducer = umap.UMAP(random_state=153) 
-            embedding = reducer.fit_transform(to_umap)
-
-            embedding1 = pd.DataFrame(embedding[:,0])
-            embedding2 = pd.DataFrame(embedding[:,1])
-
-            out_data = pd.concat([IDs_df.reset_index(), embedding1.reset_index(drop=True), embedding2.reset_index(drop=True)], axis=1, ignore_index=True)
-            out_data.columns = ['INDEX', 'ID', 'UMAP_embedding1', "UMAP_embedding2"]
-            out_data = out_data.drop(columns=['INDEX'])
-
-            # Plot 
-            print(f"Exporting UMAP plot...")
             fig, ax = plt.subplots(figsize=(12,10))
             plt.scatter(embedding[:,0], embedding[:,1], cmap="cool")
             plt.title("Data Reduction to 2 Dimensions by UMAP", fontsize=18)
-            plot_out = self.run_prefix + '.umap_plot.png'
-            plt.savefig(plot_out, dpi=600)
 
+            plot_out = self.run_prefix.joinpath(f"umap_plot_{dataset_type}.png")
+            plt.savefig(plot_out, dpi=600)
             print(f"The UMAP plot has been exported and can be found here: {plot_out}")
             
-            out_file = self.runplot_out = self.run_prefix + '.umap_data_reduction.csv'
-            out_data.to_csv(out_file, index=False)
+            embed_out = self.run_prefix.joinpath(f"umap_data_reduction_{dataset_type}.txt")
+            self.df_confounders.to_csv(embed_out, index=False, sep="\t")
+            print(f"The reduced UMAP 2 dimensions per sample file can be found here: {embed_out}")
 
-            print(f"The reduced UMAP 2 dimensions per sample .csv file can be found here: {out_file}")
+            if dataset_type == "train":
+                algo_out = self.run_prefix.joinpath("umap_clustering.joblib")
+                dump(reducer, algo_out)
+                print(f"The UMAP .joblib  file can be found here: {algo_out}")
 
-            exported_reducer = reducer.fit(to_umap)
-            algo_out = self.runplot_out = self.run_prefix + '.umap_clustering.joblib'
-            dump(exported_reducer, algo_out)
+        return reducer
 
-            self.confounders_df = out_data
 
-            print(f"The UMAP .joblib  file can be found here: {algo_out}")
+    ### TODO: Complains if there is "-" anywhere in any of the target or confounder names
+    ### TODO: Should we check if one of the targets is also in the confounders?
+    def adjust_confounders(self, adjustment_models=None):
+        confounder_list = list(self.df_confounders.columns[1:])
+        formula_for_confounders = " + ".join(confounder_list)
         
-        return self.confounders_df 
+        df_adjustments = self.df_merged.merge(self.df_confounders, how="inner", on="ID", suffixes=["", "_y"])
+        fitting_adjustment_models = adjustment_models is None
 
-    def normalize(self, confounders_df):
-        target_list = list(self.target_column_df['TARGETS'])
-        confounder_list = list(confounders_df.columns[1:])
-        columns_to_keep_list = list(self.target_data_df.columns)
+        if fitting_adjustment_models:
+            adjustment_models = {}
 
-        adjustments_df = self.target_data_df.merge(confounders_df, how='inner', on='ID', suffixes=['', '_y'])
+        for target in self.targets:
+            if fitting_adjustment_models:
+                # Fit and save model
+                current_formula = target + " ~ " + formula_for_confounders
+                model = smf.ols(formula=current_formula, data=df_adjustments).fit()
+                residuals = pd.to_numeric(model.resid)
 
-        formula_for_confounders = ' + '.join(confounder_list)
+                adjustment_models[target] = {"model": model}
+                if self.normalize:
+                    mean = residuals.mean()
+                    std = residuals.std()
+                    residuals = (residuals - mean) / std
+                    adjustment_models[target]["mean"] = mean
+                    adjustment_models[target]["std"] = std
+                
+                with open(self.run_prefix.joinpath("adjustment_models.pkl"), "wb") as file:
+                    pickle.dump(adjustment_models, file)
 
-        for target in target_list:
-            current_target = str(target)
-            print(f"Looking at the following feature: {current_target}")
-            
-            current_formula = current_target + " ~ " + formula_for_confounders
-            print(current_formula)
-            
-            target_model = smf.ols(formula=current_formula, data=adjustments_df).fit()
-            
-            if (self.normalize_switch == 'yes'):
-                adjustments_df['temp'] = pd.to_numeric(target_model.resid)
-                #print(type(adjustments_df['temp']))
-                mean_scalar = adjustments_df['temp'].mean()
-                sd_scalar = adjustments_df['temp'].std()
-                adjustments_df[current_target] = (adjustments_df['temp'] - mean_scalar)/sd_scalar
-                adjustments_df.drop(columns=['temp'], inplace=True)
             else:
-                adjustments_df[current_target] = pd.to_numeric(target_model.resid)
+                # Apply stored model
+                model = adjustment_models[target]["model"]
+                predicted = model.predict(df_adjustments)
+                residuals = pd.to_numeric(df_adjustments[target] - predicted)
 
-        adjusted_df = adjustments_df[columns_to_keep_list]
+                if self.normalize:
+                    mean = adjustment_models[target]["mean"]
+                    std = adjustment_models[target]["std"]
+                    residuals = (residuals - mean) / std
 
-        outfile_h5 = self.run_prefix + ".dataForML.h5"
-        adjusted_df.to_hdf(outfile_h5, key='dataForML', mode='w')
+            df_adjustments[target] = residuals
 
-        if (self.normalize_switch == 'yes'):
-            print(f"\n The adjusted dataframe following normalization can be found here: {outfile_h5}, your updated .dataForML file \n")
-        else:
-            print(f"\n The adjusted dataframe without normalization can be found here: {outfile_h5}, your updated .dataForML file \n")
-
-
-        return adjusted_df
+        df_adjusted = df_adjustments[list(self.df_merged.columns)]
+        return df_adjusted, adjustment_models

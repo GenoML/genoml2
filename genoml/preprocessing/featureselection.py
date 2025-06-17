@@ -17,93 +17,58 @@ import pandas as pd
 from sklearn import ensemble
 from sklearn import feature_selection
 
-class featureselection:
+class FeatureSelection:
     def __init__(self, run_prefix, df, data_type, n_est):
-        self.run_prefix = run_prefix
-        self.featureRanks = None
-        self.n_est = n_est
-        self.data_type = data_type
-        
         # Double check there are no NAs in the dataset before proceeding
         remove_cols = df.columns[df.isna().any()].tolist()
         df.drop(remove_cols, axis=1, inplace=True)
 
-        self.y = df['PHENO']
-        self.X = df.drop(columns=['PHENO'])
-        X = self.X
-        self.IDs = X.ID
-        self.X = X.drop(columns=['ID'])
+        self.run_prefix = run_prefix
+        self.n_est = n_est
+        self.data_type = data_type
+        self.y = df.PHENO
+        self.ids = df.ID
+        self.x = df.drop(columns=['PHENO','ID'])
+
 
     def rank(self):
-        print(f"""
-            Beginning featureSelection using {self.n_est} estimators...""")
-
-        if (self.data_type == "d"):
-            print(f"""
-            using extraTrees Classifier for your discrete dataset 
-            """)
+        print(f"Beginning featureSelection using {self.n_est} extraTrees estimators...")
+        if self.data_type == "d":
             clf = ensemble.ExtraTreesClassifier(n_estimators=self.n_est)
-        
-        if (self.data_type == "c"):
-            print(f"""
-            using extraTrees Regressor for your continuous dataset
-            """)
+        if self.data_type == "c":
             clf = ensemble.ExtraTreesRegressor(n_estimators=self.n_est)
-        
-        clf.fit(self.X, self.y)
-        self.featureRanks = clf.feature_importances_
+        clf.fit(self.x, self.y)
         
         # Code to drop the features below threshold and return the data set like it was (aka add PHENO and IDs back)
-        model = feature_selection.SelectFromModel(clf, prefit=True) # find this import at top
-        df_editing = model.transform(self.X)
-        print("""
-        Printing feature name that corresponds to the dataframe column name, then printing the relative importance as we go...
-        """)
-        
-        list_featureScores = []
+        ### TODO: Look into warning message from this
+        model = feature_selection.SelectFromModel(clf, prefit=True)
+        df_feature_scores = pd.DataFrame(
+            zip(self.x.columns, clf.feature_importances_),
+            columns=["Feature_Name", "Score"]
+        )
+        df_feature_scores = df_feature_scores.sort_values(by=['Score'], ascending=False)
+        feature_scores_outfile = self.run_prefix.joinpath("approx_feature_importance.txt")
+        df_feature_scores.to_csv(feature_scores_outfile, index=False, sep="\t")
 
-        for col,score in zip(self.X.columns,clf.feature_importances_):
-            print(col,score)
-            list_featureScores.append([col, score])
+        x_reduced = self.x.iloc[:, model.get_support()]
+        self.df_selecta = pd.concat([
+            self.ids.reset_index(drop=True), 
+            self.y.reset_index(drop=True), 
+            x_reduced.reset_index(drop=True)
+        ], axis = 1, ignore_index=False
+        )
+        print(f"You have reduced your dataset to {x_reduced.shape[0]} samples at {x_reduced.shape[1]} features, not including ID and PHENO.")
+        return self.df_selecta
 
-        df_featureScores = pd.DataFrame(list_featureScores, columns=["Feature_Name", "Score"])
-        #df_featureScores = df_featureScores[df_featureScores['Score'] !=0]
-        df_featureScores = df_featureScores.sort_values(by=['Score'], ascending=False)
-        featureScores_outfile = self.run_prefix + ".approx_feature_importance.txt"
-        df_featureScores.to_csv(featureScores_outfile, index=False, sep="\t")
 
-        print(f"""
-        You have reduced your dataset to {df_editing.shape[0]} samples at {df_editing.shape[1]} features, not including ID and PHENO.
-        """)
-
-        y_df = self.y
-        ID_df = pd.DataFrame(self.IDs)
-        features_selected = model.get_support()
-        X_reduced = self.X.iloc[:,features_selected]
-        df_selecta = pd.concat([ID_df.reset_index(drop=True), y_df.reset_index(drop=True), X_reduced.reset_index(drop=True)], axis = 1, ignore_index=False)
-        
-        self.df_selecta = df_selecta
-        self.featureScores_outfile = featureScores_outfile
-
-        return df_selecta
-    
     def export_data(self):
-        ## Export reduced data
-        outfile_h5 = self.run_prefix + ".dataForML.h5"
-        self.df_selecta.to_hdf(outfile_h5, key='dataForML')
-
         features_list = self.df_selecta.columns.values.tolist()
-    
-        features_listpath = self.run_prefix + ".list_features.txt"
+        features_listpath = self.run_prefix.joinpath("list_features.txt")
         with open(features_listpath, 'w') as f:
             for feature in features_list:
-                f.write("%s\n" % feature)
+                f.write(feature + "\n")
 
-        print(f"""Exporting a new {outfile_h5} file that has a reduced feature set based on your importance approximations. 
-        This is a good dataset for general ML applications for the chosen PHENO as it includes only features that are likely to impact the model.
-
+        print(f"""
         An updated list of {len(features_list)} features, including ID and PHENO, that is in your munged dataForML.h5 file can be found here {features_listpath}
-        
-        A file with all your features, ranked from largest contributors at the top to smallest contributors at the bottom, can be found at {self.featureScores_outfile}.
         """)
         

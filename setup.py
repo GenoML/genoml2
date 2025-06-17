@@ -40,10 +40,10 @@ setuptools.setup(
     install_requires=requires,
     classifiers=[
         "Development Status :: 4 - Beta",
-        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.9",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.9,<3.13',
     package_data={'genoml': ['misc/*']},
 )

@@ -31,10 +31,10 @@ def __get_executable_folder():
     if key in os.environ:
         return os.path.abspath(os.environ.get(key))
     else:
-        return os.path.join(str(pathlib.Path.home()), ".genoml", "misc",
-                            "executables")
+        return os.path.join(str(pathlib.Path.home()), ".genoml", "misc", "executables")
 
 
+### TODO: Should this be in the GenoML output directory?
 __executable_folder = __get_executable_folder()
 
 
@@ -113,14 +113,14 @@ __DEPENDENCIES = {
     "Plink": {
         "checker": check_plink,
         "Darwin": {
-            "binary": "plink",
+            "binary": "plink2",
             "version_args": ["--version"],
-            "url": "http://s3.amazonaws.com/plink1-assets/plink_mac_20200219.zip"
+            "url": "http://s3.amazonaws.com/plink2-assets/plink2_mac_20241020.zip"
         },
         "Linux": {
-            "binary": "plink",
+            "binary": "plink2",
             "version_args": ["--version"],
-            "url": "http://s3.amazonaws.com/plink1-assets/plink_linux_x86_64_20200219.zip"
+            "url": "http://s3.amazonaws.com/plink2-assets/plink2_linux_x86_64_latest.zip"
         }
     },
 }

@@ -14,144 +14,145 @@
 # ==============================================================================
 
 # Import the necessary packages
-import subprocess
-import numpy as np
-import sys
+import genoml.preprocessing.utils as preprocessing_utils
 import joblib
-import pandas as pd
-from pandas_plink import read_plink1_bin
+import pickle
+import sys
+from genoml import utils, dependencies
+from genoml.preprocessing import adjuster
 
-# Define the munging class
-import genoml.dependencies
 
-class harmonizing:
-    def __init__(self, test_geno_prefix, test_out_prefix, ref_model_prefix, training_SNPs):
-        
-        # Initializing the variables we will use 
-        self.test_geno_prefix = test_geno_prefix
-        self.test_out_prefix = test_out_prefix
-        self.ref_model_prefix = ref_model_prefix
-        self.training_SNPs = training_SNPs
+class Harmonize:
+    @utils.DescriptionLoader.function_description("info", cmd="Harmonizing")
+    def __init__(self, prefix, geno_path, pheno_path, addit_path, confounders, force_impute, data_type):
+        # Create subdirectory where all munging-related files will be saved
+        self.prefix = utils.create_results_dir(prefix, "Munge")
 
-        infile_h5 = ref_model_prefix + ".dataForML.h5"
-        self.df = pd.read_hdf(infile_h5, key = "dataForML")
+        # Load params/models from munging
+        self.confounders = confounders
+        self.data_type = data_type
+        self.force_impute = force_impute
+        with open(self.prefix.joinpath("params.pkl"), "rb") as file:
+            params = pickle.load(file)
+        self.adjust_normalize = params["adjust_normalize"]
+        self.impute_type = params["impute_type"]
+        self.vif_thresh = params["vif_thresh"]
+        self.vif_iter = params["vif_iter"]
+        self.target_features = params["target_features"]
+        self.cols = params["cols"]
+        self.avg_vals = params["avg_vals"]
+        self.umap_reducer = joblib.load(self.prefix.joinpath("umap_clustering.joblib")) if self.prefix.joinpath("umap_clustering.joblib").exists() else None
 
-    def generate_new_PLINK(self):        
-        # Show first few lines of the dataframe
-        print("")
-        print("Your data looks like this (showing the first few lines of the left-most and right-most columns)...")
-        print("#"*70)
-        print(self.df.describe())
-        print("#"*70)
-        print("")
+        utils.DescriptionLoader.print(
+            "harmonizing/info",
+            python_version=sys.version,
+            prefix = self.prefix,
+            geno_path = geno_path,
+            addit_path = addit_path,
+            pheno_path = pheno_path,
+            vif_thresh = self.vif_thresh,
+            vif_iter = self.vif_iter,
+            impute_type = self.impute_type,
+            force_impute = "" if force_impute else "NOT ",
+            umap_reduce = self.umap_reducer is not None,
+        )
+    
+        dependencies.check_dependencies()
 
-        # Save out and drop the PHENO and sample ID columns 
-        y_test = self.df.PHENO
-        X_test = self.df.drop(columns=['PHENO'])
-        IDs_test = X_test.ID
-        X_test = X_test.drop(columns=['ID'])
+        # Initializing some variables
+        self.plink_exec = dependencies.check_plink()
+        self.geno_path = geno_path
+        self.pheno_path = pheno_path
+        self.addit_path = addit_path
+        if self.prefix.joinpath("adjustment_models.pkl").exists():
+            self.adjust_data = True
+            with open(self.prefix.joinpath("adjustment_models.pkl"), "rb") as file:
+                self.adjustment_models = pickle.load(file)
+        else:
+            self.adjust_data = False
+            self.adjustment_models = None 
+        self.df_merged_harmonize = None
 
-        # Save variables to use globally within the class 
-        self.y_test = y_test
-        self.X_test = X_test
-        self.IDs_test = IDs_test
 
-        # Read in the column of SNPs from the SNP+Allele file read in 
-        snps_alleles_df = pd.read_csv(self.training_SNPs, header=None)
-        snps_only = snps_alleles_df.iloc[:, 0]
-        snps_temp = self.test_out_prefix + '.SNPS_only_toKeep_temp.txt'
-        snps_only.to_csv(snps_temp, header=None, index=False)
+    def create_merged_datasets(self):
+        """ Merge phenotype, genotype, and additional data. """
+        self.df_merged_harmonize = preprocessing_utils.read_pheno_file(self.pheno_path, self.data_type)
+        self.df_merged_harmonize = preprocessing_utils.merge_addit_data(self.df_merged_harmonize, self.addit_path, self.impute_type)
+        self.df_merged_harmonize = preprocessing_utils.merge_geno_harmonize_data(
+            self.df_merged_harmonize, self.geno_path, self.pheno_path, self.impute_type, self.prefix, self.plink_exec)
 
-        print(f"A temporary file of SNPs from your reference dataset to keep in your testing dataset has been exported here: {snps_temp}")
 
-        # Prepare the bashes to keep the SNPs of interest from the reference dataset
-        plink_exec = genoml.dependencies.check_plink()
+    def filter_shared_cols(self):
+        """ Initial filtering to keep only shared columns between train and harmonizing data. """
+        common_cols = self.cols.intersection(self.df_merged_harmonize.columns)
+        self.df_merged_harmonize = self.df_merged_harmonize[common_cols]
 
-        # Creating outfile with SNPs
-        # Force the allele designations based on the reference dataset
-        plink_outfile = self.test_out_prefix + ".refSNPs_andAlleles"
-        
-        print("")
-        print(f"Now we will create PLINK binaries where the reference SNPS and alleles will be based off of your file here: {self.training_SNPs}")
-        print("")
 
-        bash1 = f"{plink_exec} --bfile " + self.test_geno_prefix + " --extract " + snps_temp + " --reference-allele " + self.training_SNPs + " --make-bed --out " + plink_outfile
-        # Remove the .log file 
-        bash2 = "rm " + plink_outfile + ".log"
-        # Remove the .SNPS_only_toKeep_temp.txt file 
-        bash3 = "rm " + snps_temp
+    def impute_missing_cols(self):
+        """ Add missing columns back in by imputing averages from training dataset. """
+        missing_cols = self.cols.difference(self.df_merged_harmonize.columns)
 
-        cmds_a = [bash1, bash2, bash3]
+        if len(missing_cols) > 0 and not self.force_impute:
+            with open(self.prefix.joinpath("missing_cols.txt"), 'w') as file:
+                for col in missing_cols:
+                    file.write(f'{col}\n')
 
-        for cmd in cmds_a:
-            subprocess.run(cmd, shell=True)
+            val_err_str = f"{len(missing_cols)} of the {len(self.cols)} features that were used to fit the model which are not present in the dataset you're harmonizing! \n"
+            val_err_str += "We STRONGLY recommend using the same features that were used to fit your model. \n"
+            val_err_str += "However, if you want to impute these values using the average from the training data, please add the --force_impute flag. \n"
+            val_err_str += f"A list of missing columns has been written to {self.prefix.joinpath('missing_cols.txt')} \n"
+            if len(missing_cols) < 10:
+                val_err_str += "These are:\n - "
+                val_err_str += "\n - ".join(missing_cols)
+            else:
+                val_err_str += "These include:\n - "
+                val_err_str += "\n - ".join(missing_cols[:5])
+                val_err_str += "\n...\n"
+                val_err_str += "\n - ".join(missing_cols[-5:])
+            raise ValueError(val_err_str)
 
-        self.plink_outfile = plink_outfile
+        elif len(missing_cols) > 0 and self.force_impute:
+            with open(self.prefix.joinpath("missing_cols.txt"), 'w') as file:
+                for col in missing_cols:
+                    self.df_merged_harmonize[col] = self.avg_vals[col]
+                    file.write(f'{col}\t{self.avg_vals[col]}\n')
 
-        print("")
-        print(f"A new set of PLINK binaries generated from your test dataset with the SNPs you decided to keep from the reference dataset have been made here: {plink_outfile}")
-        print("")
+            print_str = f"{len(missing_cols)} of the {len(self.cols)} features that were used to fit the model which are not present in the dataset you're harmonizing! \n"
+            print_str = "You have chosen to impute these values using the average from the training data. \n"
+            print_str = "However, in the future we STRONGLY recommend using the same features that were used to fit your model. \n"
+            print_str = f"A list of missing columns and the values used for imputation has been written to {self.prefix.joinpath('missing_cols.txt')} \n"
+            if len(missing_cols) < 10:
+                print_str += "These are:\n - "
+                print_str += "\n - ".join(missing_cols)
+            else:
+                print_str += "These include:\n - "
+                print_str += "\n - ".join(missing_cols[:5])
+                print_str += "\n...\n"
+                print_str += "\n - ".join(missing_cols[-5:])
+            print(print_str)
 
-    # def read_PLINK(self):
-    # # Read in using pandas PLINK (similar to munging)
 
-    #     bed_file = self.plink_outfile + ".bed"
-    #     plink_files_py = read_plink1_bin(bed_file)
-    #     plink_files = plink_files_py.drop(['fid','father','mother','gender', 'trait', 'chrom', 'cm', 'pos','a1'])
+    def apply_adjustments(self):
+        """ Adjust dataset by covariates using the same model fit on the training set. """
+        if self.adjust_data:
+            harmonize_adjuster = adjuster.Adjuster(
+                self.prefix,
+                self.df_merged_harmonize,
+                self.target_features,
+                self.confounders,
+                self.adjust_normalize,
+                self.umap_reducer is not None,
+            )
+            _ = harmonize_adjuster.umap_reducer("harmonize", reducer=self.umap_reducer)
+            self.df_merged_harmonize, _ = harmonize_adjuster.adjust_confounders(adjustment_models=self.adjustment_models)
 
-    #     plink_files = plink_files.set_index({'sample':'iid','variant':'snp'})
-    #     plink_files.values = plink_files.values.astype('int')
 
-    #     # swap pandas-plink genotype coding to match .raw format...more about that below:
+    def save_data(self):
+        """ Save harmonized dataset. """
+        outfile_h5 = self.prefix.joinpath("test_dataset.h5")
+        self.df_merged_harmonize.to_hdf(outfile_h5, key='dataForML')
 
-    #     # for example, assuming C in minor allele, alleles are coded in plink .raw labels homozygous for minor allele as 2 and homozygous for major allele as 0:
-    #     #A A   ->    0   
-    #     #A C   ->    1   
-    #     #C C   ->    2
-    #     #0 0   ->   NA
-
-    #     # where as, read_plink1_bin flips these, with homozygous minor allele = 0 and homozygous major allele = 2
-    #     #A A   ->    2   
-    #     #A C   ->    1   
-    #     #C C   ->    0
-    #     #0 0   ->   NA
-
-    #     two_idx = (plink_files.values == 2)
-    #     zero_idx = (plink_files.values == 0)
-
-    #     plink_files.values[two_idx] = 0
-    #     plink_files.values[zero_idx] = 2
-
-    #     plink_pd = plink_files.to_pandas()
-    #     plink_pd.reset_index(inplace=True)
-    #     raw_df = plink_pd.rename(columns={'sample': 'ID'})
-
-    #     print("")
-    #     print("Your data looks like this (showing the first few lines of the left-most and right-most columns)...")
-    #     print("#"*70)
-    #     print(raw_df.describe())
-    #     print("#"*70)
-    #     print("")
-
-    #     self.raw_df = raw_df
-
-    #     return raw_df
-
-    def prep_refCols_file(self):
-        # Make a list of the column names from the reference dataset
-        ref_columns_list = self.df.columns.values.tolist()
-
-        # Write out the columns to a text file we will use in munge later 
-        ref_cols_outfile = self.test_out_prefix + ".refColsHarmonize_toKeep.txt"
-
-        with open(ref_cols_outfile, 'w') as filehandle:
-            for col in ref_columns_list:
-                filehandle.write('%s\n' % col)
-
-        print("")
-        print(f"A file with the columns in the reference file, to later use in the munging step and keep these same columns for the test dataset, has been generated here: {ref_cols_outfile}")
-        print("")
-
-        return ref_columns_list 
-
+        # Thank the user
+        print(f"Your fully munged harmonizing data can be found here: {outfile_h5}")
+        print("Thank you for harmonizing with GenoML!")
 

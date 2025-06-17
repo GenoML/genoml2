@@ -13,7 +13,4 @@
 # limitations under the License.
 # ==============================================================================
 
-from genoml import preprocessing
-from genoml import discrete
-from genoml import continuous
-from genoml import cli
+from genoml import continuous, discrete, misc, multiclass, preprocessing

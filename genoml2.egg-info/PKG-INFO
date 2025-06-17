@@ -1,20 +1,42 @@
-Metadata-Version: 2.1
+Metadata-Version: 2.4
 Name: genoml2
 Version: 1.0.1
 Summary: GenoML is an automated machine learning tool that optimizes basic machine learning pipelines for genomic data.
 Home-page: https://genoml.github.io/
+Download-URL: https://github.com/GenoML/genoml2/archive/v1.0.1.tar.gz
 Maintainer: The GenoML Development Team
 Maintainer-email: genoml@googlegroups.com
-License: UNKNOWN
-Download-URL: https://github.com/GenoML/genoml2/archive/v1.0.1.tar.gz
-Platform: UNKNOWN
 Classifier: Development Status :: 4 - Beta
-Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.9
 Classifier: License :: OSI Approved :: Apache Software License
 Classifier: Operating System :: OS Independent
-Requires-Python: >=3.6
+Requires-Python: >=3.9,<3.13
 Description-Content-Type: text/markdown
 License-File: LICENSE
+Requires-Dist: packaging==25.0
+Requires-Dist: joblib==1.5.1
+Requires-Dist: matplotlib==3.9.4
+Requires-Dist: numpy==1.26.4
+Requires-Dist: tables==3.9.2
+Requires-Dist: pandas==2.3.0
+Requires-Dist: requests==2.32.4
+Requires-Dist: scikit-learn==1.5.2
+Requires-Dist: scipy==1.13.1
+Requires-Dist: seaborn==0.13.2
+Requires-Dist: statsmodels==0.14.4
+Requires-Dist: xgboost==2.0.3
+Requires-Dist: umap-learn==0.5.7
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: download-url
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: maintainer
+Dynamic: maintainer-email
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
 
 # GenoML 
 
@@ -24,7 +46,7 @@ License-File: LICENSE
 
 [![Downloads](https://static.pepy.tech/personalized-badge/genoml2?period=total&units=international_system&left_color=black&right_color=grey&left_text=Downloads)](https://pepy.tech/project/genoml2)
 
-> Updated 2 March 2021: Latest Release on pip! v1.0.0.beta.11
+> Updated 09 June 2025: Latest Release on pip! v1.0.1
 
 # How to Get Started with GenoML
 
@@ -58,16 +80,19 @@ OR
 > Note: When you pip install this package, the examples/ folder is also downloaded! However, if  you still want to download the directory and SVN is not pre-installed, you can download it via Homebrew if you have that installed using `brew install svn` 
 
 ### CHANGELOG
+- 9-JUN-2025: Addition of multiclass prediction functionality using the same base models that are used for the discrete module. We have additionally restructured the munging functionality to allow users to process training and testing data all at once to ensure they are munged under the same conditions, as well as including multiple GWAS summary stats files for SNP filtering. We also upgraded from plink1.9 to plink2 for genomic data processing. Finally, we have added a log file in the output directory to facilitate full reproducbility of results. `README` updated to reflect these changes.
 - 8-OCT-2024: Big changes to output file structure, so now output files go in subdirectories named for each step, and prefixes are not required. `README` updated to reflect these changes.
 
 
 ### Table of Contents 
 #### [0. (OPTIONAL) How to Set Up a Virtual Environment via Conda](#0)
 #### [1. Munging with GenoML](#1)
+#### [1b. Harmonizing with GenoML](#1b)
 #### [2. Training with GenoML](#2)
 #### [3. Tuning with GenoML](#3)
 #### [4. Testing/Validating with GenoML](#4)
-#### [5. Experimental Features](#5)
+#### [5. Full pipeline example](#5)
+#### [6. Experimental Features](#6)
 
 <a id="0"></a>
 ## 0. [OPTIONAL] How to Set Up a Virtual Environment via Conda
@@ -79,7 +104,7 @@ To create and activate a virtual environment:
 
 ```shell
 # To create a virtual environment
-conda create -n GenoML python=3.7
+conda create -n GenoML python=3.12
 
 # To activate a virtual environment
 conda activate GenoML
@@ -120,26 +145,25 @@ pip install .
 ## 1. Munging with GenoML
 
 Munging with GenoML will, at minimum, do the following: 
-- Prune your genotypes using PLINK v1.9 (if `--geno` flag is used)
+- Prune your genotypes using PLINK v2 (if `--geno` flag is used)
 - Impute per column using median or mean (can be changed with the `--impute` flag)
 - Z-scaling of features and removing columns with a std dev = 0 
 
 **Required** arguments for GenoML munging are `--prefix` and `--pheno` 
-- `data` : Is the data `continuous` or `discrete`?
+- `data` : Are the data `continuous`, `discrete`, or `multiclass`?
 - `method`: Do you want to use `supervised` or `unsupervised` machine learning? *(unsupervised currently under development)*
-- `mode`:  would you like to `munge`, `train`, `tune`, or `test` your model?
+- `mode`:  would you like to `munge`, `harmonize`, `train`, `tune`, or `test` your model? Here, you will use `munge`.
 - `--prefix` : Where would you like your outputs to be saved?
-- `--pheno` : Where is your phenotype file? This file only has 2 columns, ID in one, and PHENO in the other (0 for controls and 1 for cases)
+- `--pheno` : Where is your phenotype file? This file only has 2 columns, ID in one, and PHENO in the other (0 for controls and 1 for cases when using the `discrete` module, 0, ..., *n-1* when using the `multiclass` module for *n* distinct phenotypes, or numeric values when using the `continuous` module).
 
 
 Be sure to have your files formatted the same as the examples, key points being: 
-- **0=controls and 1=case** in your phenotype file
 - Your phenotype file consisting **only** of the "ID" and "PHENO" columns
 - Your sample IDs matching across all files
 - Your sample IDs not consisting with only integers (add a prefix or suffix to all sample IDs ensuring they are alphanumeric if this is the case prior to running GenoML)
 - Please avoid the use of characters like commas, semi-colons, etc. in the column headers (it is Python after all!)  
 
-> *Note:* The following examples are for discrete data, but if you substitute following commands with `continuous` instead of discrete, you can preprocess your continuous data!
+> *Note:* The following examples are for discrete data, but if you substitute following commands with `continuous` or `multiclass` instead of discrete, you can preprocess your continuous/multiclass data!
 
 If you would like to munge just with genotypes (in PLINK binary format), the simplest command is the following: 
 ```shell
@@ -149,6 +173,30 @@ genoml discrete supervised munge \
 --prefix outputs \
 --geno examples/discrete/training \
 --pheno examples/discrete/training_pheno.csv
+```
+
+If you would like a more detailed log printed to your console, you may use the `--verbose` flag as follows: 
+```shell
+# Running GenoML munging on discrete data using PLINK genotype binary files and a phenotype file with a detailed log printed to the console
+
+genoml discrete supervised munge \
+--prefix outputs \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv \
+--verbose
+```
+> *Note:* The `--verbose` flag may be used like this for any GenoML command, not just munging.
+
+To properly evaluate your model, it must be applied to a dataset it's never seen before (testing data). If you have both training and testing data, GenoML allows you to munge them together upfront. To do this with your training and testing phenotype/genotype data, the simplest command is the following: 
+```shell
+# Running GenoML munging on discrete data using PLINK genotype binary files and phenotype files for both the training and testing datasets.
+
+genoml discrete supervised munge \
+--prefix outputs \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv \
+--geno_test examples/discrete/validation \
+--pheno_test examples/discrete/validation_pheno.csv
 ```
 
 If you would like to control the pruning stringency in genotypes: 
@@ -162,14 +210,14 @@ genoml discrete supervised munge \
 --pheno examples/discrete/training_pheno.csv
 ```
 
-You can choose to skip pruning your SNPs at this stage by changing the `--skip_prune` flag to "yes" (default is "no")
+You can choose to skip pruning your SNPs at this stage by including the `--skip_prune` flag
 ```shell
 # Running GenoML munging on discrete data using PLINK genotype binary files and a phenotype file 
 
 genoml discrete supervised munge \
 --prefix outputs \
 --geno examples/discrete/training \
---skip_prune yes \
+--skip_prune \
 --pheno examples/discrete/training_pheno.csv
 ```
 
@@ -193,11 +241,11 @@ genoml discrete supervised munge \
 --geno examples/discrete/training \
 --pheno examples/discrete/training_pheno.csv \
 --vif 5 \
---iter 1
+--vif_iter 1
 ```
 
 - The `--vif` flag specifies the VIF threshold you would like to use (5 is recommended) 
-- The number of iterations you'd like to run can be modified with the `--iter` flag (if you have or anticipate many collinear variables, it's a good idea to increase the iterations)
+- The number of iterations you'd like to run can be modified with the `--vif_iter` flag (if you have or anticipate many collinear variables, it's a good idea to increase the iterations)
 
 Well, what if you had GWAS summary statistics handy, and would like to just use the same SNPs outlined in that file? You can do so by running the following:
 ```shell
@@ -210,6 +258,19 @@ genoml discrete supervised munge \
 --gwas examples/discrete/example_GWAS.csv
 ```
 > *Note:* When using the GWAS flag, the PLINK binaries will be pruned to include matching SNPs to the GWAS file. 
+
+And if you have more than one GWAS summary statistics file, we support that too! Just use the same `--gwas` flag for each of the files you would like to include, as follows:
+```shell
+# Running GenoML munging on discrete data using PLINK genotype binary files, a phenotype file, and two GWAS summary statistics files
+
+genoml discrete supervised munge \
+--prefix outputs \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv \
+--gwas examples/discrete/example_GWAS.csv \
+--gwas examples/discrete/example_GWAS_2.csv
+```
+> *Note:* This is particularly helpful when using the `multiclass` module when you have multiple phenotypes of interest and would like to include SNPs that are relevant for each phenotype. 
 
 ...and if you wanted to add a p-value cut-off...
 ```shell
@@ -256,11 +317,13 @@ genoml discrete supervised munge \
 The `--feature_selection` flag uses extraTrees ([classifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.ExtraTreesClassifier.html) for discrete data; [regressor](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.ExtraTreesRegressor.html) for continuous data) to output a `*.approx_feature_importance.txt` file with the features most contributing to your model at the top. 
 
 Do you have additional covariates and confounders you would like to adjust for in the munging step prior to training your model and/or would like to reduce your data? To adjust, use the `--adjust_data` flag with the following necessary flags: 
-- `--adjust_normalize`: Would you like to normalize your final adjusted data? (Default: yes)
 - `--target_features`: A .txt file, one column, with a list of features to adjust (no header). These should correspond to features in the munged dataset
 - `--confounders`: A .csv of confounders to adjust for with ID column and header. Numeric, with no missing data and the ID column is mandatory (this can be PCs, for example)
 
-To reduce your data prior to adjusting, use the `--umap_reduce yes` flag. This flag will also prompt you for if you want to adjust your data, normalize, and what your target features and confounders might be. We use the [Uniform Manifold Approximation and Projection for Dimension Reduction](https://umap-learn.readthedocs.io/en/latest/) (UMAP) to reduce your data into 2D, adjust, and exports a plot and an adjusted dataframe moving forward. This can be done by running the following: 
+You may also include the following optional flag:
+- `--adjust_normalize`: Would you like to normalize your final adjusted data?
+
+To reduce your data prior to adjusting, use the `--umap_reduce` flag. This flag will also prompt you for if you want to adjust your data, normalize, and what your target features and confounders might be. We use the [Uniform Manifold Approximation and Projection for Dimension Reduction](https://umap-learn.readthedocs.io/en/latest/) (UMAP) to reduce your data into 2D, adjust, and export a plot and an adjusted dataframe moving forward. This can be done by running the following: 
 
 ```shell
 # Running GenoML munging on discreate data using PLINK binary files, a phenotype file, using UMAP to reduce dimensions and account for features, and running feature selection
@@ -270,53 +333,134 @@ genoml discrete supervised munge \
 --geno examples/discrete/training \
 --pheno examples/discrete/training_pheno.csv \
 --addit examples/discrete/training_addit.csv \
---umap_reduce yes \
---adjust_data yes \
---adjust_normalize yes \
+--umap_reduce \
+--adjust_data \
+--adjust_normalize \
+--target_features examples/discrete/to_adjust.txt \
+--confounders examples/discrete/training_addit_confounder_example.csv 
+```
+
+And if you are munging your training and testing data together, you must include a confounders file for your test dataset as well using the `--confounders_test` flag:
+
+```shell
+# Running GenoML munging on discreate data using PLINK binary files, a phenotype file, using UMAP to reduce dimensions and account for features, and running feature selection, for both the training and testing data together.
+
+genoml discrete supervised munge \
+--prefix outputs \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv \
+--addit examples/discrete/training_addit.csv \
+--geno_test examples/discrete/validation \
+--pheno_test examples/discrete/validation_pheno.csv \
+--addit_test examples/discrete/validation_addit.csv \
+--umap_reduce \
+--adjust_data \
+--adjust_normalize \
 --target_features examples/discrete/to_adjust.txt \
 --confounders examples/discrete/training_addit_confounder_example.csv \
---feature_selection 50 
+--confounders_test examples/discrete/validation_addit_confounder_example.csv 
 ```
-Here, the `--confounders` flag takes in a dataset of features that should be accounted for. This is a .csv file with the ID column and header included and is numeric with no missing data. **The ID column is mandatory.** The `--target_features` flag takes in a .txt with a list of features (column names) you are adjusting for.
+
+Here, the `--confounders` and `--confounders_test` flags take in datasets of features that should be accounted for. This is a .csv file with the ID column and header included and is numeric with no missing data. **The ID column is mandatory.** The `--target_features` flag takes in a .txt with a list of features (column names) you are adjusting for.
+
+<a id="1b"></a>
+## 1b. Harmonizing with GenoML
+GenoML allows you to munge your testing data separately from your training data as well using the harmonization feature. This is particularly helpful if you would like to apply a model pre-trained elsewhere on your own datasets. This will apply the same preprocessing and normalization parameters that were used during the original munging step to ensure your datasets are consistent with the original model inputs.
+
+**Required** arguments for GenoML harmonizing are the following: 
+- Are the data `continuous`, `discrete`, or `multiclass`?
+- `method`: Do you want to use `supervised` or `unsupervised` machine learning? *(unsupervised currently under development)*
+- `mode`:  would you like to `munge`, `harmonize`, `train`, `tune`, or `test` your model? Here, you will use `harmonize`.
+- `--prefix` : Where would you like your outputs to be saved?
+- `--pheno` : Where is your phenotype file? This file only has 2 columns: ID in one, and PHENO in the other (0 for controls and 1 for cases when using the `discrete` module, 0, ..., *n-1* when using the `multiclass` module for *n* distinct phenotypes, or numeric values when using the `continuous` module).
+
+Be sure to have your files formatted the same as the examples, key points being: 
+- Your phenotype file consisting **only** of the "ID" and "PHENO" columns
+- Your sample IDs matching across all files
+- Your sample IDs not consisting with only integers (add a prefix or suffix to all sample IDs ensuring they are alphanumeric if this is the case prior to running GenoML)
+- Please avoid the use of characters like commas, semi-colons, etc. in the column headers (it is Python after all!)  
+
+> *Note:* The following examples are for discrete data, but if you substitute following commands with `continuous` or `multiclass` instead of discrete, you can preprocess your continuous/multiclass data!
+
+If you would like to harmonize just with genotypes (in PLINK binary format), the simplest command is the following: 
+```shell
+# Running GenoML harmonization on discrete data using PLINK genotype binary files and a phenotype file 
+
+genoml discrete supervised munge \
+--prefix outputs \
+--geno examples/discrete/validation \
+--pheno examples/discrete/validation_pheno.csv
+```
+> *Note:* You must use the same `--prefix` that was used for training. This is how GenoML will know where to look for your munged data!
+
+If the training data were adjusted by confounders, you must include a file with the same features to adjust your harmonized data accordingly. You can do this by providing a path to this file using the `--confounders` flag (see "**1. Munging with GenoML**" for further explanation) as follows:
+```shell
+# Running GenoML harmonization on discrete data using PLINK genotype binary files and a phenotype file 
+
+genoml discrete supervised munge \
+--prefix outputs \
+--geno examples/discrete/validation \
+--pheno examples/discrete/validation_pheno.csv \
+--confounders examples/discrete/validation_addit_confounder_example.csv
+```
+
+Machine learning models require that your datasets include all of the features that were used to train the model. Because of this, we (and we cannot emphasize this enough) STRONGLY recommend that your harmonization dataset include every feature used in the model. However, if for some reason this is not possible and you would like to test a pre-trained model on your data anyways, we provide the option of adding the entire column to your harmonization dataset. This will take the average value from the training dataset for each feature (as determined from `--impute`) and use that same value for each of your participants. You may do so using the `--force_impute` flag as follows:
+```shell
+# Running GenoML harmonization on discrete data using PLINK genotype binary files and a phenotype file, while imputing any missing columns (ie, if an addit file was used during training and is not present for the harmonization participants).
+
+genoml discrete supervised munge \
+--prefix outputs \
+--geno examples/discrete/validation \
+--pheno examples/discrete/validation_pheno.csv \
+--force_impute
+```
 
 <a id="2"></a>
 ## 2. Training with GenoML
 Training with GenoML competes a number of different algorithms and outputs the best algorithm based on a specific metric that can be tweaked using the `--metric_max` flag *(default is AUC)*.
 
-**Required** arguments for GenoML are the following: 
-- `data` : Is the data `continuous` or `discrete`?
+**Required** arguments for GenoML training are the following: 
+- Are the data `continuous`, `discrete`, or `multiclass`?
 - `method`: Do you want to use `supervised` or `unsupervised` machine learning? *(unsupervised currently under development)*
-- `mode`:  would you like to `munge`, `train`, `tune`, or `test` your model?
+- `mode`:  would you like to `munge`, `harmonize`, `train`, `tune`, or `test` your model? Here, you will use `train`.
 - `--prefix` : Where would you like your outputs to be saved?
 
-The most basic command to train your model looks like the following, it looks for the `dataForML` file that was generated in the munging step: 
+The most basic command to train your model looks like the following: 
 ```shell
 # Running GenoML supervised training after munging on discrete data
 
 genoml discrete supervised train \
 --prefix outputs
 ```
+> *Note:* You must use the same `--prefix` that was used for training. This is how GenoML will know where to look for the `train_dataset.h5` file with your munged data!
 
-If you would like to determine the best competing algorithm by something other than the AUC, you can do so by changing the `--metric_max` flag (Options include `AUC`, `Balanced_Accuracy`, `Sensitivity`, and `Specificity`) :
+If you would like to determine the best competing algorithm by something other than the AUC, you can do so by changing the `--metric_max` flag (Options include `AUC`, `Balanced_Accuracy`, `Sensitivity`, and `Specificity` for `discrete` and `multiclass` datasets, or `Explained_Variance`, `Mean_Squared_Error`, `Median_Absolute_Error`, and `R-Squared_Error` for `continuous` datasets):
 ```shell
-# Running GenoML supervised training after munging on discrete data and specifying the metric to maximize by 
+# Running GenoML supervised training after munging on discrete data and specifying Sensitivity as the metric to optimize
 
 genoml discrete supervised train \
 --prefix outputs \
 --metric_max Sensitivity
 ```
-> *Note:* The `--metric_max` flag is only available for discrete datasets.
 
 <a id="3"></a>
 ## 3. Tuning with GenoML
+Tuning with GenoML applies fine-tuning with cross-validation using the trained model as a starting point to find the best set of hyperparameters for your datasets.
 
-The most basic command to tune your model looks like the following, it looks for the file that was generated in the training step: 
+**Required** arguments for GenoML training are the following: 
+- Are the data `continuous`, `discrete`, or `multiclass`?
+- `method`: Do you want to use `supervised` or `unsupervised` machine learning? *(unsupervised currently under development)*
+- `mode`:  would you like to `munge`, `harmonize`, `train`, `tune`, or `test` your model? Here, you will use `tune`.
+- `--prefix` : Where would you like your outputs to be saved?
+
+The most basic command to tune your model looks like the following: 
 ```shell
 # Running GenoML supervised tuning after munging and training on discrete data
 
 genoml discrete supervised tune \
 --prefix outputs
 ```
+> *Note:* You must use the same `--prefix` that was used for training. This is how GenoML will know where to look for the `train_dataset.h5` file with your munged data!
 
 If you are interested in changing the number of iterations the tuning process goes through by modifying `--max_tune` *(default is 50)*, or the number of cross-validations by modifying `--n_cv` *(default is 5)*, this is what the command would look like: 
 ```shell
@@ -324,10 +468,11 @@ If you are interested in changing the number of iterations the tuning process go
 
 genoml discrete supervised tune \
 --prefix outputs \
---max_tune 10 --n_cv 3
+--max_tune 10 \
+--n_cv 3
 ```
 
-If you are interested in tuning on another metric other than AUC *(default is AUC)*, you can modify `--metric_tune` (options are `AUC` or `Balanced_Accuracy`) by doing the following: 
+If you are interested in tuning on another metric other than AUC *(default is AUC)*, you can modify `--metric_tune` (Options include `AUC` and `Balanced_Accuracy` for `discrete` datasets, `AUC` for `multiclass` datasets, or `Explained_Variance`, `Mean_Squared_Error`, `Median_Absolute_Error`, and `R-Squared_Error` for `continuous` datasets) by doing the following: 
 ```shell
 # Running GenoML supervised tuning after munging and training on discrete data, modifying the metric to tune by
 
@@ -338,163 +483,122 @@ genoml discrete supervised tune \
 
 <a id="4"></a>
 ## 4. Testing/Validation with GenoML
+Testing/validation with GenoML applies your fully-tuned model on a new dataset to evaluate how well its performance generalizes beyond data it was trained on.
 
-In order to properly test how your model performs on a dataset it's never seen before (but you start with different PLINK binaries), we have created the harmonization step that will:
-1. Keep only the same SNPs between your reference dataset and the dataset you are using for validation
-2. Force the reference alleles in the validation dataset to match your reference dataset
-3. Export a `.txt` file with the column names from your reference dataset to later use in the munging of your validation dataset 
-
-Using GenoML for both your reference dataset and then your validation dataset, the process will look like the following: 
-
-1. Munge and train your first dataset
-    	- That will be your “reference” model
-2. Use the outputs of step 1's munge for your reference model to harmonize your incoming validation dataset
-3.  Run through harmonization step with your validation dataset
-4.  Run through munging with your newly harmonized dataset
-5.  Retrain your reference model with only the matching columns of your unseen data 
-	- Given the nature of ML algorithms, you cannot test a model on a set of data that does not have identical features
-6. Test your newly retrained reference model on the unseen data
-
-### Harmonizing your Validation/Test Dataset 
-
-**Required** arguments for harmonizing with GenoML are the following: 
-- `--test_geno_prefix` : What is the prefix of your validation dataset PLINK binaries?
-- `--test_prefix`: What is the path to your output directory?
-- `--ref_model_prefix`:  What is the output directory containing the previously GenoML-munged dataset you would like to use as your reference dataset? (This is generated at `outputs/Munge`)
-- `--training_snps_alleles` : What are the SNPs and alleles you would like to use? (This is generated at the end of your previously-GenoML munged dataset with the suffix `variants_and_alleles.tab`)
-
-To harmonize your incoming validation dataset to match the SNPs and alleles to your reference dataset, the command would look like the following:
+**Required** arguments for GenoML training are the following: 
+- Are the data `continuous`, `discrete`, or `multiclass`?
+- `method`: Do you want to use `supervised` or `unsupervised` machine learning? *(unsupervised currently under development)*
+- `mode`:  would you like to `munge`, `harmonize`, `train`, `tune`, or `test` your model? Here, you will use `test`.
+- `--prefix` : Where would you like your outputs to be saved?
 
 ```shell
-# Running GenoML harmonize
+# Running GenoML test
 
-genoml harmonize \
---test_geno_prefix examples/discrete/validation \
---test_prefix outputs \
---ref_model_prefix outputs \
---training_snps_alleles outputs/Munge/variants_and_alleles.tab
+genoml discrete supervised test \
+--prefix outputs
 ```
 
-This step will generate: 
-- a `refColsHarmonize_toKeep.txt` file of columns to keep for the next step 
-- `refSNPs_andAlleles.*` PLINK binary files (.bed, .bim, and .fam) that have the SNPs and alleles match your reference dataset
-- Files are located at `outputs/Harmonize/`
-
-Now that you have harmonized your validation dataset to your reference dataset, you can now munge using a command similar to the following:
-```shell
-# Running GenoML munge after GenoML harmonize
-
-genoml discrete supervised munge 
---prefix outputs \
---geno outputs/Harmonize/refSNPs_andAlleles \
---pheno examples/discrete/validation_pheno.csv \
---addit examples/discrete/validation_addit.csv \
---ref_cols_harmonize outputs/Harmonize/refColsHarmonize_toKeep.txt
-```
-All munging options discussed above are available at this step, the only difference here is you will add the `--ref_cols_harmonize` flag to include the `refColsHarmonize_toKeep.txt` file generated at the end of harmonizing to only keep the same columns that the reference dataset had. 
-
-After munging and training your reference model and harmonizing and munging your unseen test data, **you will retrain your reference model to include only matching features**. Given the nature of ML algorithms, you cannot test a model on a set of data that does not have identical features. 
-
-To retrain your model appropriately, after munging your test data with the `--ref_cols_harmonize ` flag, a final columns list will be generated at `outputs/Munge/finalHarmonizedCols_toKeep.txt`. This includes all the features that match between your unseen test data and your reference model. Use the `--matching_columns` flag when retraining your reference model to use the appropriate features.
-
-When retraining of the reference model is complete, you are ready to test!
+<a id="5"></a>
+## 5. Full pipeline example
 
 A step-by-step guide on how to achieve this is listed below:
 ```shell
 # 0. MUNGE THE REFERENCE DATASET
 genoml discrete supervised munge \
 --prefix outputs \
+--pheno examples/discrete/training_pheno.csv \
 --geno examples/discrete/training \
---pheno examples/discrete/training_pheno.csv
+--addit examples/discrete/training_addit.csv \
+--pheno_test examples/discrete/validation_pheno.csv \
+--geno_test examples/discrete/validation \
+--addit_test examples/discrete/validation_addit.csv \
+--r2_cutoff 0.3 \
+--impute mean \
+--vif 10 \
+--vif_iter 1 \
+--gwas examples/discrete/example_GWAS.csv \
+--gwas examples/discrete/example_GWAS_2.csv \
+--p 0.05 \
+--feature_selection 50 \
+--adjust_data \
+--adjust_normalize \
+--umap_reduce \
+--confounders examples/discrete/training_addit_confounder_example.csv \
+--confounders_test examples/discrete/validation_addit_confounder_example.csv \
+--target_features examples/discrete/to_adjust.txt \
+--verbose
 # Files made: 
-    # outputs/Munge/dataForML.h5
+    # outputs/log.txt
+    # outputs/Munge/approx_feature_importance.txt
     # outputs/Munge/list_features.txt
+    # outputs/Munge/params.pkl
+    # outputs/Munge/p_threshold_variants.tab
+    # outputs/Munge/test_dataset.h5
+    # outputs/Munge/train_dataset.h5
+    # outputs/Munge/umap_clustering.joblib
+    # outputs/Munge/umap_data_reduction_test.txt
+    # outputs/Munge/umap_data_reduction_train.txt
+    # outputs/Munge/umap_plot_test.png
+    # outputs/Munge/umap_plot_train.png
     # outputs/Munge/variants_and_alleles.tab
+    # outputs/Munge/variants.txt
 
-# 1. TRAIN THE REFERENCE DATASET
-genoml discrete supervised train \
---prefix outputs
-# Files made: 
-    # outputs/Train/best_algorithm.txt
-    # outputs/Train/trainedModel.joblib
-    # outputs/Train/trainedModel_trainingSample_Predictions.csv
-    # outputs/Train/trainedModel_withheldSample_Predictions.csv
-    # outputs/Train/trainedModel_withheldSample_ROC.png
-    # outputs/Train/trainedModel_withheldSample_probabilities.png
-    # outputs/Train/training_withheldSamples_performanceMetrics.csv
-
-# 2. HARMONIZE TEST DATASET IF USING PLINK/GENOTYPES
-genoml harmonize \
---test_geno_prefix examples/discrete/validation \
---test_prefix outputs \
---ref_model_prefix outputs \
---training_snps_alleles outputs/Harmonize/variants_and_alleles.tab
-# Files made: 
-    # outputs/Harmonize/refColsHarmonize_toKeep.txt
-    # outputs/Harmonize/refSNPs_andAlleles.bed
-    # outputs/Harmonize/refSNPs_andAlleles.bim
-    # outputs/Harmonize/refSNPs_andAlleles.fam
-
-# 3. MUNGE THE TEST DATASET ON REFERENCE MODEL COLUMNS
-genoml discrete supervised munge \
---prefix outputs \
---geno outputs/Harmonize/refSNPs_andAlleles \
---pheno examples/discrete/validation_pheno.csv \
---addit examples/discrete/validation_addit.csv \
---ref_cols_harmonize outputs/Harmonize/refColsHarmonize_toKeep.txt
-# Files made: 
-    # outputs/Munge/finalHarmonizedCols_toKeep.txt
-    # outputs/Munge/list_features.txt
-    # outputs/Munge/variants_and_alleles.tab
-    # outputs/Munge/dataForML.h5
-
-# 4. RETRAIN REFERENCE MODEL ON INTERSECTING COLUMNS BETWEEN REFERENCE AND TEST
+# 1. TRAIN THE REFERENCE MODEL
 genoml discrete supervised train \
 --prefix outputs \
---matching_columns outputs/Munge/finalHarmonizedCols_toKeep.txt
-# Note: This replaces the trained model you made in step 1! 
+--metric_max Balanced_Accuracy
 # Files made: 
-    # outputs/Train/best_algorithm.txt
-    # outputs/Train/trainedModel.joblib
-    # outputs/Train/trainedModel_trainingSample_Predictions.csv
-    # outputs/Train/trainedModel_withheldSample_Predictions.csv
-    # outputs/Train/trainedModel_withheldSample_ROC.png
-    # outputs/Train/trainedModel_withheldSample_probabilities.png
-    # outputs/Train/training_withheldSamples_performanceMetrics.csv
+    # outputs/model.joblib
+    # outputs/Train/precision_recall.png
+    # outputs/Train/predictions.txt
+    # outputs/Train/probabilities.png
+    # outputs/Train/roc.png
+    # outputs/Train/train_predictions.txt
+    # outputs/Train/withheld_performance_metrics.txt
+# Files updated: 
+    # outputs/log.txt
 
-# OPTIONAL: TUNING YOUR RETRAINED REFERENCE MODEL ON INTERSECTING COLUMNS BETWEEN REFERENCE AND TEST
+# 2. OPTIONAL: TUNING YOUR REFERENCE MODEL
 genoml discrete supervised tune \
 --prefix outputs \
---matching_columns outputs/Munge/finalHarmonizedCols_toKeep.txt
-
-# 5. TEST RETRAINED REFERENCE MODEL OR TUNED MODEL ON UNSEEN DATA
-genoml discrete supervised test \
---prefix outputs \
---test_prefix outputs \
---ref_model_prefix outputs/Train/trainedModel
-    # If testing a tuned model, change path from `*/Train/trainedModel` to `*/Tune/tunedModel`
+--max_tune 10 \
+--n_cv 3 \
+--metric_tune Balanced_Accuracy
 # Files made: 
-    # outputs/Test/testedModel_allSample_predictions.csv
-    # outputs/Test/testedModel_allSample_probabilities.png
-    # outputs/Test/testedModel_allSample_ROC.png
-    # outputs/Test/testedModel_allSamples_performanceMetrics.csv
+    # outputs/Tune/cv_summary.txt
+    # outputs/Tune/precision_recall.png
+    # outputs/Tune/predictions.txt
+    # outputs/Tune/probabilities.png
+    # outputs/Tune/roc.png
+    # outputs/Tune/tuning_summary.txt
+# Files updated: 
+    # outputs/model.joblib
+    # outputs/log.txt
+
+# 3. TEST TUNED MODEL ON UNSEEN DATA
+genoml discrete supervised test \
+--prefix outputs
+# Files made: 
+    # outputs/Test/performance_metrics.txt
+    # outputs/Test/precision_recall.png
+    # outputs/Test/predictions.txt
+    # outputs/Test/probabilities.png
+    # outputs/Test/roc.png
+# Files updated: 
+    # outputs/log.txt
 ```
 
-> *Note:* When munging the test dataset on the reference model columns using the --ref_cols_harmonize, be sure not to include the --feature_selection flag, as you have already specified the columns to keep moving forward.
-
-<a id="5"></a>
-## 5. Experimental Features
+<a id="6"></a>
+## 6. Experimental Features
 **UNDER ACTIVE DEVELOPMENT** 
 
 Planned experimental features include, but are not limited to:
 - Unsupervised munging, training, tuning, and testing
--  GWAS QC and Pipeline
--  Network analyses
--  Meta-learning
--  Federated learning
--  Biobank-scale support
--  Cross-silo checks for genetic duplicates
--  Outlier detection
--  ...?
-
-
+- GWAS QC and Pipeline
+- Network analyses
+- Meta-learning
+- Federated learning
+- Biobank-scale support
+- Cross-silo checks for genetic duplicates
+- Outlier detection
+- ...?
