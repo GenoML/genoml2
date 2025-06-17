@@ -23,15 +23,15 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="genoml2",
-    version="1.0.1",
+    version="1.5.0",
     maintainer="The GenoML Development Team",
-    maintainer_email="genoml@googlegroups.com",
+    maintainer_email="mary@datatecnica.com",
     description="GenoML is an automated machine learning tool that optimizes"
-                " basic machine learning pipelines for genomic data.",
+                " basic machine learning pipelines for genomics data.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://genoml.github.io/",
-    download_url="https://github.com/GenoML/genoml2/archive/v1.0.1.tar.gz",
+    download_url="hhttps://github.com/GenoML/genoml2/archive/refs/tags/v.1.5.0.tar.gz",
     entry_points={
         'console_scripts':
             ['genoml=genoml.__main__:handle_main'],
