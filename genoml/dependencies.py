@@ -34,7 +34,6 @@ def __get_executable_folder():
         return os.path.join(str(pathlib.Path.home()), ".genoml", "misc", "executables")
 
 
-### TODO: Should this be in the GenoML output directory?
 __executable_folder = __get_executable_folder()
 
 
@@ -70,24 +69,33 @@ def __check_package(name):
         raise EnvironmentError("Unknown package: {}".format(name))
 
     if platform_system not in __DEPENDENCIES[name]:
-        raise EnvironmentError(
-            "Unknown supported OK: {}".format(platform_system))
+        raise EnvironmentError("Unsupported OS: {}".format(platform_system))
 
     entry = __DEPENDENCIES[name][platform_system]
-
     binary_name = entry["binary"]
     args = entry["version_args"]
     url = entry["url"]
 
+    # Special case: override URL based on macOS architecture
+    if name == "Plink" and platform_system == "Darwin":
+        arch = platform.machine()
+        if arch == "arm64":
+            url = "https://s3.amazonaws.com/plink2-assets/alpha6/plink2_mac_arm64_20250609.zip"
+        elif arch == "x86_64":
+            url = "https://s3.amazonaws.com/plink2-assets/alpha6/plink2_mac_avx2_20250609.zip"
+        else:
+            url = "https://s3.amazonaws.com/plink2-assets/alpha6/plink2_mac_20250609.zip"
+
     if __check_exec(binary_name, *args):
-        logging.debug("{} is found".format(name))
+        logging.debug(f"{name} is already installed.")
         return os.path.join(__executable_folder, binary_name)
 
-    logging.warning("Installing {}".format(name))
+    logging.warning(f"Installing {name} from {url}")
     __install_exec(url, binary_name)
+
     if not __check_exec(binary_name, *args):
-        logging.warning("Failed to run {} after installation".format(name))
-        raise EnvironmentError("Can not install {}".format(name))
+        logging.warning(f"Failed to run {name} after installation")
+        raise EnvironmentError(f"Cannot install {name}")
     else:
         return os.path.join(__executable_folder, binary_name)
 
@@ -98,10 +106,8 @@ def check_dependencies():
     ret = {}
     for package, data in __DEPENDENCIES.items():
         if "checker" in data:
-            with utils.DescriptionLoader.context(
-                    "check_dependencies_{}".format(package)):
+            with utils.DescriptionLoader.context(f"check_dependencies_{package}"):
                 ret[package] = data["checker"]()
-
     return ret
 
 
@@ -115,7 +121,7 @@ __DEPENDENCIES = {
         "Darwin": {
             "binary": "plink2",
             "version_args": ["--version"],
-            "url": "http://s3.amazonaws.com/plink2-assets/plink2_mac_20241020.zip"
+            "url": "https://s3.amazonaws.com/plink2-assets/alpha6/plink2_mac_20250609.zip"  # fallback
         },
         "Linux": {
             "binary": "plink2",
