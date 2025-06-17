@@ -26,6 +26,11 @@ genoml/discrete/supervised/tuning.py
 genoml/misc/descriptions.json
 genoml/multiclass/__init__.py
 genoml/multiclass/utils.py
+genoml/multiclass/supervised/__init__.py
+genoml/multiclass/supervised/main.py
+genoml/multiclass/supervised/testing.py
+genoml/multiclass/supervised/training.py
+genoml/multiclass/supervised/tuning.py
 genoml/preprocessing/__init__.py
 genoml/preprocessing/adjuster.py
 genoml/preprocessing/featureselection.py
