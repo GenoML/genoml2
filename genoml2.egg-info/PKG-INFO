@@ -1,11 +1,13 @@
-Metadata-Version: 2.4
+Metadata-Version: 2.1
 Name: genoml2
-Version: 1.0.1
-Summary: GenoML is an automated machine learning tool that optimizes basic machine learning pipelines for genomic data.
+Version: 1.5.0
+Summary: GenoML is an automated machine learning tool that optimizes basic machine learning pipelines for genomics data.
 Home-page: https://genoml.github.io/
-Download-URL: https://github.com/GenoML/genoml2/archive/v1.0.1.tar.gz
 Maintainer: The GenoML Development Team
-Maintainer-email: genoml@googlegroups.com
+Maintainer-email: mary@datatecnica.com
+License: UNKNOWN
+Download-URL: https://github.com/GenoML/genoml2/archive/refs/tags/v1.5.0.tar.gz
+Platform: UNKNOWN
 Classifier: Development Status :: 4 - Beta
 Classifier: Programming Language :: Python :: 3.9
 Classifier: License :: OSI Approved :: Apache Software License
@@ -13,30 +15,6 @@ Classifier: Operating System :: OS Independent
 Requires-Python: >=3.9,<3.13
 Description-Content-Type: text/markdown
 License-File: LICENSE
-Requires-Dist: packaging==25.0
-Requires-Dist: joblib==1.5.1
-Requires-Dist: matplotlib==3.9.4
-Requires-Dist: numpy==1.26.4
-Requires-Dist: tables==3.9.2
-Requires-Dist: pandas==2.3.0
-Requires-Dist: requests==2.32.4
-Requires-Dist: scikit-learn==1.5.2
-Requires-Dist: scipy==1.13.1
-Requires-Dist: seaborn==0.13.2
-Requires-Dist: statsmodels==0.14.4
-Requires-Dist: xgboost==2.0.3
-Requires-Dist: umap-learn==0.5.7
-Dynamic: classifier
-Dynamic: description
-Dynamic: description-content-type
-Dynamic: download-url
-Dynamic: home-page
-Dynamic: license-file
-Dynamic: maintainer
-Dynamic: maintainer-email
-Dynamic: requires-dist
-Dynamic: requires-python
-Dynamic: summary
 
 # GenoML 
 
@@ -46,13 +24,13 @@ Dynamic: summary
 
 [![Downloads](https://static.pepy.tech/personalized-badge/genoml2?period=total&units=international_system&left_color=black&right_color=grey&left_text=Downloads)](https://pepy.tech/project/genoml2)
 
-> Updated 09 June 2025: Latest Release on pip! v1.0.1
+> Updated 17 June 2025: Latest Release on pip! v1.5.0
 
 # How to Get Started with GenoML
 
 
 ### Introduction
-[GenoML (**Geno**mics + **M**achine **L**earning)](https://genoml.com) is an automated Machine Learning (autoML) for genomics data. In general, use a Linux or Mac with Python >3.5 for best results. **This [repository](https://github.com/GenoML/genoml2) and [pip package](https://pypi.org/project/genoml2/) are under active development!** 
+[GenoML (**Geno**mics + **M**achine **L**earning)](https://genoml.com) is an automated Machine Learning (autoML) for genomics data. In general, use a Linux or Mac with Python 3.9-3.12 for best results. **This [repository](https://github.com/GenoML/genoml2) and [pip package](https://pypi.org/project/genoml2/) are under active development!** 
 
 This README is a brief look into how to structure arguments and what arguments are available at each phase for the GenoML CLI. 
 
@@ -80,7 +58,7 @@ OR
 > Note: When you pip install this package, the examples/ folder is also downloaded! However, if  you still want to download the directory and SVN is not pre-installed, you can download it via Homebrew if you have that installed using `brew install svn` 
 
 ### CHANGELOG
-- 9-JUN-2025: Addition of multiclass prediction functionality using the same base models that are used for the discrete module. We have additionally restructured the munging functionality to allow users to process training and testing data all at once to ensure they are munged under the same conditions, as well as including multiple GWAS summary stats files for SNP filtering. We also upgraded from plink1.9 to plink2 for genomic data processing. Finally, we have added a log file in the output directory to facilitate full reproducbility of results. `README` updated to reflect these changes.
+- 16-JUN-2025: Addition of multiclass prediction functionality using the same base models that are used for the discrete module. We have additionally restructured the munging functionality to allow users to process training and testing data all at once to ensure they are munged under the same conditions, as well as including multiple GWAS summary stats files for SNP filtering. We also upgraded from plink1.9 to plink2 for genomic data processing. Finally, we have added a log file in the output directory to facilitate full reproducbility of results. `README` updated to reflect these changes.
 - 8-OCT-2024: Big changes to output file structure, so now output files go in subdirectories named for each step, and prefixes are not required. `README` updated to reflect these changes.
 
 
@@ -112,13 +90,15 @@ conda activate GenoML
 # To install requirements via pip 
 pip install -r requirements.txt
     # If issues installing xgboost from requirements - (3 options)
-        # use Homebrew to 
+        # Option 1: use Homebrew to 
             # xcode-select --install
             # brew install gcc@7
-        # conda install -c conda-forge xgboost 
-        # pip install xgboost==0.90
+        # or Option 2: conda install -c conda-forge xgboost 
+        # or Option 3: pip install xgboost==2.0.3
     # If issues installing umap 
-        # pip install umap-learn 
+        # pip install umap-learn
+    # If issues installing pytables/dependency issue 
+        # conda install -c conda-forge pytables
 
 ## MISC
 # To deactivate the virtual environment
@@ -141,6 +121,8 @@ pip install .
 # conda remove --name GenoML --all 
 ```
 
+> *Note:* The following examples are for discrete data, but if you substitute following commands with `continuous` or `multiclass` instead of discrete, you can munge, harmonize, train, tune, and test your continuous/multiclass data! 
+
 <a id="1"></a>
 ## 1. Munging with GenoML
 
@@ -162,8 +144,6 @@ Be sure to have your files formatted the same as the examples, key points being:
 - Your sample IDs matching across all files
 - Your sample IDs not consisting with only integers (add a prefix or suffix to all sample IDs ensuring they are alphanumeric if this is the case prior to running GenoML)
 - Please avoid the use of characters like commas, semi-colons, etc. in the column headers (it is Python after all!)  
-
-> *Note:* The following examples are for discrete data, but if you substitute following commands with `continuous` or `multiclass` instead of discrete, you can preprocess your continuous/multiclass data!
 
 If you would like to munge just with genotypes (in PLINK binary format), the simplest command is the following: 
 ```shell
@@ -549,6 +529,7 @@ genoml discrete supervised train \
 --metric_max Balanced_Accuracy
 # Files made: 
     # outputs/model.joblib
+    # outputs/algorithm.txt
     # outputs/Train/precision_recall.png
     # outputs/Train/predictions.txt
     # outputs/Train/probabilities.png
@@ -593,12 +574,15 @@ genoml discrete supervised test \
 **UNDER ACTIVE DEVELOPMENT** 
 
 Planned experimental features include, but are not limited to:
-- Unsupervised munging, training, tuning, and testing
+- Support for unsupervised learning models
+- Multiclass and multilabel prediction
 - GWAS QC and Pipeline
 - Network analyses
+- Multi-omic munging
 - Meta-learning
 - Federated learning
-- Biobank-scale support
 - Cross-silo checks for genetic duplicates
 - Outlier detection
 - ...?
+
+

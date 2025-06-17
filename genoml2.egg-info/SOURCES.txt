@@ -34,7 +34,6 @@ genoml/preprocessing/main.py
 genoml/preprocessing/munging.py
 genoml/preprocessing/utils.py
 genoml/preprocessing/vif.py
-genoml/preprocessing/vif_old_.py
 genoml2.egg-info/PKG-INFO
 genoml2.egg-info/SOURCES.txt
 genoml2.egg-info/dependency_links.txt

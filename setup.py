@@ -31,7 +31,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://genoml.github.io/",
-    download_url="hhttps://github.com/GenoML/genoml2/archive/refs/tags/v.1.5.0.tar.gz",
+    download_url="https://github.com/GenoML/genoml2/archive/refs/tags/v1.5.0.tar.gz",
     entry_points={
         'console_scripts':
             ['genoml=genoml.__main__:handle_main'],
