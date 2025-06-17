@@ -13,80 +13,64 @@
 # limitations under the License.
 # ==============================================================================
 
-# Import the necessary packages
-from pathlib import Path
+import joblib
+import pandas as pd
 import genoml.discrete.utils as discrete_utils
+import sys
+from pathlib import Path
+from genoml import utils
 
-class test:
-    def __init__(self, df, loaded_model, run_prefix):
-        self.df = df
-        path = Path(run_prefix).joinpath("Test")
-        if not path.is_dir():
-            path.mkdir()
-        self.run_prefix = path
-        self.algo = loaded_model
+
+### TODO: Add functionality to apply models without having ground truth data
+class Test:
+    @utils.DescriptionLoader.function_description("info", cmd="Discrete Supervised Testing")
+    def __init__(self, prefix):
+        utils.DescriptionLoader.print(
+            "testing/info",
+            python_version=sys.version,
+            prefix=prefix,
+        )
+
+        df = utils.read_munged_data(prefix, "test")
+        model_path = Path(prefix).joinpath("model.joblib")
+        algorithm = joblib.load(model_path)
+
+        self._run_prefix = Path(prefix).joinpath("Test")
+        if not self._run_prefix.is_dir():
+            self._run_prefix.mkdir()
+        self._y_test = df.PHENO
+        self._ids_test = df.ID
+        x_test = df.drop(columns=['ID', 'PHENO'])
+        self._y_pred = algorithm.predict(x_test)
+        self._y_pred_prob = algorithm.predict_proba(x_test)
+        self._algorithm_name = algorithm.__class__.__name__
     
-    def prep_df(self):
-        print("")
-        print("Your data looks like this (showing the first few lines of the left-most and right-most columns)...")
-        print("#"*70)
-        print(self.df.describe())
-        print("#"*70)
-        print("")
 
-        # Save out and drop the PHENO and sample ID columns 
-        y_test = self.df.PHENO
-        X_test = self.df.drop(columns=['PHENO'])
-        IDs_test = X_test.ID
-        X_test = X_test.drop(columns=['ID'])
+    def plot_results(self):
+        """ Plot results from best-performing algorithm. """
+        discrete_utils.plot_results(
+            self._run_prefix,
+            self._y_test,
+            self._y_pred_prob,
+            self._algorithm_name,
+        )
 
-        # Save variables to use globally within the class 
-        self.y_test = y_test
-        self.X_test = X_test
-        self.IDs_test = IDs_test
-
-    def plot_results(self, save=False):
-        # Issue #24: RandomForestClassifier is finicky - can't recalculate moving forward like the other
-        self.algo.fit(self.X_test, self.y_test)
-        plot_path = self.run_prefix.joinpath('testModel_withheldSample_ROC.png')
-        ground_truth = self.y_test.values
-        predictions = self.algo.predict(self.X_test)
-        discrete_utils.ROC(save, plot_path, ground_truth, predictions)
-        discrete_utils.precision_recall_plot(save, plot_path, ground_truth, predictions)
 
     def export_prediction_data(self):
-        test_out = discrete_utils.export_prediction_tables(
-            self.algo,
-            self.y_test,
-            self.X_test,
-            self.IDs_test,
-            self.run_prefix.joinpath('tunedModel_withheldSample_testingPredictions.csv'),
+        """ Save results from best-performing algorithm. """
+        discrete_utils.export_prediction_data(
+            self._run_prefix,
+            self._y_test,
+            self._y_pred_prob,
+            self._ids_test,
         )
 
-        discrete_utils.export_prob_hist(
-            test_out,
-            self.run_prefix.joinpath('tunedModel_withheldSample_testingProbabilities'),
-        )
 
     def additional_sumstats(self):
-        print("")
-        print("#"*70)
-        print("Some additional summary stats logging from your application of your model to the test dataset.")
-        print("")
-
-        log_outfile = self.run_prefix.joinpath('tunedModel_validationCohort_allCasesControls_performanceMetrics.csv')
-        log_table = discrete_utils.summary_stats(
-            self.algo,
-            self.y_test,
-            self.X_test,
+        """ Save performance metrics for testing data """
+        log_table = pd.DataFrame(
+            data=[[self._algorithm_name] + discrete_utils._calculate_accuracy_scores(self._y_test, self._y_pred)], 
+            columns=["Algorithm", "AUC", "Accuracy", "Balanced_Accuracy", "Log_Loss", "Sensitivity", "Specificity", "PPV", "NPV"],
         )
-        log_table.to_csv(log_outfile, index=False)
-
-        print("")
-        print("#"*70)
-        print("")
-        print(f"This table below is also logged as {log_outfile} and is in your current working directory...")
-        print("#"*70)
-        print(log_table)
-        print("#"*70)
-        print("")
+        log_outfile = self._run_prefix.joinpath('performance_metrics.txt')
+        log_table.to_csv(log_outfile, index=False, sep="\t")

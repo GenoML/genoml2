@@ -1,0 +1,12 @@
+Thursday, June 12, 2025 at 08:17:42 AM EDT
+genoml discrete supervised munge --prefix outputs --pheno examples/discrete/training_pheno.csv --geno examples/discrete/training --addit examples/discrete/training_addit.csv --pheno_test examples/discrete/validation_pheno.csv --geno_test examples/discrete/validation --addit_test examples/discrete/validation_addit.csv --r2_cutoff 0.3 --impute mean --vif 10 --vif_iter 1 --gwas examples/discrete/example_GWAS.csv --gwas examples/discrete/example_GWAS_2.csv --p 0.05 --feature_selection 50 --adjust_data --adjust_normalize --umap_reduce --confounders examples/discrete/training_addit_confounder_example.csv --confounders_test examples/discrete/validation_addit_confounder_example.csv --target_features examples/discrete/to_adjust.txt --verbose
+
+Thursday, June 12, 2025 at 08:18:28 AM EDT
+genoml discrete supervised train --prefix outputs --metric_max Balanced_Accuracy --verbose
+
+Thursday, June 12, 2025 at 08:19:19 AM EDT
+genoml discrete supervised tune --prefix outputs --max_tune 10 --n_cv 3 --metric_tune Balanced_Accuracy --verbose
+
+Thursday, June 12, 2025 at 08:19:33 AM EDT
+genoml discrete supervised test --prefix outputs --verbose
+

@@ -18,10 +18,10 @@
 
 ## SETTING UP A VIRTUAL ENVIRONMENT 
 # Making a virtual environment
-#conda create -n GenoML python=3.7
+conda create -n GenoML python=3.12
 
 # Activating and changing directories to environment
-#conda activate GenoML
+# conda activate GenoML
     # Deactivating a conda environment 
         # conda deactivate 
     # Removing a conda environment 
@@ -32,7 +32,7 @@ pip install -r requirements.txt
     # If issues installing xgboost from requirements - use Homebrew to 
         # xcode-select --install
         # brew install gcc@7
-        # conda install -c conda-forge xgboost [or] pip install xgboost==0.90
+        # conda install -c conda-forge xgboost [or] pip install xgboost==2.0.3
 
 # Install the package at this path
 pip install .
@@ -43,192 +43,238 @@ pip install .
 # Removing a conda virtualenv
 #conda remove --name GenoML --all
 
-# Run GenoML 
-genoml
-    # usage: genoml <command> [<args>]
-        #    continuous      for processing continuous datatypes (ex: age at onset)
-        #    discrete        for processing discrete datatypes (ex: case vs. control status)
-        #    harmonize       for harmonizing incoming test datasets to use the same SNPs and reference alleles prior to munging, training, and testing
-    # genoml: error: the following arguments are required: command
+## 1. MUNGE
 
-## MUNGING 
-# Running the munging script [discrete]
+# Running GenoML munging on discrete data using PLINK genotype binary files and a phenotype file 
 genoml discrete supervised munge \
---prefix outputs/test_discrete_geno \
---geno examples/discrete/training \
---pheno examples/discrete/training_pheno.csv 
-
-# Running the munging script with VIF and iterations [discrete]
-genoml discrete supervised munge --prefix outputs/test_discrete_geno \
---geno examples/discrete/training \
---pheno examples/discrete/training_pheno.csv \
---vif 5 \
---iter 1
-
-# Running the munging script with GWAS [discrete]
-genoml discrete supervised munge --prefix outputs/test_discrete_geno \
---geno examples/discrete/training \
---pheno examples/discrete/training_pheno.csv \
---gwas examples/discrete/example_GWAS.csv 
-
-# Running the munging script with VIF and GWAS [discrete]
-genoml discrete supervised munge --prefix outputs/test_discrete_geno \
---geno examples/discrete/training \
---pheno examples/discrete/training_pheno.csv \
---gwas examples/discrete/example_GWAS.csv \
---vif 5 --iter 1
-
-# Running the munging script with addit, VIF, and GWAS [discrete]
-genoml discrete supervised munge --prefix outputs/test_discrete_geno \
---geno examples/discrete/training \
---pheno examples/discrete/training_pheno.csv \
---gwas examples/discrete/example_GWAS.csv \
---addit examples/discrete/training_addit.csv \
---vif 5 --iter 1
-
-# Running the munging script with featureSelection [discrete]
-genoml discrete supervised munge --prefix outputs/test_discrete_geno \
---geno examples/discrete/training \
---pheno examples/discrete/training_pheno.csv \
---feature_selection 50
-
-# Running the munging script with everything [discrete]
-genoml discrete supervised munge --prefix outputs/test_discrete_geno \
---geno examples/discrete/training \
---pheno examples/discrete/training_pheno.csv \
---gwas examples/discrete/example_GWAS.csv \
---addit examples/discrete/training_addit.csv \
---p 0.01 \
---vif 5 --iter 1
-
-# Running the munging script [continuous]
-genoml continuous supervised munge --prefix outputs/test_continuous_geno \
---geno examples/continuous/training \
---pheno examples/continuous/training_pheno.csv 
-
-# Running the munging script with VIF [continuous]
-genoml continuous supervised munge --prefix outputs/test_continuous_geno \
---geno examples/continuous/training \
---pheno examples/continuous/training_pheno.csv \
---vif 5 \
---iter 2
-
-# Running the munging script with GWAS [continuous]
-genoml continuous supervised munge --prefix outputs/test_continuous_geno \
---geno examples/continuous/training \
---pheno examples/continuous/training_pheno.csv \
---gwas examples/continuous/example_GWAS.csv 
-
-# Running the munging script with VIF and GWAS [continuous]
-genoml continuous supervised munge --prefix outputs/test_continuous_geno \
---geno examples/continuous/training \
---pheno examples/continuous/training_pheno.csv \
---gwas examples/continuous/example_GWAS.csv \
---vif 5 --iter 1
-
-# Running the munging script with addit, VIF, and GWAS [continuous]
-genoml continuous supervised munge --prefix outputs/test_continuous_geno \
---geno examples/continuous/training \
---pheno examples/continuous/training_pheno.csv \
---gwas examples/continuous/example_GWAS.csv \
---addit examples/continuous/training_addit.csv \
---vif 5 --iter 1
-
-# Running the munging script with everything [continuous]
-genoml continuous supervised munge --prefix outputs/test_continuous_geno \
---geno examples/continuous/training \
---pheno examples/continuous/training_pheno.csv \
---gwas examples/continuous/example_GWAS.csv \
---addit examples/continuous/training_addit.csv \
---p 0.01 \
---vif 5 --iter 1
-
-## TRAIN 
-# Running the supervised training script [discrete]
-genoml discrete supervised train \
---prefix outputs/test_discrete_geno \
---metric_max Sensitivity
-
-# Running the supervised training script [continuous]
-genoml continuous supervised train \
---prefix outputs/test_continuous_geno \
-
-## TUNE 
-# Running the supervised tuning script [discrete]
-genoml discrete supervised tune \
---prefix outputs/test_discrete_geno \
---max_tune 10 --n_cv 3
-
-# Running the supervised tuning script [continuous]
-genoml continuous supervised tune \
---prefix outputs/test_continuous_geno \
---max_tune 10 --n_cv 3
-
-
-## TEST DISCRETE
-# MUNGE THE REFERENCE
-genoml discrete supervised munge --prefix outputs/test_discrete_geno \
+--prefix outputs \
 --geno examples/discrete/training \
 --pheno examples/discrete/training_pheno.csv
 
-# TRAIN THE REFERENCE
-genoml discrete supervised train \
---prefix outputs/test_discrete_geno
-  
-# HARMONIZE TEST DATASET
-genoml harmonize --test_geno_prefix examples/discrete/validation \
---test_prefix outputs/validation_test_discrete_geno \
---ref_model_prefix outputs/test_discrete_geno \
---training_snps_alleles outputs/test_discrete_geno.variants_and_alleles.tab
-  
-# MUNGE THE TEST DATASET ON INTERSECTING COLUMNS
-genoml discrete supervised munge --prefix outputs/validation_test_discrete_geno \
---geno outputs/validation_test_discrete_geno_refSNPs_andAlleles \
+# Running GenoML munging on discrete data using PLINK genotype binary files and a phenotype file with a detailed log printed to the console
+genoml discrete supervised munge \
+--prefix outputs \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv \
+--verbose
+
+# Running GenoML munging on discrete data using PLINK genotype binary files and phenotype files for both the training and testing datasets.
+genoml discrete supervised munge \
+--prefix outputs \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv \
+--geno_test examples/discrete/validation \
+--pheno_test examples/discrete/validation_pheno.csv
+
+# Running GenoML munging on discrete data using PLINK genotype binary files and a phenotype file 
+genoml discrete supervised munge \
+--prefix outputs \
+--geno examples/discrete/training \
+--r2_cutoff 0.3 \
+--pheno examples/discrete/training_pheno.csv
+
+# Running GenoML munging on discrete data using PLINK genotype binary files and a phenotype file 
+genoml discrete supervised munge \
+--prefix outputs \
+--geno examples/discrete/training \
+--skip_prune \
+--pheno examples/discrete/training_pheno.csv
+
+# Running GenoML munging on discrete data using PLINK genotype binary files and a phenotype file and specifying impute
+genoml discrete supervised munge \
+--prefix outputs \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv \
+--impute mean
+
+# Running GenoML munging on discrete data using PLINK genotype binary files and a phenotype file while using VIF to remove multicollinearity 
+genoml discrete supervised munge \
+--prefix outputs \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv \
+--vif 5 \
+--vif_iter 1
+
+# Running GenoML munging on discrete data using PLINK genotype binary files, a phenotype file, and a GWAS summary statistics file 
+genoml discrete supervised munge \
+--prefix outputs \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv \
+--gwas examples/discrete/example_GWAS.csv
+
+# Running GenoML munging on discrete data using PLINK genotype binary files, a phenotype file, and two GWAS summary statistics files
+genoml discrete supervised munge \
+--prefix outputs \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv \
+--gwas examples/discrete/example_GWAS.csv \
+--gwas examples/discrete/example_GWAS_2.csv
+
+# Running GenoML munging on discrete data using PLINK genotype binary files, a phenotype file, and a GWAS summary statistics file with a p-value cut-off 
+genoml discrete supervised munge \
+--prefix outputs \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv \
+--gwas examples/discrete/example_GWAS.csv \
+--p 0.01
+
+# Running GenoML munging on discrete data using PLINK genotype binary files, a phenotype file, and an addit file
+genoml discrete supervised munge \
+--prefix outputs \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv \
+--addit examples/discrete/training_addit.csv
+
+# Running GenoML munging on discrete data using PLINK genotype binary files, a phenotype file, and an addit file
+genoml discrete supervised munge \
+--prefix outputs \
+--pheno examples/discrete/training_pheno.csv \
+--addit examples/discrete/training_addit.csv
+
+# Running GenoML munging on discrete data using PLINK genotype binary files, a phenotype file, and running feature selection 
+genoml discrete supervised munge \
+--prefix outputs \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv \
+--addit examples/discrete/training_addit.csv \
+--feature_selection 50
+
+# Running GenoML munging on discreate data using PLINK binary files, a phenotype file, using UMAP to reduce dimensions and account for features, and running feature selection
+genoml discrete supervised munge \
+--prefix outputs \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv \
+--addit examples/discrete/training_addit.csv \
+--umap_reduce \
+--adjust_data \
+--adjust_normalize \
+--target_features examples/discrete/to_adjust.txt \
+--confounders examples/discrete/training_addit_confounder_example.csv 
+
+# Running GenoML munging on discreate data using PLINK binary files, a phenotype file, using UMAP to reduce dimensions and account for features, and running feature selection, for both the training and testing data together.
+genoml discrete supervised munge \
+--prefix outputs \
+--geno examples/discrete/training \
+--pheno examples/discrete/training_pheno.csv \
+--addit examples/discrete/training_addit.csv \
+--geno_test examples/discrete/validation \
+--pheno_test examples/discrete/validation_pheno.csv \
+--addit_test examples/discrete/validation_addit.csv \
+--umap_reduce \
+--adjust_data \
+--adjust_normalize \
+--target_features examples/discrete/to_adjust.txt \
+--confounders examples/discrete/training_addit_confounder_example.csv \
+--confounders_test examples/discrete/validation_addit_confounder_example.csv 
+
+
+
+## 1b. HARMONIZE
+
+# Running GenoML harmonization on discrete data using PLINK genotype binary files and a phenotype file 
+genoml discrete supervised munge \
+--prefix outputs \
+--geno examples/discrete/validation \
+--pheno examples/discrete/validation_pheno.csv
+
+# Running GenoML harmonization on discrete data using PLINK genotype binary files and a phenotype file 
+genoml discrete supervised munge \
+--prefix outputs \
+--geno examples/discrete/validation \
 --pheno examples/discrete/validation_pheno.csv \
---addit examples/discrete/validation_addit.csv \
---ref_cols_harmonize outputs/validation_test_discrete_geno_refColsHarmonize_toKeep.txt
-  
-# RETRAIN REFERENCE ON INTERSECTING COLUMNS
+--confounders examples/discrete/validation_addit_confounder_example.csv
+
+# Running GenoML harmonization on discrete data using PLINK genotype binary files and a phenotype file, while imputing any missing columns (ie, if an addit file was used during training and is not present for the harmonization participants).
+genoml discrete supervised munge \
+--prefix outputs \
+--geno examples/discrete/validation \
+--pheno examples/discrete/validation_pheno.csv \
+--force_impute
+
+
+
+## 2. TRAIN
+
+# Running GenoML supervised training after munging on discrete data
 genoml discrete supervised train \
---prefix outputs/test_discrete_geno \
---matching_columns outputs/validation_test_discrete_geno_finalHarmonizedCols_toKeep.txt
+--prefix outputs
 
-# TEST RETRAINED REFERENCE MODEL ON UNSEEN DATA
+# Running GenoML supervised training after munging on discrete data and specifying Sensitivity as the metric to optimize
+genoml discrete supervised train \
+--prefix outputs \
+--metric_max Sensitivity
+
+
+
+
+## 3. TUNE
+
+# Running GenoML supervised tuning after munging and training on discrete data
+genoml discrete supervised tune \
+--prefix outputs
+
+# Running GenoML supervised tuning after munging and training on discrete data, modifying the number of iterations and cross-validations 
+genoml discrete supervised tune \
+--prefix outputs \
+--max_tune 10 \
+--n_cv 3
+
+# Running GenoML supervised tuning after munging and training on discrete data, modifying the metric to tune by
+genoml discrete supervised tune \
+--prefix outputs \
+--metric_tune Balanced_Accuracy
+
+
+
+
+## 4. TEST
+
+# Running GenoML test
 genoml discrete supervised test \
---prefix outputs/validation_test_discrete_geno \
---test_prefix outputs/validation_test_discrete_geno \
---ref_model_prefix outputs/test_discrete_geno.trainedModel 
+--prefix outputs
 
-## TEST continuous
-# MUNGE THE REFERENCE
-genoml continuous supervised munge --prefix outputs/test_continuous_geno \
---geno examples/continuous/training \
---pheno examples/continuous/training_pheno.csv
 
-# TRAIN THE REFERENCE
-genoml continuous supervised train \
---prefix outputs/test_continuous_geno
-  
-# HARMONIZE TEST DATASET
-genoml harmonize --test_geno_prefix examples/continuous/validation \
---test_prefix outputs/validation_test_continuous_geno \
---ref_model_prefix outputs/test_continuous_geno \
---training_snps_alleles outputs/test_continuous_geno.variants_and_alleles.tab
-  
-# MUNGE THE TEST DATASET ON INTERSECTING COLUMNS
-genoml discrete supervised munge --prefix outputs/validation_test_continuous_geno \
---geno outputs/validation_test_continuous_geno_refSNPs_andAlleles \
---pheno examples/continuous/validation_pheno.csv \
---addit examples/continuous/validation_addit.csv \
---ref_cols_harmonize outputs/validation_test_continuous_geno_refColsHarmonize_toKeep.txt
-  
-# RETRAIN REFERENCE ON INTERSECTING COLUMNS
-genoml continuous supervised train \
---prefix outputs/test_continuous_geno \
---matching_columns outputs/validation_test_continuous_geno_finalHarmonizedCols_toKeep.txt
 
-# TEST RETRAINED REFERENCE MODEL ON UNSEEN DATA
-genoml continuous supervised test \
---prefix outputs/validation_test_continuous_geno \
---test_prefix outputs/validation_test_continuous_geno \
---ref_model_prefix outputs/test_continuous_geno.trainedModel
+
+## 5. FULL PIPELINE EXAMPLE
+
+# MUNGE THE REFERENCE DATASET
+genoml discrete supervised munge \
+--prefix outputs \
+--pheno examples/discrete/training_pheno.csv \
+--geno examples/discrete/training \
+--addit examples/discrete/training_addit.csv \
+--pheno_test examples/discrete/validation_pheno.csv \
+--geno_test examples/discrete/validation \
+--addit_test examples/discrete/validation_addit.csv \
+--r2_cutoff 0.3 \
+--impute mean \
+--vif 10 \
+--vif_iter 1 \
+--gwas examples/discrete/example_GWAS.csv \
+--gwas examples/discrete/example_GWAS_2.csv \
+--p 0.05 \
+--feature_selection 50 \
+--adjust_data \
+--adjust_normalize \
+--umap_reduce \
+--confounders examples/discrete/training_addit_confounder_example.csv \
+--confounders_test examples/discrete/validation_addit_confounder_example.csv \
+--target_features examples/discrete/to_adjust.txt \
+--verbose
+
+# TRAIN THE REFERENCE MODEL
+genoml discrete supervised train \
+--prefix outputs \
+--metric_max Balanced_Accuracy
+
+# OPTIONAL: TUNING YOUR REFERENCE MODEL
+genoml discrete supervised tune \
+--prefix outputs \
+--max_tune 10 \
+--n_cv 3 \
+--metric_tune Balanced_Accuracy
+
+# TEST TUNED MODEL ON UNSEEN DATA
+genoml discrete supervised test \
+--prefix outputs

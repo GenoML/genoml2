@@ -23,288 +23,237 @@ import time
 import xgboost
 
 
-def ROC(save, plot_path, ground_truth, predictions, plot_label="Test Dataset"):
+### TODO: Inputs should be numpy instead of pandas?
+def plot_results(out_dir, y, y_pred, algorithm_name):
+    """
+    Generate ROC and precision-recall plots for each class.
+
+    Args:
+        out_dir (pathlib.Path): Directory where results are saved.
+        y (pandas.Series): Ground truth phenotypes.
+        y_pred (numpy.ndarray): Predicted phenotypes.
+        algorithm_name: Classifier model in OneVsRestClassifier wrapper.
+    """
+    
+    y_pred_prob = y_pred[:,1]
+    y_pred = y_pred.argmax(axis=1)
+    roc_path = out_dir.joinpath('roc.png')
+    precision_recall_path = out_dir.joinpath('precision_recall.png')
+    ROC(roc_path, y.values, y_pred_prob, algorithm_name)
+    precision_recall_plot(precision_recall_path, y.values, y_pred, algorithm_name)
+
+
+def ROC(plot_path, y, y_pred, algorithm_name):
+    """
+    Generate ROC plots for each class given ground-truth values and corresponding predictions.
+
+    Args:
+        plot_path (str): File path where plot will be saved to.
+        y (numpy.ndarray): Ground truth phenotypes.
+        y_pred (numpy.ndarray): Predicted probabilities for each class.
+        algorithm_name (str): Label to add to plot title.
+    """
+
     plt.figure()
+    plt.plot([0, 1], [0, 1], 'r--')
 
-    fpr, tpr, _ = metrics.roc_curve(ground_truth, predictions)
-    roc_auc = metrics.roc_auc_score(ground_truth, predictions)
-
-    plt.plot(fpr, tpr, color='purple', label='ROC curve (area = %0.2f)' % roc_auc)
-    plt.plot([0, 1], [0, 1], color='cyan', linestyle='--', label='Chance (area = %0.2f)' % 0.5)
+    fpr, tpr, _ = metrics.roc_curve(y, y_pred)
+    roc_auc = metrics.roc_auc_score(y, y_pred)
+    plt.plot(fpr, tpr, color='purple', label=f'ROC curve (area = {roc_auc:.3f})')
 
     plt.xlim([0.0, 1.05])
     plt.ylim([0.0, 1.05])
     plt.xlabel('False positive rate')
     plt.ylabel('True positive rate')
-    plt.title(f'Receiver operating characteristic (ROC) - {plot_label}')
+    plt.title(f'Receiver operating characteristic (ROC) - {algorithm_name}')
     plt.legend(loc="lower right")
-    if save:
-        plt.savefig(plot_path, dpi=600)
-        print(f"We are also exporting an ROC curve for you here {plot_path} this is a graphical representation of AUC "
-              f"in the withheld test data for the best performing algorithm.")
+    plt.savefig(plot_path, dpi=600)
+    print(f"We are also exporting an ROC curve for you here {plot_path} this is a graphical representation of AUC "
+          f"in the withheld test data for the best performing algorithm.")
 
 
-def precision_recall_plot(save, plot_path, ground_truth, predictions, plot_label="Test Dataset"):
+def precision_recall_plot(plot_path, y, y_pred, algorithm_name):
+    """
+    Generate precision-recall plots for each class given ground-truth values and corresponding predictions.
+
+    Args:
+        plot_path (str): File path where plot will be saved to.
+        y (numpy.ndarray): Ground truth phenotypes.
+        y_pred (numpy.ndarray): Predicted probabilities for each class.
+        algorithm_name (str): Label to add to plot title.
+    """
+
     plt.figure()
 
-    precision, recall, _ = metrics.precision_recall_curve(ground_truth, predictions)
+    precision, recall, _ = metrics.precision_recall_curve(y, y_pred)
     plt.plot(precision, recall, label="Precision-Recall curve")
 
     plt.xlim([0.0, 1.05])
     plt.ylim([0.0, 1.05])
     plt.xlabel("Recall")
     plt.ylabel("Precision")
-    plt.title(f"Precision vs. Recall Curve - {plot_label}")
+    plt.title(f"Precision vs. Recall Curve - {algorithm_name}")
     plt.legend(loc="lower left")
-    if save:
-        plt.savefig(plot_path, dpi=600)
-        print(f"We are also exporting a Precision-Recall plot for you here {plot_path}. This is a graphical "
-              f"representation of the relationship between precision and recall scores in the withheld test data for "
-              f"the best performing algorithm.")
+    plt.savefig(plot_path, dpi=600)
+    print(f"We are also exporting a Precision-Recall plot for you here {plot_path}. This is a graphical "
+          f"representation of the relationship between precision and recall scores in the withheld test data for "
+          f"the best performing algorithm.")
 
 
-def export_prediction_tables(algo, y_vals, x_vals, IDs, output_path):
-    predicted_probs = algo.predict_proba(x_vals)
-    case_probs = predicted_probs[:,1]
-    case_probs_df = pd.DataFrame(case_probs)
-    predicted_probs_df = pd.DataFrame(predicted_probs, dtype=float)
-    predicted_cases_df = predicted_probs_df.idxmax(axis=1)
-    y_vals_df = pd.DataFrame(y_vals)
-    IDs_df = pd.DataFrame(IDs)
-    prediction_df = pd.concat(
+def export_prediction_data(out_dir, y, y_pred, ids, y_train=None, y_train_pred=None, ids_train=None):
+    """
+    Save probability histograms and tables with accuracy metrics.
+
+    Args:
+        out_dir (pathlib.Path): Directory where results are saved.
+        y (pandas.DataFrame): Ground truth phenotypes.
+        y_pred (pandas.DataFrame): Predicted probabilities for each class.
+        ids (pandas.Series): ids for participants corresponding to the datasets.
+        y_train (optional, pandas.DataFrame): Ground truth phenotypes from the training dataset (Default: None).
+        y_train_pred (optional, pandas.DataFrame): Predicted phenotypes from the training dataset (Default: None).
+        ids_train (optional, pandas.Series): ids for participants in the training dataset (Default: None).
+    """
+
+    if y_train is not None and y_train_pred is not None and ids_train is not None:
+        export_prediction_tables(
+            y_train,
+            y_train_pred,
+            ids_train,
+            out_dir.joinpath('train_predictions.txt'),
+            dataset="training",
+        )
+
+    df_prediction = export_prediction_tables(
+        y,
+        y_pred,
+        ids,
+        out_dir.joinpath('predictions.txt'),
+    )
+
+    export_prob_hist(
+        df_prediction,
+        out_dir.joinpath('probabilities'),
+    )
+
+
+def calculate_accuracy_scores(x, y, algorithm):
+    """
+    Apply discrete prediction model and calculate accuracy metrics.
+
+    Args:
+        x (pandas.DataFrame): Model input features.
+        y (pandas.DataFrame): Reported output features.
+        algorithm: Contonuous prediction algorithm.
+
+    :return: accuracy_metrics *(list)*: \n
+        Accuracy metrics used for the discrete prediction module.
+    """
+
+    y_pred = algorithm.predict(x)
+    return _calculate_accuracy_scores(y, y_pred)
+
+
+def _calculate_accuracy_scores(y, y_pred):
+    """
+    Calculate accuracy metrics for the chosen discrete prediction model.
+
+    Args:
+        y (pandas.DataFrame): Reported output features.
+        y_pred (pandas.DataFrame): Predicted output features.
+
+    :return: accuracy_metrics *(list)*: \n
+        Accuracy metrics used for the discrete prediction module.
+    """
+
+    rocauc = metrics.roc_auc_score(y, y_pred)
+    acc = metrics.accuracy_score(y, y_pred) * 100
+    balacc = metrics.balanced_accuracy_score(y, y_pred) * 100
+    ll = metrics.log_loss(y, y_pred)
+    
+    CM = metrics.confusion_matrix(y, y_pred)
+    TN = CM[0][0]
+    FN = CM[1][0]
+    TP = CM[1][1]
+    FP = CM[0][1]
+    sens = TP/(TP+FN)
+    spec = TN/(TN+FP)
+    ppv = TP/(TP+FP)
+    npv = TN/(TN+FN)
+
+    accuracy_metrics = [rocauc, acc, balacc, ll, sens, spec, ppv, npv]
+    return accuracy_metrics
+
+
+def export_prediction_tables(y, y_pred, ids, output_path, dataset="withheld test"):
+    """
+    Generate and save tables with prediction probabilities and predicted classes for each sample.
+
+    Args:
+        y (pandas.DataFrame): Ground truth phenotypes.
+        y_pred (pandas.DataFrame): Predicted phenotypes.
+        ids (pandas.Series): ids for participants corresponding to the datasets.
+        output_path (pathlib.Path): Where to save output files.
+        dataset (str): Indicator of whether analyzing training, tuning, or testing data.
+
+    :return: df_prediction *(pandas.DataFrame)*: \n
+        Table of reported and predicted phenotypes.
+    """
+
+    y_pred = pd.DataFrame(y_pred, dtype=float)
+    df_predicted_cases = y_pred.idxmax(axis=1)
+    case_probs = pd.DataFrame(y_pred.iloc[:,1])
+    y = pd.DataFrame(y)
+    ids = pd.DataFrame(ids)
+    df_prediction = pd.concat(
         [
-            IDs_df.reset_index(),
-            y_vals_df.reset_index(drop=True),
-            case_probs_df.reset_index(drop=True),
-            predicted_cases_df.reset_index(drop=True),
+            ids.reset_index(drop=True),
+            y.reset_index(drop=True),
+            case_probs.reset_index(drop=True),
+            df_predicted_cases.reset_index(drop=True),
         ],
         axis=1,
         ignore_index=True,
     )
 
-    prediction_df.columns = ['INDEX', 'ID', "CASE_REPORTED", "CASE_PROBABILITY", "CASE_PREDICTED"]
-    prediction_df = prediction_df.drop(columns=['INDEX'])
-    prediction_df.to_csv(output_path, index=False)
+    df_prediction.columns = ['ID', "CASE_REPORTED", "CASE_PROBABILITY", "CASE_PREDICTED"]
+    df_prediction.to_csv(output_path, index=False, sep="\t")
 
     print("")
-    print(f"Preview of the exported predictions for the withheld test data that has been exported as {output_path} "
-          f"these are pretty straight forward.")
-    print("They generally include the sample ID, the previously reported case status, the probabilities for each case "
-          "from the best performing algorithm, and the predicted label from that algorithm")
+    print(f"Preview of the exported predictions for the {dataset} data that has been exported as {output_path}.")
     print("")
     print("#" * 70)
-    print(prediction_df.head())
+    print(df_prediction.head())
     print("#" * 70)
 
-    return prediction_df
+    return df_prediction
 
 
-def export_prob_hist(to_plot_df, plot_path):
-    plt.figure()
+def export_prob_hist(df_plot, plot_prefix):
+    """
+    Save probability histograms for each class.
+
+    Args:
+        df_plot (pandas.DataFrame): Table of predicted phenotypes.
+        plot_prefix (pathlib.Path): Prefix for output files.
+    """
 
     # Using the withheld sample data
-    to_plot_df[f'percent_probability'] = to_plot_df[f'CASE_PROBABILITY'] * 100
-    to_plot_df[f'Probability (%)'] = to_plot_df[f'percent_probability'].round(decimals=0)
-    to_plot_df['Reported Status'] = to_plot_df['CASE_REPORTED']
-    to_plot_df['Predicted Status'] = to_plot_df['CASE_PREDICTED']
-
-    to_plot_df.describe()
+    df_plot[f'Probability (%)'] = (df_plot[f'CASE_PROBABILITY'] * 100).round(decimals=0)
+    df_plot['Reported Status'] = df_plot['CASE_REPORTED']
+    df_plot['Predicted Status'] = df_plot['CASE_PREDICTED']
 
     # Start plotting
+    plt.figure()
     sns.histplot(
-        data=to_plot_df,
+        data=df_plot,
         x=f"Probability (%)",
         hue="Predicted Status",
         kde=True,
         alpha=0.2,
         multiple='dodge',
     )
-    path = f"{plot_path}.png"
+    path = f"{plot_prefix}.png"
     plt.savefig(path, dpi=300)
     plt.clf()
     print(f"We are also exporting probability density plots to the file {path} this is a plot of the probability "
           f"distributions for each case, stratified by case status in the withheld test samples.")
-
-
-def get_hyperparameters(best_algo):
-    if best_algo == 'LogisticRegression':
-        hyperparameters = {
-            "penalty": ["l1", "l2"],
-            "C": stats.randint(1, 10),
-        }
-
-    elif best_algo == 'SGDClassifier':
-        hyperparameters = {
-            'alpha': [1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3],
-            'loss': ['log_loss'],
-            'penalty': ['l2'],
-            'n_jobs': [-1],
-        }
-
-    elif best_algo in ('RandomForestClassifier', 'AdaBoostClassifier', 'GradientBoostingClassifier', 'BaggingClassifier'):
-        hyperparameters = {
-            "n_estimators": stats.randint(1, 1000),
-        }
-
-    elif best_algo == 'SVC':
-        hyperparameters = {
-            "kernel": ["linear", "poly", "rbf", "sigmoid"],
-            "C": stats.randint(1, 10),
-        }
-
-    elif best_algo == 'ComplementNB':
-        hyperparameters = {
-            "alpha": stats.uniform(0, 1),
-        }
-
-    elif best_algo == 'MLPClassifier':
-        hyperparameters = {
-            "alpha": stats.uniform(0, 1),
-            "learning_rate": ['constant', 'invscaling', 'adaptive'],
-        }
-
-    elif best_algo == 'XGBClassifier':
-        hyperparameters = {
-            "max_depth": stats.randint(1, 100),
-            "learning_rate": stats.uniform(0, 1),
-            "n_estimators": stats.randint(1, 100),
-            "gamma": stats.uniform(0, 1),
-        }
-
-    elif best_algo == 'KNeighborsClassifier':
-        hyperparameters = {
-            "leaf_size": stats.randint(1, 100),
-            "n_neighbors": stats.randint(1, 10),
-        }
-
-    elif best_algo in ('LinearDiscriminantAnalysis', 'QuadraticDiscriminantAnalysis'):
-        hyperparameters = {
-            "tol": stats.uniform(0, 1),
-        }
-
-    return hyperparameters
-
-
-def get_best_algo(best_algo):
-    if best_algo == 'LogisticRegression':
-        algo = getattr(sklearn.linear_model, best_algo)()
-
-    elif best_algo == 'SGDClassifier':
-        algo = getattr(sklearn.linear_model, best_algo)(loss='modified_huber')
-
-    elif best_algo in ('RandomForestClassifier', 'AdaBoostClassifier', 'GradientBoostingClassifier', 'BaggingClassifier'):
-        algo = getattr(sklearn.ensemble, best_algo)()
-
-    elif best_algo == 'SVC':
-        algo = getattr(sklearn.svm, best_algo)(probability=True)
-
-    elif best_algo == 'ComplementNB':
-        algo = getattr(sklearn.naive_bayes, best_algo)()
-
-    elif best_algo == 'MLPClassifier':
-        algo = getattr(sklearn.neural_network, best_algo)()
-
-    elif best_algo == 'XGBClassifier':
-        algo = getattr(xgboost, best_algo)()
-
-    elif best_algo == 'KNeighborsClassifier':
-        algo = getattr(sklearn.neighbors, best_algo)()
-
-    elif best_algo in ('LinearDiscriminantAnalysis', 'QuadraticDiscriminantAnalysis'):
-        algo = getattr(sklearn.discriminant_analysis, best_algo)()
-
-    return algo
-
-
-def summary_stats(algo, y_vals, x_vals):
-
-    log_cols = [
-        "Algorithm",
-        "AUC_Percent",
-        "Accuracy_Percent",
-        "Balanced_Accuracy_Percent",
-        "Log_Loss",
-        "Sensitivity",
-        "Specificity",
-        "PPV",
-        "NPV",
-        "Runtime_Seconds",
-    ]
-
-    name = algo.__class__.__name__
-    print("")
-    print("#" * 70)
-    print("")
-    print(name)
-    start_time = time.time()
-    algo.fit(x_vals, y_vals)
-
-    rocauc, acc, balacc, ll = calculate_accuracy_scores(
-        algo,
-        y_vals,
-        x_vals,
-    )
-
-    end_time = time.time()
-    elapsed_time = (end_time - start_time)
-    print("Runtime in seconds: {:.4}".format(elapsed_time))
-
-    CM = metrics.confusion_matrix(
-        y_vals.values,
-        algo.predict(x_vals),
-    )
-    TN = CM[0][0]
-    FN = CM[1][0]
-    TP = CM[1][1]
-    FP = CM[0][1]
-    sensitivity = TP/(TP+FN)
-    specificity = TN/(TN+FP)
-    PPV = TP/(TP+FP)
-    NPV = TN/(TN+FN)
-
-    log_entry = pd.DataFrame(
-        [[
-            name,
-            rocauc * 100,
-            acc * 100,
-            balacc * 100,
-            ll,
-            sensitivity,
-            specificity,
-            PPV,
-            NPV,
-            elapsed_time,
-        ]],
-        columns=log_cols,
-    )
-
-    return log_entry
-
-
-def calculate_accuracy_scores(algo, y_vals, x_vals):
-
-    rocauc = metrics.roc_auc_score(
-        y_vals,
-        algo.predict(x_vals),
-        multi_class="ovr",
-    )
-    print("AUC: {:.4%}".format(rocauc))
-
-    acc = metrics.accuracy_score(
-        y_vals,
-        algo.predict(x_vals),
-    )
-    print("Accuracy: {:.4%}".format(acc))
-
-    balacc = metrics.balanced_accuracy_score(
-        y_vals.values,
-        algo.predict(x_vals),
-    )
-    print("Balanced Accuracy: {:.4%}".format(balacc))
-
-    ll = metrics.log_loss(
-        y_vals,
-        algo.predict(x_vals),
-    )
-    print("Log Loss: {:.4}".format(ll))
-    return rocauc, acc, balacc, ll

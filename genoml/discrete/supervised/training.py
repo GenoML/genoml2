@@ -17,192 +17,138 @@
 import joblib
 import pandas as pd
 from pathlib import Path
-from sklearn import discriminant_analysis, ensemble, linear_model, model_selection, neighbors, neural_network, svm
-import xgboost
+from sklearn import model_selection
+from genoml.models import get_candidate_algorithms
 import genoml.discrete.utils as discrete_utils
+import sys
+from genoml import utils
 
 
-# Define the train class
-class train:
+### TODO: Add random state
+class Train:
+    @utils.DescriptionLoader.function_description("info", cmd="Discrete Supervised Training")
+    def __init__(self, prefix, metric_max):
+        utils.DescriptionLoader.print(
+            "training/info",
+            python_version=sys.version,
+            prefix=prefix,
+            metric_max=metric_max,
+        )
 
-    def __init__(self, df, run_prefix):
-        # code that will prepare the data
+        df = utils.read_munged_data(prefix, "train")
+
         y = df.PHENO
-        X = df.drop(columns=['PHENO'])
+        x = df.drop(columns=['PHENO'])
+        x_train, x_valid, y_train, y_valid = model_selection.train_test_split(
+            x, 
+            y, 
+            test_size=0.3, 
+            random_state=42,
+        )
 
-        # Split the data
-        X_train, X_valid, y_train, y_valid = model_selection.train_test_split(X, y, test_size=0.3, random_state=42)
-        IDs_train = X_train.ID
-        IDs_valid = X_valid.ID
-        X_train = X_train.drop(columns=['ID'])
-        X_valid = X_valid.drop(columns=['ID'])
+        candidate_algorithms = get_candidate_algorithms("discrete_supervised")
 
-        path = Path(run_prefix).joinpath("Train")
-        if not path.is_dir():
-            path.mkdir()
-
-        # Saving the prepped data the other classes will need
-        self.df = df
-        self.run_prefix = path
-        self.X_train = X_train
-        self.X_valid = X_valid
-        self.y_train = y_train
-        self.y_valid = y_valid
-        self.IDs_train = IDs_train
-        self.IDs_valid = IDs_valid
-
-        # Where the results will be stored
-        self.log_table = None
-        self.best_algo = None
-        self.algo = None
-        self.rfe_df = None
-
-        ### TODO: Weird results for: SGDClassifier, QuadraticDiscriminantAnalysis
-        ### TODO: MLPClassifier and QuadraticDiscriminantAnalysis do not always converge on training data
-        # The methods we will use
-        self.algorithms = [
-            linear_model.LogisticRegression(solver='lbfgs'),
-            ensemble.RandomForestClassifier(n_estimators=100),
-            ensemble.AdaBoostClassifier(),
-            ensemble.GradientBoostingClassifier(),
-            linear_model.SGDClassifier(loss='modified_huber'),
-            svm.SVC(probability=True, gamma='scale'),
-            neural_network.MLPClassifier(),
-            neighbors.KNeighborsClassifier(),
-            discriminant_analysis.LinearDiscriminantAnalysis(),
-            discriminant_analysis.QuadraticDiscriminantAnalysis(),
-            ensemble.BaggingClassifier(),
-            xgboost.XGBClassifier(),
+        self._column_names = [
+            "Algorithm",
+            "Runtime_Seconds",
+            "AUC",
+            "Accuracy",
+            "Balanced_Accuracy",
+            "Log_Loss",
+            "Sensitivity",
+            "Specificity",
+            "PPV",
+            "NPV",
         ]
+        self._run_prefix = Path(prefix).joinpath("Train")
+        if not self._run_prefix.is_dir():
+            self._run_prefix.mkdir()
+        self._x_train = x_train.drop(columns=['ID'])
+        self._x_valid = x_valid.drop(columns=['ID'])
+        self._y_train = y_train
+        self._y_valid = y_valid
+        self._ids_train = x_train.ID
+        self._ids_valid = x_valid.ID
+        self._algorithms = {algorithm.__class__.__name__: algorithm for algorithm in candidate_algorithms}
+        self._metric_max = metric_max
+        self._best_algorithm = None
+        self._log_table = []
 
-    # Report and data summary you want
-    def summary(self):
-        print("Your data looks like this (showing the first few lines of the left-most and right-most columns)...")
-        print("#" * 70)
-        print(self.df.describe())
-        print("#" * 70)
 
     def compete(self):
-        self.log_table = []
-        for algo in self.algorithms:
-            log_entry = discrete_utils.summary_stats(algo, self.y_valid, self.X_valid)
-            self.log_table.append(log_entry)
-        self.log_table = pd.concat(self.log_table)
-        print("#" * 70)
-        print("")
+        """ Compete the algorithms. """
+        self._log_table = utils.fit_algorithms(
+            self._run_prefix,
+            self._algorithms,
+            self._x_train,
+            self._y_train,
+            self._x_valid,
+            self._y_valid,
+            self._column_names,
+            discrete_utils.calculate_accuracy_scores,
+        )
 
-    def results(self, metric_max):
-        self.metric_max = metric_max
-        metric_keys = {
-            'AUC': 'AUC_Percent',
-            'Balanced_Accuracy': 'Balanced_Accuracy_Percent',
-            'Sensitivity': 'Sensitivity',
-            'Specificity': 'Specificity'
-        }
 
+    def select_best_algorithm(self):
+        """ Determine the best-performing algorithm. """
         # Drop those that have an accuracy less than 50%, balanced accuracy less than 50%, delta between sensitivity
         # and specificity greater than 0.85, sensitivity equal to 0 or 1, or specificity equal to 0 or 1.
-        sorted_table = self.log_table[
-            (self.log_table['AUC_Percent'] > 50)
-            & (self.log_table['Balanced_Accuracy_Percent'] > 50)
-            & (self.log_table['Sensitivity'].sub(self.log_table['Specificity'], axis=0).abs() < 0.85)
-            & (self.log_table['Sensitivity'] != 0.0)
-            & (self.log_table['Sensitivity'] != 1.0)
-            & (self.log_table['Specificity'] != 0.0)
-            & (self.log_table['Specificity'] != 1.0)
-            ]
+        filtered_table = self._log_table[
+            (self._log_table['AUC'] > 50)
+            & (self._log_table['Balanced_Accuracy'] > 50)
+            & (self._log_table['Sensitivity'].sub(self._log_table['Specificity'], axis=0).abs() < 0.85)
+            & (self._log_table['Sensitivity'] != 0.0)
+            & (self._log_table['Sensitivity'] != 1.0)
+            & (self._log_table['Specificity'] != 0.0)
+            & (self._log_table['Specificity'] != 1.0)
+        ]
 
         # If for some reason ALL the algorithms are overfit...
-        if sorted_table.empty:
-            print(
-                'It seems as though all the algorithms are over-fit in some way or another... We will report the best algorithm based on your chosen metric instead and use that moving forward.')
-            sorted_table = self.log_table
+        if filtered_table.empty:
+            print('It seems as though all the algorithms are over-fit in some way or another... We will report the best algorithm based on your chosen metric instead and use that moving forward.')
+            filtered_table = self._log_table
 
         # Sort the table and reset the index so that we can access the best algorithm at index 0
-        sorted_table = sorted_table.sort_values(metric_keys[self.metric_max], ascending=False)
-        sorted_table = sorted_table.reset_index(drop=True)
+        filtered_table = filtered_table.sort_values(self._metric_max, ascending=False)
+        filtered_table = filtered_table.reset_index(drop=True)
 
-        # Get the best algorithm's name and AUC.
-        self.best_algo = sorted_table.at[0, 'Algorithm']
-        self.roc_auc = float(sorted_table.at[0, 'AUC_Percent']) * 0.01
+        self._best_algorithm = utils.select_best_algorithm(
+            filtered_table, 
+            self._metric_max, 
+            self._algorithms,
+        )
+        self._y_pred = self._best_algorithm.predict_proba(self._x_valid)
+        self._best_algorithm_name = self._best_algorithm.__class__.__name__
+        with open(self._run_prefix.parent.joinpath("algorithm.txt"), "w") as file:
+            file.write(self._best_algorithm_name)
 
-        # If for some reason algorithms report the exact same score, only choose the first one so things don't crash
-        if isinstance(self.best_algo, list):
-            self.best_algo = self.best_algo[0]
 
     def export_model(self):
-        algo = discrete_utils.get_best_algo(self.best_algo)
-        algo.fit(self.X_train, self.y_train)
-
-        print("...remember, there are occasionally slight fluctuations in model performance on the same withheld samples...")
-        print("#" * 70)
-        print(self.best_algo)
-
-        discrete_utils.calculate_accuracy_scores(
-            algo,
-            self.y_valid,
-            self.X_valid,
+        """ Save best-performing algorithm """
+        utils.export_model(
+            self._run_prefix.parent, 
+            self._best_algorithm,
         )
 
-        ### Save it using joblib
-        algo_out = self.run_prefix.joinpath('trainedModel.joblib')
-        joblib.dump(algo, algo_out)
 
-        print("#" * 70)
-        print(f"... this model has been saved as {algo_out} for later use and can be found in your working directory.")
+    def plot_results(self):
+        """ Plot results from best-performing algorithm. """
+        discrete_utils.plot_results(
+            self._run_prefix,
+            self._y_valid,
+            self._y_pred,
+            self._best_algorithm_name,
+        )
 
-        self.algo = algo
-
-    def plot_results(self, save=False):
-        # Issue #24: RandomForestClassifier is finicky - can't recalculate moving forward like the other
-        plot_path = self.run_prefix.joinpath('trainedModel_withheldSample_ROC.png')
-        ground_truth = self.y_valid.values
-        predictions = self.algo.predict(self.X_valid)
-        discrete_utils.ROC(save, plot_path, ground_truth, predictions, plot_label=self.best_algo)
-        discrete_utils.precision_recall_plot(save, plot_path, ground_truth, predictions, plot_label=self.best_algo)
 
     def export_prediction_data(self):
-        discrete_utils.export_prediction_tables(
-            self.algo,
-            self.y_train,
-            self.X_train,
-            self.IDs_train,
-            self.run_prefix.joinpath('trainedModel_withheldSample_trainPredictions.csv'),
+        """ Save results from best-performing algorithm. """
+        discrete_utils.export_prediction_data(
+            self._run_prefix,
+            self._y_valid,
+            self._y_pred,
+            self._ids_valid,
+            y_train = self._y_train,
+            y_train_pred = self._best_algorithm.predict_proba(self._x_train),
+            ids_train = self._ids_train,
         )
-
-        valid_out = discrete_utils.export_prediction_tables(
-            self.algo,
-            self.y_valid,
-            self.X_valid,
-            self.IDs_valid,
-            self.run_prefix.joinpath('trainedModel_withheldSample_validPredictions.csv'),
-        )
-
-        discrete_utils.export_prob_hist(
-            valid_out,
-            self.run_prefix.joinpath('trainedModel_withheldSample_validProbabilities'),
-        )
-
-    def save_results(self, algorithm_results=False, best_algorithm=False):
-        if algorithm_results:
-            log_table = self.log_table
-            log_outfile = self.run_prefix.joinpath('training_withheldSamples_performanceMetrics.csv')
-            print(f"""A complete table of the performance metrics can be found at {log_outfile}
-            Note that any models that were overfit (if AUC or Balanced Accuracy was 50% or less, or sensitivity/specificity were 1 or 0) were not considered when nominating the best algorithm.""")
-
-            print(f"This table below is also logged as {log_outfile} and is in your current working directory...")
-            print("#" * 70)
-            print(log_table)
-            print("#" * 70)
-
-            log_table.to_csv(log_outfile, index=False)
-
-        if best_algorithm:
-            best_algo = self.best_algo
-            print(
-                f"Based on your withheld samples, the algorithm with the best {self.metric_max} is the {best_algo}... let's save that model for you.")
-            best_algo_name_out = self.run_prefix.joinpath("best_algorithm.txt")
-            file = open(best_algo_name_out, 'w')
-            file.write(self.best_algo)
-            file.close()
-

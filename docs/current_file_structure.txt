@@ -1,7 +1,7 @@
 .
 ├── docs
-│   ├── current_file_structure.txt
-│   └── GettingStarted.sh
+│   ├── current_file_structure.txt
+│   └── GettingStarted.sh
 ├── examples
 │   ├── continuous
 │   │   ├── example_GWAS.csv
@@ -28,113 +28,109 @@
 │       ├── validation.bim
 │       └── validation.fam
 ├── genoml
-│   ├── cli
-│   │   ├── __init__.py
-│   │   ├── continuous_supervised_test.py
-│   │   ├── continuous_supervised_train.py
-│   │   ├── continuous_supervised_tune.py
-│   │   ├── discrete_supervised_test.py
-│   │   ├── discrete_supervised_train.py
-│   │   └── discrete_supervised_tune.py
-│   ├── continuous
-│   │   ├── supervised
-│   │   │   ├── __init__.py
-│   │   │   ├── testing.py
-│   │   │   ├── training.py
-│   │   │   └── tuning.py
-│   │   └── __init__.py
-│   ├── discrete
-│   │   ├── supervised
-│   │   │   ├── __init__.py
-│   │   │   ├── testing.py
-│   │   │   ├── training.py
-│   │   │   └── tuning.py
-│   │   └── __init__.py
-│   ├── preprocessing
-│   │   ├── __init__.py
-│   │   ├── featureselection.py
-│   │   ├── harmonizing.py
-│   │   ├── munging.py
-│   │   └── vif.py
-│   ├── __init__.py
-│   ├── dependencies.py
-│   ├── GenoML.py
-│   ├── GenoMLHarmonizing.py
-│   ├── GenoMLMunging.py
-│   └── utils.py
+│   ├── continuous
+│   │   ├── __init__.py
+│   │   ├── supervised
+│   │   │   ├── __init__.py
+│   │   │   ├── main.py
+│   │   │   ├── testing.py
+│   │   │   ├── training.py
+│   │   │   └── tuning.py
+│   │   └── utils.py
+│   ├── dependencies.py
+│   ├── discrete
+│   │   ├── __init__.py
+│   │   ├── supervised
+│   │   │   ├── __init__.py
+│   │   │   ├── main.py
+│   │   │   ├── testing.py
+│   │   │   ├── training.py
+│   │   │   └── tuning.py
+│   │   └── utils.py
+│   ├── __init__.py
+│   ├── __main__.py
+│   ├── misc
+│   │   └── descriptions.json
+│   ├── models.py
+│   ├── multiclass
+│   │   ├── __init__.py
+│   │   ├── supervised
+│   │   │   ├── main.py
+│   │   │   ├── testing.py
+│   │   │   ├── training.py
+│   │   │   └── tuning.py
+│   │   └── utils.py
+│   ├── preprocessing
+│   │   ├── adjuster.py
+│   │   ├── featureselection.py
+│   │   ├── harmonizing.py
+│   │   ├── __init__.py
+│   │   ├── main.py
+│   │   ├── munging.py
+│   │   ├── utils.py
+│   │   └── vif.py
+│   └── utils.py
 ├── outputs
-│   ├── test_continuous_geno_approx_feature_importance.txt
-│   ├── test_continuous_geno.best_algorithm.txt
-│   ├── test_continuous_geno.dataForML.h5
-│   ├── test_continuous_geno.p_threshold_variants.tab
-│   ├── test_continuous_geno.trainedModel_trainingSample_Predictions.csv
-│   ├── test_continuous_geno.trainedModel_withheldSample_Predictions.csv
-│   ├── test_continuous_geno.trainedModel_withheldSample_regression.png
-│   ├── test_continuous_geno.trainedModel.joblib
-│   ├── test_continuous_geno.training_withheldSamples_performanceMetrics.csv
-│   ├── test_continuous_geno.tunedModel_allSample_Predictions.csv
-│   ├── test_continuous_geno.tunedModel_allSample_regression.png
-│   ├── test_continuous_geno.tunedModel_CV_Summary.csv
-│   ├── test_continuous_geno.tunedModel_top10Iterations_Summary.csv
-│   ├── test_continuous_geno.tunedModel.joblib
-│   ├── test_continuous_geno.variants_and_alleles.tab
-│   ├── test_discrete_geno_approx_feature_importance.txt
-│   ├── test_discrete_geno.best_algorithm.txt
-│   ├── test_discrete_geno.dataForML.h5
-│   ├── test_discrete_geno.p_threshold_variants.tab
-│   ├── test_discrete_geno.trainedModel_trainingSample_featureImportance.csv
-│   ├── test_discrete_geno.trainedModel_trainingSample_Predictions.csv
-│   ├── test_discrete_geno.trainedModel_withheldSample_Predictions.csv
-│   ├── test_discrete_geno.trainedModel_withheldSample_probabilities.png
-│   ├── test_discrete_geno.trainedModel_withheldSample_ROC.png
-│   ├── test_discrete_geno.trainedModel.joblib
-│   ├── test_discrete_geno.training_withheldSamples_performanceMetrics.csv
-│   ├── test_discrete_geno.tunedModel_allSample_Predictions.csv
-│   ├── test_discrete_geno.tunedModel_allSample_probabilities.png
-│   ├── test_discrete_geno.tunedModel_allSample_ROC.png
-│   ├── test_discrete_geno.tunedModel_CV_Summary.csv
-│   ├── test_discrete_geno.tunedModel_top10Iterations_Summary.csv
-│   ├── test_discrete_geno.tunedModel.joblib
-│   ├── test_discrete_geno.variants_and_alleles.tab
-│   ├── test.csv
-│   ├── validation_test_continuous_geno_finalHarmonizedCols_toKeep.txt
-│   ├── validation_test_continuous_geno_refColsHarmonize_toKeep.txt
-│   ├── validation_test_continuous_geno_refSNPs_andAlleles.bed
-│   ├── validation_test_continuous_geno_refSNPs_andAlleles.bim
-│   ├── validation_test_continuous_geno_refSNPs_andAlleles.fam
-│   ├── validation_test_continuous_geno.best_algorithm.txt
-│   ├── validation_test_continuous_geno.dataForML.h5
-│   ├── validation_test_continuous_geno.testedModel_allSample_predictions.csv
-│   ├── validation_test_continuous_geno.testedModel_allSamples_performanceMetrics.csv
-│   ├── validation_test_continuous_geno.testedModel_allSamples_regressionPlot.png
-│   ├── validation_test_continuous_geno.trainedModel_trainingSample_Predictions.csv
-│   ├── validation_test_continuous_geno.trainedModel_withheldSample_Predictions.csv
-│   ├── validation_test_continuous_geno.trainedModel_withheldSample_regression.png
-│   ├── validation_test_continuous_geno.trainedModel.joblib
-│   ├── validation_test_continuous_geno.training_withheldSamples_performanceMetrics.csv
-│   ├── validation_test_continuous_geno.variants_and_alleles.tab
-│   ├── validation_test_continuous_genotestedModel_allSamples_regressionSummary.csv
-│   ├── validation_test_discrete_geno_finalHarmonizedCols_toKeep.txt
-│   ├── validation_test_discrete_geno_refColsHarmonize_toKeep.txt
-│   ├── validation_test_discrete_geno_refSNPs_andAlleles.bed
-│   ├── validation_test_discrete_geno_refSNPs_andAlleles.bim
-│   ├── validation_test_discrete_geno_refSNPs_andAlleles.fam
-│   ├── validation_test_discrete_geno.best_algorithm.txt
-│   ├── validation_test_discrete_geno.dataForML.h5
-│   ├── validation_test_discrete_geno.testedModel_allSample_predictions.csv
-│   ├── validation_test_discrete_geno.testedModel_allSample_probabilities.png
-│   ├── validation_test_discrete_geno.testedModel_allSample_ROC.png
-│   ├── validation_test_discrete_geno.testedModel_allSamples_performanceMetrics.csv
-│   ├── validation_test_discrete_geno.trainedModel_trainingSample_Predictions.csv
-│   ├── validation_test_discrete_geno.trainedModel_withheldSample_Predictions.csv
-│   ├── validation_test_discrete_geno.trainedModel_withheldSample_probabilities.png
-│   ├── validation_test_discrete_geno.trainedModel_withheldSample_ROC.png
-│   ├── validation_test_discrete_geno.trainedModel.joblib
-│   ├── validation_test_discrete_geno.training_withheldSamples_performanceMetrics.csv
-│   └── validation_test_discrete_geno.variants_and_alleles.tab
-├── GettingStarted.sh
+│   ├── algorithm.txt
+│   ├── log.txt
+│   ├── model.joblib
+│   ├── Munge
+│   │   ├── approx_feature_importance.txt
+│   │   ├── list_features.txt
+│   │   ├── params.pkl
+│   │   ├── p_threshold_variants.tab
+│   │   ├── test_dataset.h5
+│   │   ├── train_dataset.h5
+│   │   ├── umap_clustering.joblib
+│   │   ├── umap_data_reduction_test.txt
+│   │   ├── umap_data_reduction_train.txt
+│   │   ├── umap_plot_test.png
+│   │   ├── umap_plot_train.png
+│   │   ├── variants_and_alleles.tab
+│   │   └── variants.txt
+│   ├── Test
+│   │   ├── performance_metrics.txt
+│   │   ├── precision_recall.png
+│   │   ├── predictions.txt
+│   │   ├── probabilities1.png
+│   │   ├── probabilities2.png
+│   │   ├── probabilities3.png
+│   │   ├── probabilities.png
+│   │   ├── regression.png
+│   │   ├── regression_summary.txt
+│   │   ├── roc.png
+│   │   └── testing_predictions.txt
+│   ├── Train
+│   │   ├── precision_recall.png
+│   │   ├── predictions.txt
+│   │   ├── probabilities1.png
+│   │   ├── probabilities2.png
+│   │   ├── probabilities3.png
+│   │   ├── probabilities.png
+│   │   ├── regression.png
+│   │   ├── regression_summary.txt
+│   │   ├── roc.png
+│   │   ├── training_predictions.txt
+│   │   ├── train_predictions.txt
+│   │   ├── withheld_performance_metrics.txt
+│   │   └── withheld_predictions.txt
+│   └── Tune
+│       ├── cv_summary.txt
+│       ├── precision_recall.png
+│       ├── predictions.txt
+│       ├── probabilities1.png
+│       ├── probabilities2.png
+│       ├── probabilities3.png
+│       ├── probabilities.png
+│       ├── regression.png
+│       ├── regression_summary.txt
+│       ├── roc.png
+│       ├── tuning_predictions.txt
+│       └── tuning_summary.txt
 ├── LICENSE
 ├── logo.png
+├── MANIFEST.in
 ├── README.md
 ├── requirements.txt
+├── setup.cfg
 └── setup.py

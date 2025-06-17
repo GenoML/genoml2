@@ -21,16 +21,18 @@ from statsmodels.stats import outliers_influence
 
 
 # Define the VIF class to be used in munging
-class vif:
+class VIF:
     def __init__(self, iterations, vif_threshold, df, chunk_size, run_prefix):
         self.iterations = iterations
         self.threshold = vif_threshold
         self.df = df
         self.id = df['ID']
         self.pheno = df['PHENO']
-        self.cleaned_df = None
         self.chunk_size = chunk_size
         self.run_prefix = run_prefix
+        self.cleaned_df = None
+        self.df_list = None
+        self.glued_df = None
 
     def check_df(self):
         """
@@ -50,20 +52,8 @@ class vif:
         # Convert any infinite values to NaN prior to dropping NAs
         df.replace([np.inf, -np.inf], np.nan)
         df.dropna(how='any', inplace=True)
-
-        print("Keeping only numerical columns...")
-        int_cols = \
-            df = df._get_numeric_data()
-
-        print("Checking datatypes...")
-        data_type = df.dtypes
-
-        # Subset df to include only relevant numerical types
-        int_cols = df.select_dtypes(include=["int", "int16", "int32", "int64", "float",
-                                             "float16", "float32", "float64"]).shape[1]
-
-        original_df = df
-        self.original_df = original_df
+        
+        self.original_df = df
 
         print("Sampling 100 rows at random to reduce memory overhead...")
         cleaned_df = df.sample(n=100).copy().reset_index()
@@ -71,11 +61,12 @@ class vif:
 
         print("Dropping columns that are not SNPs...")
         cleaned_df.drop(columns=['PHENO'], axis=1, inplace=True)
+        cleaned_df.drop(columns=['ID'], axis=1, inplace=True)
         print("Dropped!")
 
         print("Cleaned!")
         self.cleaned_df = cleaned_df
-        return cleaned_df
+
 
     def randomize_chunks(self):
         chunk_size = self.chunk_size
@@ -100,17 +91,16 @@ class vif:
         print("Generating chunked, randomized dataframes...")
         chunked_list = [col_names_shuffle[i * chunk_size:(i + 1) * chunk_size] for i in
                         range((len(col_names_shuffle) + chunk_size - 1) // chunk_size)]
-        df_list = []
+        self.df_list = []
         for each_list in chunked_list:
             temp_df = cleaned_df[each_list].astype(float)
-            df_list.append(temp_df.copy())
+            self.df_list.append(temp_df.copy())
 
-        no_chunks = len(df_list)
-        print(f"The number of dataframes you have moving forward is {no_chunks}")
+        print(f"The number of dataframes you have moving forward is {len(self.df_list)}")
         print("Complete!")
-        return df_list
 
-    def calculate_vif(self, df_list):
+
+    def calculate_vif(self):
         """
         calculate_vif takes in an list of randomized dataframes and removes any variables
         that is greater than the specified threshold (default=5.0). This is to combat 
@@ -127,7 +117,7 @@ class vif:
         dropped = True
         print(f"Dropping columns with a VIF threshold greater than {threshold}")
 
-        for df in df_list:
+        for df in self.df_list:
             while dropped:
                 # Loop until all variables in dataset have a VIF less than the threshold 
                 variables = df.columns
@@ -156,51 +146,32 @@ class vif:
         print("\nVIF calculation on all chunks complete! \n")
 
         print("Gluing the dataframe back together...")
-        glued_df = pd.concat(df_list, axis=1)
+        self.glued_df = pd.concat(self.df_list, axis=1)
         print("Full VIF-filtered dataframe generated!")
 
-        return glued_df
+    def vif_calculations(self):
+        self.check_df()
 
-    def iterate(self, checked):
-        """
-        The iterate function specifies a number of times to iterate through the shuffling 
-        and VIF filtering functions 
-        ### Arguments:
-            number {int} -- An integer specifying the number of iterations to perform (default=5)
-        ### Returns:
-            features_toKeep {list} -- A list of features to keep, extracted from the final iteration
-        """
-
-        iterations = self.iterations
-
-        for iteration in range(iterations):
+        for iteration in range(self.iterations):
             print(f"""
                 \n\n
                 Iteration {iteration + 1}
                 \n\n
                 """)
-            rando = self.randomize_chunks()
-            checked = self.calculate_vif(rando)
+            self.randomize_chunks()
+            self.calculate_vif()
 
         # When done, make list of features to keep 
-        features_toKeep = checked.columns.values.tolist()
+        features = self.glued_df.columns.values.tolist()
 
         print(f"""
         \n\n
             Iterations Complete!
         \n\n
         """)
-        return features_toKeep, checked
-
-    def vif_calculations(self):
-        outfile_h5 = self.run_prefix + ".dataForML.h5"
-        checked = self.check_df()
-        features, complete_vif = self.iterate(checked)
 
         # Return the original dataframe with the features to keep 
         complete_vif_original_df = self.original_df[features]
-        complete_vif_original_df['ID'] = self.id
-        complete_vif_original_df['PHENO'] = self.pheno
-        complete_vif_original_df.to_hdf(outfile_h5, key='dataForML')
-
+        complete_vif_original_df.insert(0, "ID", self.id)
+        complete_vif_original_df.insert(0, "PHENO", self.pheno)
         return complete_vif_original_df
