@@ -1,4 +1,4 @@
-Metadata-Version: 2.4
+Metadata-Version: 2.1
 Name: genoml2
 Version: 1.5.4
 Summary: GenoML is an automated machine learning tool that optimizes basic machine learning pipelines for genomics data.
@@ -26,17 +26,6 @@ Requires-Dist: seaborn==0.13.2
 Requires-Dist: statsmodels==0.14.4
 Requires-Dist: xgboost==2.0.3
 Requires-Dist: umap-learn==0.5.7
-Dynamic: classifier
-Dynamic: description
-Dynamic: description-content-type
-Dynamic: download-url
-Dynamic: home-page
-Dynamic: license-file
-Dynamic: maintainer
-Dynamic: maintainer-email
-Dynamic: requires-dist
-Dynamic: requires-python
-Dynamic: summary
 
 # GenoML 
 

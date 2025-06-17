@@ -6,7 +6,7 @@
 
 [![Downloads](https://static.pepy.tech/personalized-badge/genoml2?period=total&units=international_system&left_color=black&right_color=grey&left_text=Downloads)](https://pepy.tech/project/genoml2)
 
-> Updated 17 June 2025: Latest Release on pip! v1.5.2
+> Updated 17 June 2025: Latest Release on pip! v1.5.4
 
 # How to Get Started with GenoML
 
@@ -81,6 +81,8 @@ pip install -r requirements.txt
         # pip install umap-learn
     # If issues installing pytables/dependency issue 
         # conda install -c conda-forge pytables
+    # If issues with blosc 
+        # conda install -c conda-forge tables blosc
 
 ## MISC
 # To deactivate the virtual environment
