@@ -1,12 +1,12 @@
 Metadata-Version: 2.1
 Name: genoml2
-Version: 1.5.1
+Version: 1.5.2
 Summary: GenoML is an automated machine learning tool that optimizes basic machine learning pipelines for genomics data.
 Home-page: https://genoml.github.io/
 Maintainer: The GenoML Development Team
 Maintainer-email: mary@datatecnica.com
 License: UNKNOWN
-Download-URL: https://github.com/GenoML/genoml2/archive/refs/tags/v1.5.1.tar.gz
+Download-URL: https://github.com/GenoML/genoml2/archive/refs/tags/v1.5.2.tar.gz
 Platform: UNKNOWN
 Classifier: Development Status :: 4 - Beta
 Classifier: Programming Language :: Python :: 3.9
@@ -24,7 +24,7 @@ License-File: LICENSE
 
 [![Downloads](https://static.pepy.tech/personalized-badge/genoml2?period=total&units=international_system&left_color=black&right_color=grey&left_text=Downloads)](https://pepy.tech/project/genoml2)
 
-> Updated 17 June 2025: Latest Release on pip! v1.5.0
+> Updated 17 June 2025: Latest Release on pip! v1.5.2
 
 # How to Get Started with GenoML
 
