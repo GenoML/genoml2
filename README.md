@@ -72,13 +72,15 @@ conda activate GenoML
 # To install requirements via pip 
 pip install -r requirements.txt
     # If issues installing xgboost from requirements - (3 options)
-        # use Homebrew to 
+        # Option 1: use Homebrew to 
             # xcode-select --install
             # brew install gcc@7
-        # conda install -c conda-forge xgboost 
-        # pip install xgboost==2.0.3
+        # or Option 2: conda install -c conda-forge xgboost 
+        # or Option 3: pip install xgboost==2.0.3
     # If issues installing umap 
-        # pip install umap-learn 
+        # pip install umap-learn
+    # If issues installing pytables/dependency issue 
+        # conda install -c conda-forge pytables
 
 ## MISC
 # To deactivate the virtual environment
