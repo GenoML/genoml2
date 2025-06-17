@@ -1,13 +1,11 @@
-Metadata-Version: 2.1
+Metadata-Version: 2.4
 Name: genoml2
-Version: 1.5.2
+Version: 1.5.4
 Summary: GenoML is an automated machine learning tool that optimizes basic machine learning pipelines for genomics data.
 Home-page: https://genoml.github.io/
+Download-URL: https://github.com/GenoML/genoml2/archive/refs/tags/v1.5.4.tar.gz
 Maintainer: The GenoML Development Team
 Maintainer-email: mary@datatecnica.com
-License: UNKNOWN
-Download-URL: https://github.com/GenoML/genoml2/archive/refs/tags/v1.5.2.tar.gz
-Platform: UNKNOWN
 Classifier: Development Status :: 4 - Beta
 Classifier: Programming Language :: Python :: 3.9
 Classifier: License :: OSI Approved :: Apache Software License
@@ -15,6 +13,30 @@ Classifier: Operating System :: OS Independent
 Requires-Python: >=3.9,<3.13
 Description-Content-Type: text/markdown
 License-File: LICENSE
+Requires-Dist: packaging==25.0
+Requires-Dist: joblib==1.5.1
+Requires-Dist: matplotlib==3.9.4
+Requires-Dist: numpy==1.26.4
+Requires-Dist: tables==3.9.2
+Requires-Dist: pandas==2.3.0
+Requires-Dist: requests==2.32.4
+Requires-Dist: scikit-learn==1.5.2
+Requires-Dist: scipy==1.13.1
+Requires-Dist: seaborn==0.13.2
+Requires-Dist: statsmodels==0.14.4
+Requires-Dist: xgboost==2.0.3
+Requires-Dist: umap-learn==0.5.7
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: download-url
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: maintainer
+Dynamic: maintainer-email
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
 
 # GenoML 
 
@@ -584,5 +606,3 @@ Planned experimental features include, but are not limited to:
 - Cross-silo checks for genetic duplicates
 - Outlier detection
 - ...?
-
-
