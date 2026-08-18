@@ -22,7 +22,6 @@ import requests
 import stat
 import subprocess
 import zipfile
-
 from genoml import utils
 
 

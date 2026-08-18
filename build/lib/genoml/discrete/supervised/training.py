@@ -24,7 +24,6 @@ import sys
 from genoml import utils
 
 
-### TODO: Add random state
 class Train:
     @utils.DescriptionLoader.function_description("info", cmd="Discrete Supervised Training")
     def __init__(self, prefix, metric_max):

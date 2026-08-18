@@ -21,39 +21,37 @@ import sys
 from pathlib import Path
 
 
-### TODO: Add docstrings
-def define_geno_bash_cmds(run_prefix, skip_prune, plink_exec, geno_path, r2, gwas_paths, pheno_path):
-    tmp_prefix = str(run_prefix.joinpath("temp_genos"))
-    extract_vars_path = str(run_prefix.joinpath('p_threshold_variants.tab'))
-    var_alleles_path = str(run_prefix.joinpath('variants_and_alleles.tab'))
-    var_path = str(run_prefix.joinpath('variants.txt'))
+def define_geno_bash_cmds(prefix, skip_prune, plink_exec, geno_path, r2, gwas_paths, pheno_path):
+    tmp_prefix = str(prefix.joinpath("temp_genos"))
+    extract_vars_path = str(prefix.joinpath('p_threshold_variants.tab'))
+    var_alleles_path = str(prefix.joinpath('variants_and_alleles.tab'))
+    var_path = str(prefix.joinpath('variants.txt'))
 
     # Default to using p-files if provided by the user, otherwise use b-files
     if Path(geno_path + ".pvar").exists() and Path(geno_path + ".pgen").exists() and Path(geno_path + ".psam").exists():
         print(f"A list of variants and the allele being counted in the dosages (usually the minor allele) can "
               f"be found here: {var_alleles_path}")
-        tmp_ids_path = _create_ids_to_keep(geno_path, pheno_path, 2, run_prefix)
+        tmp_ids_path = _create_ids_to_keep(geno_path, pheno_path, 2, prefix)
         return _define_pfile_cmds(skip_prune, plink_exec, geno_path, r2, tmp_prefix, extract_vars_path, var_alleles_path, var_path, gwas_paths, tmp_ids_path)
     
     elif Path(geno_path + ".bim").exists() and Path(geno_path + ".bed").exists() and Path(geno_path + ".fam").exists():
         print(f"A list of variants and the allele being counted in the dosages (usually the minor allele) can "
               f"be found here: {var_alleles_path}")
-        tmp_ids_path = _create_ids_to_keep(geno_path, pheno_path, 1, run_prefix)
+        tmp_ids_path = _create_ids_to_keep(geno_path, pheno_path, 1, prefix)
         return _define_bfile_cmds(skip_prune, plink_exec, geno_path, r2, tmp_prefix, extract_vars_path, var_alleles_path, var_path, gwas_paths, tmp_ids_path)
     
-    ### TODO: Add compatibility for VCF input
     else:
         raise FileNotFoundError(f"No valid genotype files found. Options indlude:\n\t"
                                 f"{geno_path} + \".pvar\", \".pgen\", AND \".psam\", OR\n\t"
                                 f"{geno_path} + \".bim\",  \".bed\",  AND \".fam\"")
 
 
-def gwas_filter(run_prefix, gwas_paths, p_gwas):
+def gwas_filter(prefix, gwas_paths, p_gwas):
     if len(gwas_paths) > 0:
         snps_to_keep = []
-        outfile = run_prefix.joinpath("p_threshold_variants.tab")
+        outfile = prefix.joinpath("p_threshold_variants.tab")
         for gwas_path in gwas_paths:
-            gwas_df = pd.read_csv(gwas_path, sep=None)
+            gwas_df = pd.read_csv(gwas_path, sep=None, engine="python")
             if "SNP" in gwas_df.columns.values[0]:
                 gwas_df.rename({gwas_df.columns.values[0]:"SNP"}, axis=1, inplace=True)
             if "p" in gwas_df.columns.values[0]:
@@ -70,25 +68,25 @@ def gwas_filter(run_prefix, gwas_paths, p_gwas):
 
 
 def read_pheno_file(pheno_path, data_type):
-    pheno_df = pd.read_csv(pheno_path, sep=None, encoding="utf-8-sig")
+    df_pheno = pd.read_csv(pheno_path, engine="python", sep=None, encoding="utf-8-sig")
     try:
-        if not {'ID', 'PHENO'}.issubset(pheno_df.columns):
+        if not {"ID", "PHENO"}.issubset(df_pheno.columns):
             raise ValueError("Error: It doesn't look as though your phenotype file is properly formatted. Did you check"
                              " that the columns are 'ID' and 'PHENO' and that controls=0 and cases=1?")
     except ValueError as ve:
         print(ve)
         sys.exit()
-    pheno_df['ID'] = pheno_df['ID'].astype(str)
+    df_pheno["ID"] = df_pheno["ID"].astype(str)
     if data_type == "c":
-        pheno_df['PHENO'] = pheno_df['PHENO'].astype(float)
+        df_pheno["PHENO"] = df_pheno["PHENO"].astype(float)
     else:
-        pheno_df['PHENO'] = pd.Categorical(pheno_df['PHENO']).codes
-    return pheno_df
+        df_pheno["PHENO"] = pd.Categorical(df_pheno["PHENO"]).codes
+    return df_pheno[["ID", "PHENO"]]
 
 
-def create_geno_df(run_prefix):
-    df_geno = pd.read_csv(str(run_prefix.joinpath('temp_genos.raw')), sep=r"\s+", engine='c')
-    cols = df_geno.columns.values
+def create_geno_df(prefix):
+    df_geno = pd.read_csv(str(prefix.joinpath('temp_genos.raw')), sep=r"\s+", engine="c")
+    cols = list(df_geno.columns.values)
     cols.sort()
     df_geno.drop(["FID","PAT","MAT","SEX","PHENOTYPE"], axis=1, inplace=True)
     var_ids = df_geno.columns.values[1:]
@@ -96,7 +94,7 @@ def create_geno_df(run_prefix):
     rename_dict["IID"] = "ID"
     df_geno.rename(rename_dict, inplace=True, axis=1)
     df_geno.rename_axis("variant", inplace=True, axis=1)
-    bash_rm_temp = f"rm {str(run_prefix.joinpath('temp_genos.*'))}"
+    bash_rm_temp = f"rm {str(prefix.joinpath('temp_genos.*'))}"
     print(bash_rm_temp)
     subprocess.run(bash_rm_temp, shell=True)
 
@@ -125,7 +123,7 @@ def impute_df(df, impute_type, feature_type="genotype"):
 def normalize_cols(df):
     # Remove the ID column
     cols = list(df.columns)
-    cols.remove('ID')
+    cols.remove("ID")
     df_numeric = df[cols]
 
     # Remove any columns with a standard deviation of zero
@@ -144,11 +142,21 @@ def normalize_cols(df):
             print(f"The column {removed_list[removed_column]} was removed")
         cols = addit_keep_list
 
+    normalize_means = dict()
+    normalize_stdevs = dict()
     for col in cols:
         if (df[col].min() == 0.0) and (df[col].max() == 1.0):
             print(f"{col} is likely a binary indicator or a proportion and will not be scaled, just + 1 all the values of this variable and rerun to flag this column to be scaled.")
+            normalize_means[col] = 0
+            normalize_stdevs[col] = 1
         else:
-            df[col] = (df[col] - df[col].mean()) / df[col].std(ddof=0)
+            normalize_mean = df[col].mean()
+            normalize_stdev = df[col].std(ddof=0)
+            df[col] = (df[col] - normalize_mean) / normalize_stdev
+            normalize_means[col] = normalize_mean
+            normalize_stdevs[col] = normalize_stdev
+    normalize_means = pd.Series(normalize_means)
+    normalize_stdevs = pd.Series(normalize_stdevs)
 
     print("")
     print("You have just Z-scaled your non-genotype features, putting everything on a numeric scale similar to genotypes.")
@@ -157,10 +165,10 @@ def normalize_cols(df):
     print(df.describe())
     print("#" * 70)
 
-    return df
+    return df, normalize_means, normalize_stdevs
 
 
-def filter_harmonize(run_prefix, merged, ref_cols_harmonize):
+def filter_harmonize(prefix, merged, ref_cols_harmonize):
     if ref_cols_harmonize is not None:
         print("")
         print(f"Looks like you are munging after the harmonization step. Great! We will keep the columns generated from your reference dataset from that harmonize step that was exported to this file: {ref_cols_harmonize}")
@@ -175,7 +183,7 @@ def filter_harmonize(run_prefix, merged, ref_cols_harmonize):
 
     # Make a list of final features that will be included in the model after re-munging the reference dataset
     matching_cols_list = merged.columns.values.tolist()
-    intersecting_cols_outfile = run_prefix.joinpath(f"list_features{'_harmonized' if ref_cols_harmonize is not None else ''}.txt")
+    intersecting_cols_outfile = prefix.joinpath(f"list_features{'_harmonized' if ref_cols_harmonize is not None else ''}.txt")
     with open(intersecting_cols_outfile, 'w') as filehandle:
         for col in matching_cols_list:
             filehandle.write('%s\n' % col)
@@ -232,7 +240,7 @@ def _define_pfile_cmds(
     return cmds
 
 
-def _create_ids_to_keep(geno_path, pheno_path, plink_ver, run_prefix):
+def _create_ids_to_keep(geno_path, pheno_path, plink_ver, prefix):
     """
     Remove IDs from genotype dataset that are not in the phenotype dataset.
 
@@ -240,7 +248,7 @@ def _create_ids_to_keep(geno_path, pheno_path, plink_ver, run_prefix):
         geno_path (str): Path to genotype data.
         pheno_path (str): Path to phenotype data.
         plink_ver (int): 1 if using plink1.9, or 2 if using plink2.
-        run_prefix (pathlib.Path): Path to results directory.
+        prefix (pathlib.Path): Path to results directory.
 
     :return: tmp_ids_path *(str)*: \n
         Temporary path to file with IDs being kept from the genomic dataset.
@@ -257,12 +265,12 @@ def _create_ids_to_keep(geno_path, pheno_path, plink_ver, run_prefix):
         ids_geno = df_geno[list_ids]
     ids_pheno = list(pd.read_csv(pheno_path)["ID"])
     ids_overlap = ids_geno[ids_geno["IID"].isin(ids_pheno)]
-    tmp_ids_path = str(run_prefix.joinpath(".tmp_ids_keep.txt"))
+    tmp_ids_path = str(prefix.joinpath(".tmp_ids_keep.txt"))
     ids_overlap.to_csv(tmp_ids_path, index=False, header=False, sep="\t")
     return tmp_ids_path
 
 
-def merge_addit_data(df_merged, addit_path, impute_type):
+def merge_addit_data(df_merged, addit_path, impute_type, normalize_means=None, normalize_stdevs=None):
     """
     Merge additional/clinical data with phenotype data.
 
@@ -270,26 +278,38 @@ def merge_addit_data(df_merged, addit_path, impute_type):
         df_merged (pandas.DataFrame): Predicted phenotype probabilities.
         addit_path (str): Path to additional/clinical data.
         impute_type (str): Imputation method to use.
+        normalize_means (pandas.Series): Means for each of the harmonized addit features.
+        normalize_stdevs (pandas.Series): Standard deviations for each of the harmonized addit features.
 
     :return: df_merged *(pandas.DataFrame)*: \n
         Merged phenotype and additional/clinical data.
+    :return: means *(pandas.Series)*: \n
+        Mean values for each addit feature being normalized.
+    :return: stdevs *(pandas.Series)*: \n
+        Standard Deviation values for each addit feature being normalized.
     """
 
     # Process non-genotype data if provided by the user
     if addit_path is not None:
         print("Processing non-genotype data")
-        df_addit = pd.read_csv(addit_path, sep=None, encoding="utf-8-sig")
-        df_addit['ID'] = df_addit['ID'].astype(str)
+        df_addit = pd.read_csv(addit_path, engine="python", sep=None, encoding="utf-8-sig")
+        df_addit["ID"] = df_addit["ID"].astype(str)
         df_addit = impute_df(df_addit, impute_type, feature_type="non-genotype")
-        df_addit = normalize_cols(df_addit)
-        df_merged = pd.merge(df_merged, df_addit, on='ID', how='inner')
+        if normalize_means is not None and normalize_stdevs is not None:
+            norm_cols = normalize_means.index.tolist()
+            norm_cols = [col for col in norm_cols if col in df_addit.columns.values]
+            df_addit = df_addit[["ID"] + norm_cols]
+            df_addit[norm_cols] = (df_addit[norm_cols] - normalize_means[norm_cols]) / normalize_stdevs[norm_cols]
+        else:
+            df_addit, normalize_means, normalize_stdevs = normalize_cols(df_addit)
+        df_merged = pd.merge(df_merged, df_addit, on="ID", how="inner")
     else:
         print("No additional features as predictors? No problem, we'll stick to genotypes.")
     
-    return df_merged
+    return df_merged, normalize_means, normalize_stdevs
 
 
-def merge_geno_data(df_merged, geno_path, pheno_path, impute_type, run_prefix, gwas_paths, p_gwas, skip_prune, plink_exec, r2):
+def merge_geno_data(df_merged, geno_path, pheno_path, impute_type, prefix, gwas_paths, p_gwas, skip_prune, plink_exec, r2):
     """
     Merge genotype data with phenotype and additional/clinical data.
 
@@ -298,7 +318,7 @@ def merge_geno_data(df_merged, geno_path, pheno_path, impute_type, run_prefix, g
         geno_path (str): Path to genotype data.
         pheno_path (str): Path to phenotype data.
         impute_type (str): Imputation method to use.
-        run_prefix (pathlib.Path): Path to results directory.
+        prefix (pathlib.Path): Path to results directory.
         gwas_paths (list): Paths to GWAS summary statistics datasets.
         p_gwas (float): GWAS p-value threshold.
         skip_prune (bool): True if skipping LD pruning, otherwise False.
@@ -312,8 +332,8 @@ def merge_geno_data(df_merged, geno_path, pheno_path, impute_type, run_prefix, g
     # Process genotype data if provided by user
     if geno_path is not None:
         print("Processing genotype data")
-        gwas_filter(run_prefix, gwas_paths, p_gwas)
-        cmds = define_geno_bash_cmds(run_prefix, skip_prune, plink_exec, geno_path, r2, gwas_paths, pheno_path)
+        gwas_filter(prefix, gwas_paths, p_gwas)
+        cmds = define_geno_bash_cmds(prefix, skip_prune, plink_exec, geno_path, r2, gwas_paths, pheno_path)
 
         print("Running the following commands:")
         for cmd in cmds:
@@ -322,7 +342,7 @@ def merge_geno_data(df_merged, geno_path, pheno_path, impute_type, run_prefix, g
         
         for cmd in cmds:
             subprocess.run(cmd, shell=True)
-        df_geno = create_geno_df(run_prefix)
+        df_geno = create_geno_df(prefix)
         df_geno = impute_df(df_geno, impute_type)
         df_merged = pd.merge(df_merged, df_geno, on='ID', how='inner')
     else:
@@ -331,7 +351,7 @@ def merge_geno_data(df_merged, geno_path, pheno_path, impute_type, run_prefix, g
     return df_merged
 
 
-def merge_geno_harmonize_data(df_merged, geno_path, pheno_path, impute_type, run_prefix, plink_exec):
+def merge_geno_harmonize_data(df_merged, geno_path, pheno_path, impute_type, prefix, plink_exec):
     """
     Merge genotype data with phenotype and additional/clinical data.
 
@@ -340,7 +360,7 @@ def merge_geno_harmonize_data(df_merged, geno_path, pheno_path, impute_type, run
         geno_path (str): Path to genotype data.
         pheno_path (str): Path to phenotype data.
         impute_type (str): Imputation method to use.
-        run_prefix (pathlib.Path): Path to results directory.
+        prefix (pathlib.Path): Path to results directory.
         plink_exec (str): Path to plink2 executable.
 
     :return: df_merged *(pandas.DataFrame)*: \n
@@ -349,20 +369,20 @@ def merge_geno_harmonize_data(df_merged, geno_path, pheno_path, impute_type, run
 
     # Process genotype data if provided by user
     if geno_path is not None:
-        tmp_prefix = str(run_prefix.joinpath("temp_genos"))
-        var_alleles_path = str(run_prefix.joinpath('variants_and_alleles.tab'))
-        var_path = str(run_prefix.joinpath('variants.txt'))
+        tmp_prefix = str(prefix.joinpath("temp_genos"))
+        var_alleles_path = str(prefix.joinpath('variants_and_alleles.tab'))
+        var_path = str(prefix.joinpath('variants.txt'))
 
         # Default to using p-files if provided by the user, otherwise use b-files
         if Path(geno_path + ".pvar").exists() and Path(geno_path + ".pgen").exists() and Path(geno_path + ".psam").exists():
-            tmp_ids_path = _create_ids_to_keep(geno_path, pheno_path, 2, run_prefix)
+            tmp_ids_path = _create_ids_to_keep(geno_path, pheno_path, 2, prefix)
             cmds = [
                 f"{plink_exec} --pfile {geno_path} --keep {tmp_ids_path} --extract {var_path} --make-pgen --out {tmp_prefix}",
                 f"{plink_exec} --pfile {tmp_prefix} --export A --export-allele {var_alleles_path} --out {tmp_prefix}",
             ]
         
         elif Path(geno_path + ".bim").exists() and Path(geno_path + ".bed").exists() and Path(geno_path + ".fam").exists():
-            tmp_ids_path = _create_ids_to_keep(geno_path, pheno_path, 1, run_prefix)
+            tmp_ids_path = _create_ids_to_keep(geno_path, pheno_path, 1, prefix)
             cmds = [
                 f"{plink_exec} --bfile {geno_path} --keep {tmp_ids_path} --extract {var_path} --make-bed --out {tmp_prefix}",
                 f"{plink_exec} --bfile {tmp_prefix} --export A --export-allele {var_alleles_path} --out {tmp_prefix}",
@@ -382,7 +402,7 @@ def merge_geno_harmonize_data(df_merged, geno_path, pheno_path, impute_type, run
         for cmd in cmds:
             subprocess.run(cmd, shell=True)
 
-        df_geno = create_geno_df(run_prefix)
+        df_geno = create_geno_df(prefix)
         df_geno = impute_df(df_geno, impute_type)
         df_merged = pd.merge(df_merged, df_geno, on='ID', how='inner')
     else:

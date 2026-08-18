@@ -21,7 +21,6 @@ from sklearn import metrics
 from genoml import utils
 
 
-### TODO: Inputs should be numpy instead of pandas?
 def plot_results(out_dir, y, y_pred, algorithm_name):
     """
     Generate ROC and precision-recall plots for each class.
@@ -162,7 +161,6 @@ def calculate_accuracy_scores(x, y_proba, algorithm):
     return _calculate_accuracy_scores(y_proba, y_pred_proba)
 
 
-### TODO: Macro vs weighted? Separate for each class using one vs all?
 def _calculate_accuracy_scores(y_proba, y_pred_proba):
     """
     Calculate accuracy metrics for the chosen multiclass prediction model.

@@ -16,22 +16,18 @@
 # Import the necessary packages
 import argparse
 import functools
-import sys
-from pathlib import Path
-from datetime import datetime
-
-from genoml import utils, dependencies
+import genoml.continuous.supervised.main as continuous_supervised
 import genoml.discrete.supervised.main as discrete_supervised
 import genoml.multiclass.supervised.main as multiclass_supervised
-import genoml.continuous.supervised.main as continuous_supervised
 import genoml.preprocessing.main as preprocessing
-
-
-### TODO: Add variables for loading intermediate results that were not generated within GenoML.
-### TODO: Add ability to load confounders in same file with addit.
+import sys
+from datetime import datetime
+from genoml import utils, dependencies
+from pathlib import Path
 
 
 def handle_main():
+    print(f"Running GenoML version 2.0.0")
     entry_points = [
         {"name": "continuous", "handler": handle_continuous,
         "description": "for processing continuous datatypes (ex: age at onset)"},
@@ -118,27 +114,27 @@ def handle_multiclass_supervised():
 def handle_continuous_supervised_munge():
     handle_endpoints("genoml continuous supervised munge",
                      ["prefix", "impute_type", "geno", "pheno", "addit", "geno_test", "pheno_test", "addit_test",
-                      "skip_prune", "r2_cutoff", "feature_selection", "gwas", "p", "vif", "vif_iter", "umap_reduce",
-                      "adjust_data", "adjust_normalize", "target_features", "confounders", "confounders_test"],
+                      "skip_prune", "r2_cutoff", "n_trees", "gwas", "p", "vif", "vif_iter", "pearson_threshold", 
+                      "ols_threshold", "umap_reduce", "adjust_data", "adjust_normalize", "target_features", 
+                      "confounders", "confounders_test", "n_outer_cv", "random_state"],
                       functools.partial(preprocessing.munge, data_type="c"), 3)
 
 
 def handle_continuous_supervised_harmonize():
-    ### TODO: Allow users to harmonize from a different directory than where the training Munge data are -- define two different prefixes
     handle_endpoints("genoml continuous supervised harmonize",
-                     ["prefix", "geno", "pheno", "addit", "confounders", "force_impute"],
+                     ["prefix", "geno", "pheno", "addit", "confounders", "force_impute", "random_state"],
                      functools.partial(preprocessing.harmonize, data_type="c"), 3)
 
 
 def handle_continuous_supervised_train():
     handle_endpoints("genoml continuous supervised train",
-                     ["prefix", "metric_max"],
+                     ["prefix", "metric_max", "train_split", "random_state"],
                      continuous_supervised.train, 3)
 
 
 def handle_continuous_supervised_tune():
     handle_endpoints("genoml continuous supervised tune",
-                     ["prefix", "metric_tune", "max_tune", "n_cv"],
+                     ["prefix", "metric_tune", "max_tune", "n_inner_cv", "random_state"],
                      continuous_supervised.tune, 3)
 
 
@@ -151,26 +147,27 @@ def handle_continuous_supervised_test():
 def handle_discrete_supervised_munge():
     handle_endpoints("genoml discrete supervised munge",
                      ["prefix", "impute_type", "geno", "pheno", "addit", "geno_test", "pheno_test", "addit_test",
-                      "skip_prune", "r2_cutoff", "feature_selection", "gwas", "p", "vif", "vif_iter", "umap_reduce",
-                      "adjust_data", "adjust_normalize", "target_features", "confounders", "confounders_test"],
+                      "skip_prune", "r2_cutoff", "n_trees", "gwas", "p", "vif", "vif_iter", "pearson_threshold", 
+                      "ols_threshold", "umap_reduce", "adjust_data", "adjust_normalize", "target_features", 
+                      "confounders", "confounders_test", "n_outer_cv", "random_state"],
                       functools.partial(preprocessing.munge, data_type="d"), 3)
 
               
 def handle_discrete_supervised_harmonize():       
     handle_endpoints("genoml discrete supervised harmonize",
-                     ["prefix", "geno", "pheno", "addit", "confounders", "force_impute"],
+                     ["prefix", "geno", "pheno", "addit", "confounders", "force_impute", "random_state"],
                      functools.partial(preprocessing.harmonize, data_type="d"), 3)
 
 
 def handle_discrete_supervised_train():
     handle_endpoints("genoml discrete supervised train",
-                     ["prefix", "metric_max"],
+                     ["prefix", "metric_max", "train_split", "random_state"],
                      discrete_supervised.train, 3)
 
 
 def handle_discrete_supervised_tune():
     handle_endpoints("genoml discrete supervised tune",
-                     ["prefix", "metric_tune", "max_tune", "n_cv"],
+                     ["prefix", "metric_tune", "max_tune", "n_inner_cv", "random_state"],
                      discrete_supervised.tune, 3)
 
 
@@ -183,26 +180,27 @@ def handle_discrete_supervised_test():
 def handle_multiclass_supervised_munge():
     handle_endpoints("genoml multiclass supervised munge",
                      ["prefix", "impute_type", "geno", "pheno", "addit", "geno_test", "pheno_test", "addit_test",
-                      "skip_prune", "r2_cutoff", "feature_selection", "gwas", "p", "vif", "vif_iter", "umap_reduce",
-                      "adjust_data", "adjust_normalize", "target_features", "confounders", "confounders_test"],
+                      "skip_prune", "r2_cutoff", "n_trees", "gwas", "p", "vif", "vif_iter", "pearson_threshold", 
+                      "ols_threshold", "umap_reduce", "adjust_data", "adjust_normalize", "target_features", 
+                      "confounders", "confounders_test", "n_outer_cv", "random_state"],
                       functools.partial(preprocessing.munge, data_type="d"), 3)
 
 
 def handle_multiclass_supervised_harmonize():
     handle_endpoints("genoml multiclass supervised harmonize",
-                     ["prefix", "geno", "pheno", "addit", "confounders", "force_impute"],
+                     ["prefix", "geno", "pheno", "addit", "confounders", "force_impute", "random_state"],
                      functools.partial(preprocessing.harmonize, data_type="d"), 3)
 
 
 def handle_multiclass_supervised_train():
     handle_endpoints("genoml multiclass supervised train",
-                     ["prefix", "metric_max"],
+                     ["prefix", "metric_max", "train_split", "random_state"],
                      multiclass_supervised.train, 3)
 
 
 def handle_multiclass_supervised_tune():
     handle_endpoints("genoml multiclass supervised tune",
-                     ["prefix", "metric_tune", "max_tune", "n_cv"],
+                     ["prefix", "metric_tune", "max_tune", "n_inner_cv", "random_state"],
                      multiclass_supervised.tune, 3)
 
 
@@ -256,7 +254,7 @@ def add_default_flag(parser, flag_name):
             choices = ["AUC", "Balanced_Accuracy", "Specificity", "Sensitivity"]
             default = "AUC"
         elif "continuous" in parser.prog:
-            choices = ["Explained_Variance", "Mean_Squared_Error", "Median_Absolute_Error", "R-Squared_Error"]
+            choices = ["Explained_Variance", "Root_Mean_Squared_Error", "Median_Absolute_Error", "Pearson_R"]
             default = "Explained_Variance"
         parser.add_argument(
             '--metric_max', 
@@ -283,7 +281,7 @@ def add_default_flag(parser, flag_name):
             choices = ["AUC"]
             default = "AUC"
         elif "continuous" in parser.prog:
-            choices = ["Explained_Variance", "Mean_Squared_Error", "Median_Absolute_Error", "R-Squared_Error"]
+            choices = ["Explained_Variance", "Root_Mean_Squared_Error", "Median_Absolute_Error", "R-Squared_Error"]
             default = "Explained_Variance"
         parser.add_argument(
             '--metric_tune', 
@@ -303,13 +301,32 @@ def add_default_flag(parser, flag_name):
                  'tuning parameters [default: 50].',
         )
 
-    elif flag_name == "n_cv":
+    elif flag_name == "n_inner_cv":
         parser.add_argument(
-            '--n_cv', 
+            '--n_inner_cv', 
             type=int, 
             default=5,
-            help='Number of cross validations: (integer likely greater than 3). Here we set the number of '
-                 'cross-validation runs for the algorithms [default: 5].')
+            help='Number of inner cross validations: (integer likely greater than 3) during tuning. '
+                 'Here we set the number of cross-validation runs for the algorithms [default: 5].',
+        )
+
+    elif flag_name == "n_outer_cv":
+        parser.add_argument(
+            '--n_outer_cv', 
+            type=int, 
+            default=0,
+            help='Number of outer cross validation folds: (integer likely greater than 3) for the pipeline. '
+                 'Here we set the number of cross-validation runs for the algorithms [default: 0].',
+        )
+
+    elif flag_name == "train_split":
+        parser.add_argument(
+            '--train_split', 
+            type=float, 
+            default=70,
+            help='Percent of samples to use for model fitting, with the rest used as withheld validation '
+                 'samples. Numbers below 1 will be treated as fractions [default: 70].',
+        )
 
     elif flag_name == "test_geno_prefix":
         parser.add_argument(
@@ -423,9 +440,9 @@ def add_default_flag(parser, flag_name):
     elif flag_name == "vif":
         parser.add_argument(
             "--vif", 
-            type=int, 
+            type=float, 
             default=0,
-            help="Variance Inflation Factor (VIF): (integer). This is the VIF threshold for pruning "
+            help="Variance Inflation Factor (VIF): (float). This is the VIF threshold for pruning "
                  "non-genotype features. We recommend a value of 5-10. The default of 0 means no VIF "
                  "filtering will be done. [default: 0].",
         )
@@ -437,6 +454,22 @@ def add_default_flag(parser, flag_name):
             default=0,
             help="Iterator: (integer). How many iterations of VIF pruning of features do you want to run. "
                  "To save time VIF is run in randomly assorted chunks of 1000 features per iteration. [default: 0].",
+        )
+
+    elif flag_name == "pearson_threshold":
+        parser.add_argument(
+            "--pearson_threshold", 
+            type=float, 
+            default=0,
+            help="Threshold to use for Pearson correlation filtering (0-1). [default: 0].",
+        )
+
+    elif flag_name == "ols_threshold":
+        parser.add_argument(
+            "--ols_threshold", 
+            type=float, 
+            default=0,
+            help="p-value threshold to use for OLS filtering. [default: 0].",
         )
 
     elif flag_name == "impute_type":
@@ -455,9 +488,9 @@ def add_default_flag(parser, flag_name):
             help="If harmonizing, add in missing columns using the average value from munging.",
         )
 
-    elif flag_name == "feature_selection":
+    elif flag_name == "n_trees":
         parser.add_argument(
-            '--feature_selection', 
+            '--n_trees', 
             type=int, 
             default=0,
             help='Run a quick tree-based feature selection routine prior to anything else, here you '
@@ -517,6 +550,14 @@ def add_default_flag(parser, flag_name):
             required=('--adjust_data' in sys.argv) and ("--pheno_test" in sys.argv),
         )
 
+    elif flag_name == "random_state":
+        parser.add_argument(
+            '--random_state', 
+            type=int, 
+            default=3,
+            help="Random seed to use for reproducibility", 
+        )
+
     else:
         raise Exception(f"Unknown flag: {flag_name}")
 
@@ -543,7 +584,8 @@ def handle_endpoints(command_name, flag_names, endpoint, level):
                             error=""):
         dependencies.check_dependencies()
 
-        ### TODO: Add check here for if the directory exists
+        if not Path(args[0]).is_dir():
+            raise FileNotFoundError(f"Directory does not exist: {Path(args[0])}. Please create this directory and try again.")
         with open(Path(args[0]).joinpath("log.txt"), "a") as f:
             f.write(datetime.now().astimezone().strftime("%A, %B %d, %Y at %I:%M:%S %p %Z") + "\n")
             f.write(" ".join(sys.argv) + "\n\n")

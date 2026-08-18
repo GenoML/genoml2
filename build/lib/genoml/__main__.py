@@ -27,10 +27,6 @@ import genoml.continuous.supervised.main as continuous_supervised
 import genoml.preprocessing.main as preprocessing
 
 
-### TODO: Add variables for loading intermediate results that were not generated within GenoML.
-### TODO: Add ability to load confounders in same file with addit.
-
-
 def handle_main():
     entry_points = [
         {"name": "continuous", "handler": handle_continuous,
@@ -124,7 +120,6 @@ def handle_continuous_supervised_munge():
 
 
 def handle_continuous_supervised_harmonize():
-    ### TODO: Allow users to harmonize from a different directory than where the training Munge data are -- define two different prefixes
     handle_endpoints("genoml continuous supervised harmonize",
                      ["prefix", "geno", "pheno", "addit", "confounders", "force_impute"],
                      functools.partial(preprocessing.harmonize, data_type="c"), 3)
@@ -541,7 +536,6 @@ def handle_endpoints(command_name, flag_names, endpoint, level):
                             error=""):
         dependencies.check_dependencies()
 
-        ### TODO: Add check here for if the directory exists
         with open(Path(args[0]).joinpath("log.txt"), "a") as f:
             f.write(datetime.now().astimezone().strftime("%A, %B %d, %Y at %I:%M:%S %p %Z") + "\n")
             f.write(" ".join(sys.argv) + "\n\n")

@@ -34,7 +34,6 @@ def __get_executable_folder():
         return os.path.join(str(pathlib.Path.home()), ".genoml", "misc", "executables")
 
 
-### TODO: Should this be in the GenoML output directory?
 __executable_folder = __get_executable_folder()
 
 

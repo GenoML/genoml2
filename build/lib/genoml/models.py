@@ -18,8 +18,6 @@ from sklearn import discriminant_analysis, ensemble, linear_model, neighbors, ne
 import xgboost
 
 
-### TODO: Look into different estimators for AdaBoost/Bagging?
-### TODO: Weird results for: SGDClassifier, QuadraticDiscriminantAnalysis
 CANDIDATE_ALGORITHMS = {
     "discrete_supervised": [
         discriminant_analysis.LinearDiscriminantAnalysis(),

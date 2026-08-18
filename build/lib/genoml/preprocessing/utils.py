@@ -21,7 +21,6 @@ import sys
 from pathlib import Path
 
 
-### TODO: Add docstrings
 def define_geno_bash_cmds(run_prefix, skip_prune, plink_exec, geno_path, r2, gwas_paths, pheno_path):
     tmp_prefix = str(run_prefix.joinpath("temp_genos"))
     extract_vars_path = str(run_prefix.joinpath('p_threshold_variants.tab'))
@@ -41,7 +40,6 @@ def define_geno_bash_cmds(run_prefix, skip_prune, plink_exec, geno_path, r2, gwa
         tmp_ids_path = _create_ids_to_keep(geno_path, pheno_path, 1, run_prefix)
         return _define_bfile_cmds(skip_prune, plink_exec, geno_path, r2, tmp_prefix, extract_vars_path, var_alleles_path, var_path, gwas_paths, tmp_ids_path)
     
-    ### TODO: Add compatibility for VCF input
     else:
         raise FileNotFoundError(f"No valid genotype files found. Options indlude:\n\t"
                                 f"{geno_path} + \".pvar\", \".pgen\", AND \".psam\", OR\n\t"

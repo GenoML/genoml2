@@ -80,8 +80,6 @@ class Adjuster:
         return reducer
 
 
-    ### TODO: Complains if there is "-" anywhere in any of the target or confounder names
-    ### TODO: Should we check if one of the targets is also in the confounders?
     def adjust_confounders(self, adjustment_models=None):
         confounder_list = list(self.df_confounders.columns[1:])
         formula_for_confounders = " + ".join(confounder_list)

@@ -13,53 +13,76 @@
 # limitations under the License.
 # ==============================================================================
 
-import joblib
-import numpy as np
-import pandas as pd
-from pathlib import Path
-import seaborn as sns
-import sklearn
-import matplotlib.pyplot as plt
-from sklearn import discriminant_analysis, ensemble, linear_model, metrics, model_selection, neighbors, neural_network, svm
-from time import time
-import xgboost
 import genoml.discrete.utils as discrete_utils
-from genoml import utils
+import joblib
+import re
 import sys
+from genoml import utils
+from pathlib import Path
+from sklearn import metrics
+from sklearn.base import clone
+from sklearn.model_selection import StratifiedKFold
 
 
 class Tune:
     @utils.DescriptionLoader.function_description("info", cmd="Discrete Supervised Tuning")
-    def __init__(self, run_prefix, metric_tune, max_iter, cv_count):
+    def __init__(self, prefix, metric_tune, max_iter, cv_count, random_state):
         utils.DescriptionLoader.print(
             "tuning/info",
             python_version=sys.version,
-            run_prefix=run_prefix,
+            prefix=prefix,
             max_iter=max_iter,
             cv_count=cv_count,
         )
 
-        df = utils.read_munged_data(run_prefix, "train")
-        model_path = Path(run_prefix).joinpath('model.joblib')
+        if Path(prefix).joinpath("Munge").joinpath(f"train_dataset.h5").exists():
+            self._is_using_outer_cv = False
+            df_tune = utils.read_munged_data(Path(prefix).joinpath("Munge").joinpath(f"train_dataset.h5"))
+            model_path = Path(prefix).joinpath("model.joblib")
+            self._y_tune = df_tune.PHENO
+            self._ids_tune = df_tune.ID
+            self._x_tune = df_tune.drop(columns=["PHENO", "ID"])
+            self._algorithm = joblib.load(model_path)
+            algorithm_name = self._algorithm.__class__.__name__
+        else:
+            raise FileNotFoundError(
+                f"No munged data found at {prefix}/Munge. Please run the munge step first."
+            )
 
-        dict_hyperparams = utils.get_tuning_hyperparams("discrete")
+        if Path(prefix).joinpath("Munge").joinpath(f"train_dataset_fold1.h5").exists():
+            self._is_using_outer_cv = True
+            self._y_tune = [self._y_tune]
+            self._ids_tune = [self._ids_tune]
+            self._x_tune = [self._x_tune]
+            self._algorithm = [self._algorithm]
+            train_datasets = sorted(
+                [f for f in Path(prefix).joinpath("Munge").iterdir() 
+                if f.is_file() and f.name.startswith("train_dataset_fold")],
+                key=lambda f: int(re.search(r'fold(\d+)', f.name).group(1))
+            )
+            for fold, train_dataset in enumerate(train_datasets):
+                df_tune = utils.read_munged_data(train_dataset)
+                self._y_tune.append(df_tune.PHENO)
+                self._ids_tune.append(df_tune.ID)
+                self._x_tune.append(df_tune.drop(columns=["PHENO", "ID"]))
+                self._algorithm.append(clone(joblib.load(model_path)))
+            algorithm_name = self._algorithm[0].__class__.__name__
 
-        ### TODO: Can "metric_tune" be anything other than the two listed options?
+        dict_hyperparams = utils.get_tuning_hyperparams("discrete", random_state)
+
         if metric_tune == "AUC":
-            self._scoring_metric = metrics.make_scorer(metrics.roc_auc_score, needs_proba=True)
+            self._scoring_metric = metrics.make_scorer(metrics.roc_auc_score)
         elif metric_tune == "Balanced_Accuracy":
-            self._scoring_metric = metrics.make_scorer(metrics.balanced_accuracy_score, needs_proba=False)
+            self._scoring_metric = metrics.make_scorer(metrics.balanced_accuracy_score)
 
-        self._run_prefix = Path(run_prefix).joinpath("Tune")
-        if not self._run_prefix.is_dir():
-            self._run_prefix.mkdir()
+        self._prefix = Path(prefix).joinpath("Tune")
+        if not self._prefix.is_dir():
+            self._prefix.mkdir()
         self._max_iter = max_iter
-        self._cv_count = cv_count
-        self._y_tune = df.PHENO
-        self._ids_tune = df.ID
-        self._x_tune = df.drop(columns=['PHENO', 'ID'])
-        self._algorithm = joblib.load(model_path)
-        self._hyperparameters = dict_hyperparams[self._algorithm.__class__.__name__]
+        self._random_state = random_state
+        self._cv = StratifiedKFold(n_splits=cv_count, shuffle=True, random_state=self._random_state)
+
+        self._hyperparameters = dict_hyperparams[algorithm_name]
         self._cv_tuned = None
         self._cv_baseline = None
         self._cv_results = None
@@ -68,9 +91,9 @@ class Tune:
         self._algorithm_name = None
 
         # Communicate to the user the best identified algorithm 
-        print(f"From previous analyses in the training phase, we've determined that the best "
-              f"algorithm for this application is {self._algorithm.__class__.__name__}... "
-              f"so let's tune it up and see what gains we can make!")
+        print("From previous analyses in the training phase, we've determined that "
+              f"the best algorithm for this application is {algorithm_name}... so "
+              "let's tune it up and see what gains we can make!")
 
 
     def tune_model(self):
@@ -82,60 +105,67 @@ class Tune:
             self._hyperparameters,
             self._scoring_metric,
             self._max_iter,
-            self._cv_count,
+            self._cv,
+            self._random_state,
+            self._is_using_outer_cv,
         )
 
 
     def report_tune(self):
         """ Save best-performing fine-tuning iterations. """
         utils.report_best_tuning(
-            self._run_prefix, 
+            self._prefix, 
             self._cv_results, 
             10,
+            self._is_using_outer_cv,
         )
 
 
     def summarize_tune(self):
         """ Report results for baseline and tuned models. """
-        self._cv_baseline, self._cv_tuned = utils.sumarize_tune(
-            self._run_prefix,
+        self._cv_baseline, self._cv_tuned = utils.summarize_tune(
+            self._prefix,
             self._algorithm, 
             self._algorithm_tuned, 
             self._x_tune, 
             self._y_tune, 
             self._scoring_metric, 
-            self._cv_count, 
+            self._cv, 
+            self._is_using_outer_cv,
         )
 
 
     def compare_performance(self):
-        """ Compare fine-tuned model with baseline model. """
-        self._algorithm = next(utils.compare_tuning_performance(
-            self._run_prefix, 
+        """ Compare tuned model with baseline model. """
+        self._algorithm, _ = utils.compare_tuning_performance(
+            self._prefix, 
             self._cv_tuned, 
             self._cv_baseline, 
             self._algorithm_tuned, 
             self._algorithm, 
-        ))
-        self._y_pred = self._algorithm.predict_proba(self._x_tune)
-        self._algorithm_name = self._algorithm.__class__.__name__
+            self._is_using_outer_cv,
+            x = self._x_tune,
+        )
 
 
     def plot_results(self):
         """ Plot results from best-performing algorithm. """
         discrete_utils.plot_results(
-            self._run_prefix,
-            self._y_tune,
-            self._y_pred,
-            self._algorithm_name,
+            self._prefix,
+            [y_tune.values for y_tune in self._y_tune] if self._is_using_outer_cv else self._y_tune.values, 
+            [x_tune.values for x_tune in self._x_tune] if self._is_using_outer_cv else self._x_tune.values, 
+            self._algorithm,
+            self._is_using_outer_cv,
         )
 
 
     def export_prediction_data(self):
         """ Save results from best-performing algorithm. """
         discrete_utils.export_prediction_data(
-            self._run_prefix,
+            self._prefix,
+            self._algorithm,
             self._y_tune,
-            self._y_pred,
+            self._x_tune,
             self._ids_tune,
+            self._is_using_outer_cv,
         )

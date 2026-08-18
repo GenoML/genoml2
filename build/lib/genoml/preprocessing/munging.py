@@ -143,7 +143,6 @@ class Munge:
             self.df_merged = feature_selector.rank()
             feature_selector.export_data()
 
-        ### TODO: Check that VIF does what we want it to do.
         # Run the VIF calculation
         if self.vif_iter > 0:
             munge_vif = vif.VIF(self.vif_iter, self.vif_thresh, self.df_merged, 100, self.prefix)

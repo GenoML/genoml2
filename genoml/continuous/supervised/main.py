@@ -13,24 +13,21 @@
 # limitations under the License.
 # ==============================================================================
 
-import sys
+from genoml.continuous.supervised.testing import Test
 from genoml.continuous.supervised.training import Train
 from genoml.continuous.supervised.tuning import Tune
-from genoml.continuous.supervised.testing import Test
 
 
-def train(prefix, metric_max):
-
-    trainer = Train(prefix, metric_max)
+def train(prefix, metric_max, train_split, random_state):
+    trainer = Train(prefix, metric_max, train_split, random_state)
     trainer.compete()
     trainer.select_best_algorithm()
     trainer.export_model()
     trainer.export_prediction_data()
 
 
-### TODO: Add variables for loading old results
-def tune(prefix, metric_tune, max_iter, cv_count):
-    tuner = Tune(prefix, metric_tune, max_iter, cv_count)
+def tune(prefix, metric_tune, max_iter, cv_count, random_state):
+    tuner = Tune(prefix, metric_tune, max_iter, cv_count, random_state)
     tuner.tune_model()
     tuner.report_tune()
     tuner.summarize_tune()
@@ -40,6 +37,5 @@ def tune(prefix, metric_tune, max_iter, cv_count):
 
 def test(prefix):
     tester = Test(prefix)
-    tester.performance_metrics()
     tester.export_prediction_data()
     tester.additional_sumstats()

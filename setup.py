@@ -23,7 +23,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="genoml2",
-    version="1.5.4",
+    version="2.0.0",
     maintainer="The GenoML Development Team",
     maintainer_email="mary@datatecnica.com",
     description="GenoML is an automated machine learning tool that optimizes"
@@ -31,7 +31,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://genoml.github.io/",
-    download_url="https://github.com/GenoML/genoml2/archive/refs/tags/v1.5.4.tar.gz",
+    download_url="https://github.com/GenoML/genoml2/archive/refs/tags/v2.0.0.tar.gz",
     entry_points={
         'console_scripts':
             ['genoml=genoml.__main__:handle_main'],
@@ -44,6 +44,6 @@ setuptools.setup(
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.9,<3.13',
+    python_requires='>=3.9',
     package_data={'genoml': ['misc/*']},
 )

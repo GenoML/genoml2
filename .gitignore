@@ -1,4 +1,5 @@
-
-outputs/.DS_Store
+outputs/
 .DS_Store
 genoml-git.code-workspace
+__pycache__/
+

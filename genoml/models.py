@@ -14,41 +14,39 @@
 # ==============================================================================
 
 
-from sklearn import discriminant_analysis, ensemble, linear_model, neighbors, neural_network, svm
 import xgboost
+from sklearn import discriminant_analysis, ensemble, linear_model, neighbors, neural_network, svm
 
 
-### TODO: Look into different estimators for AdaBoost/Bagging?
-### TODO: Weird results for: SGDClassifier, QuadraticDiscriminantAnalysis
 CANDIDATE_ALGORITHMS = {
     "discrete_supervised": [
-        discriminant_analysis.LinearDiscriminantAnalysis(),
-        discriminant_analysis.QuadraticDiscriminantAnalysis(),
-        ensemble.AdaBoostClassifier(random_state=3),
-        ensemble.BaggingClassifier(random_state=3),
-        ensemble.GradientBoostingClassifier(random_state=3),
-        ensemble.RandomForestClassifier(n_estimators=100, random_state=3),
-        linear_model.LogisticRegression(solver='lbfgs', random_state=3),
-        linear_model.SGDClassifier(loss='modified_huber', random_state=3),
-        neighbors.KNeighborsClassifier(),
-        neural_network.MLPClassifier(random_state=3),
-        svm.SVC(probability=True, gamma='scale', random_state=3),
-        xgboost.XGBClassifier(random_state=3),
+        lambda random_state: discriminant_analysis.LinearDiscriminantAnalysis(),
+        # lambda random_state: discriminant_analysis.QuadraticDiscriminantAnalysis(),
+        lambda random_state: ensemble.AdaBoostClassifier(random_state=random_state),
+        lambda random_state: ensemble.BaggingClassifier(random_state=random_state),
+        lambda random_state: ensemble.GradientBoostingClassifier(random_state=random_state),
+        lambda random_state: ensemble.RandomForestClassifier(n_estimators=100, random_state=random_state),
+        lambda random_state: linear_model.LogisticRegression(solver='lbfgs', random_state=random_state),
+        lambda random_state: linear_model.SGDClassifier(loss='modified_huber', random_state=random_state),
+        lambda random_state: neighbors.KNeighborsClassifier(),
+        # lambda random_state: neural_network.MLPClassifier(random_state=random_state),
+        lambda random_state: svm.SVC(probability=True, gamma='scale', random_state=random_state),
+        lambda random_state: xgboost.XGBClassifier(random_state=random_state),
     ],
     "continuous_supervised": [
-        ensemble.AdaBoostRegressor(random_state=3),
-        ensemble.BaggingRegressor(random_state=3),
-        ensemble.GradientBoostingRegressor(random_state=3),
-        ensemble.RandomForestRegressor(random_state=3),
-        linear_model.ElasticNet(random_state=3),
-        linear_model.SGDRegressor(random_state=3),
-        neighbors.KNeighborsRegressor(),
-        neural_network.MLPRegressor(random_state=3),
-        svm.SVR(gamma='auto'),
-        xgboost.XGBRegressor(random_state=3),
+        lambda random_state: ensemble.AdaBoostRegressor(random_state=random_state),
+        lambda random_state: ensemble.BaggingRegressor(random_state=random_state),
+        lambda random_state: ensemble.GradientBoostingRegressor(random_state=random_state),
+        lambda random_state: ensemble.RandomForestRegressor(random_state=random_state),
+        lambda random_state: linear_model.ElasticNet(random_state=random_state),
+        lambda random_state: linear_model.SGDRegressor(random_state=random_state),
+        lambda random_state: neighbors.KNeighborsRegressor(),
+        # lambda random_state: neural_network.MLPRegressor(random_state=random_state),
+        lambda random_state: svm.SVR(gamma='auto'),
+        lambda random_state: xgboost.XGBRegressor(random_state=random_state),
     ],
 }
 
 
-def get_candidate_algorithms(module_name):
-    return CANDIDATE_ALGORITHMS.get(module_name, {})
+def get_candidate_algorithms(module_name, random_state):
+    return [constructor(random_state) for constructor in CANDIDATE_ALGORITHMS.get(module_name, [])]

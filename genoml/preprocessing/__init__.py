@@ -18,6 +18,5 @@ from genoml.preprocessing.adjuster import Adjuster
 from genoml.preprocessing.featureselection import FeatureSelection
 from genoml.preprocessing.harmonizing import Harmonize
 from genoml.preprocessing.munging import Munge
-from genoml.preprocessing.vif import VIF
 
 __all__ = []

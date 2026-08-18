@@ -21,7 +21,6 @@ from pathlib import Path
 from genoml import utils
 
 
-### TODO: Add functionality to apply models without having ground truth data
 class Test:
     @utils.DescriptionLoader.function_description("info", cmd="Continuous Supervised Testing")
     def __init__(self, prefix):
@@ -46,7 +45,6 @@ class Test:
         self._algorithm_name = algorithm.__class__.__name__
 
 
-    ### TODO: Use same function for training and tuning as well?
     def performance_metrics(self):
         """ Save performance metrics. """
         continuous_utils.performance_metrics(

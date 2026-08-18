@@ -14,127 +14,206 @@
 # ==============================================================================
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 import statsmodels.formula.api as sm
-from sklearn import metrics
+from itertools import repeat
 from genoml import utils
+from scipy.stats import pearsonr
+from sklearn import metrics
+from sklearn.metrics import mean_squared_error
 
 
-def export_prediction_data(out_dir, ids, step, y, y_predicted, y_withheld=None, y_withheld_predicted=None):
-    """
-    Save table with predicted vs. reported phenotypes for each sample and generate regression model.
+def export_prediction_data(out_dir, ids, step, algorithm, y, x, is_using_outer_cv, y_withheld=None, x_withheld=None, ids_withheld=None):
+    if is_using_outer_cv:
+        # Store prediction results for each fold
+        results_cv = []
+        for fold, algo in enumerate(algorithm):
+            y_predicted = algo.predict(x[fold])
+            if fold == 0 and step != "testing":
+                results = pd.DataFrame(
+                    zip(ids[fold], y[fold], y_predicted), 
+                    columns=["ID", "REPORTED", "PREDICTED"],
+                )
+            else:
+                results_cv.append(pd.DataFrame(
+                    zip(ids[fold], y[fold], y_predicted, repeat(fold)), 
+                    columns=["ID", "REPORTED", "PREDICTED", "FOLD"],
+                ))
 
-    Args:
-        out_dir (pathlib.Path): Path to output directory.
-        ids (numpy.ndarray): Array of sample IDs.
-        step (str): Step of the GenoML workflow. 
-        y (numpy.ndarray): Array of reported phenotypes for each training sample.
-        y_predicted (numpy.ndarray): Array of predicted phenotypes for each training sample.
-        y_withheld (numpy.ndarray, optional): Array of reported phenotypes for each validation sample (Default: None).
-        y_withheld_predicted (numpy.ndarray, optional): Array of predicted phenotypes for each validation sample (Default: None).
+        # Combine all folds
+        results_cv = pd.concat(results_cv, ignore_index=True)
+            
+    else:
+        y_predicted = algorithm.predict(x)
+        if x_withheld is not None:
+            y_withheld_predicted = algorithm.predict(x_withheld)
 
-    :return: results *(pandas.DataFrame)*: \n
-        Table with predicted and reported phenotypes.
-    """
-
-    output_columns = ["ID", f"REPORTED", f"PREDICTED"]
-
-    # Training results.
-    results = pd.DataFrame(
-        zip(ids, y, y_predicted), 
-        columns=output_columns,
-    )
-    with utils.DescriptionLoader.context(
-        "utils/export_predictions",
-        output_path=out_dir.joinpath(f'{step}_predictions.txt'), 
-        data=results.head(),
-    ):
-        results.to_csv(out_dir.joinpath(f'{step}_predictions.txt'), index=False, sep="\t")
-
-    # Withheld results, if applicable.
-    if step == "training":
+        # Training results.
         results = pd.DataFrame(
-            zip(ids, y_withheld, y_withheld_predicted), 
-            columns=output_columns,
+            zip(ids, y, y_predicted), 
+            columns=["ID", "REPORTED", "PREDICTED"],
         )
+        if step == "training":
+            withheld_results = pd.DataFrame(
+                zip(ids_withheld, y_withheld, y_withheld_predicted), 
+                columns=["ID", "REPORTED", "PREDICTED"],
+            )
+    
+    if step != "testing" or (step == "testing" and not is_using_outer_cv):
         with utils.DescriptionLoader.context(
-            "utils/export_predictions/withheld_data",
-            output_path=out_dir.joinpath('withheld_predictions.txt'), 
+            "utils/export_predictions",
+            output_path=out_dir.joinpath(f"{step}_predictions.tsv"), 
             data=results.head(),
         ):
-            results.to_csv(out_dir.joinpath('withheld_predictions.txt'), index=False, sep="\t")
+            results.to_csv(
+                out_dir.joinpath(f"{step}_predictions.tsv"), 
+                index=False, 
+                sep="\t",
+            )
 
-    # Regression model on withheld results.
-    reg_model = sm.ols(formula=f'REPORTED ~ PREDICTED', data=results)
-    fitted = reg_model.fit()
+        _plot_results(
+            out_dir.joinpath(f"regression_summary.txt"),
+            out_dir.joinpath(f"regression.png"), 
+            results,
+            False,
+        )
+
+    if is_using_outer_cv:
+        with utils.DescriptionLoader.context(
+            "utils/export_predictions",
+            output_path=out_dir.joinpath(f"{step}_predictions_cv.tsv"), 
+            data=results_cv.head(),
+        ):
+            results_cv.to_csv(
+                out_dir.joinpath(f"{step}_predictions_cv.tsv"), 
+                index=False, 
+                sep="\t",
+            )
+
+        _plot_results(
+            out_dir.joinpath(f"regression_summary_cv.txt"),
+            out_dir.joinpath(f"regression_cv.png"), 
+            results_cv,
+            True,
+        )
+
+    if step == "training":
+        with utils.DescriptionLoader.context(
+            "utils/export_predictions/withheld_data",
+            output_path=out_dir.joinpath(f"{step}_predictions_withheld.tsv"), 
+            data=withheld_results.head(),
+        ):
+            withheld_results.to_csv(
+                out_dir.joinpath(f"{step}_predictions_withheld.tsv"), 
+                index=False, 
+                sep="\t",
+            )
+
+        _plot_results(
+            out_dir.joinpath(f"regression_summary_withheld.txt"),
+            out_dir.joinpath("regression_withheld.png"), 
+            withheld_results,
+            False,
+        )
+
+
+def _plot_results(regression_summary_path, regression_plot_path, df, is_using_outer_cv):
+    plt.figure()
+
+    # Fit overall regression line and add it to the plot
+    reg_model = sm.ols("REPORTED ~ PREDICTED", data=df).fit()
+
     with utils.DescriptionLoader.context(
         "utils/export_predictions/plot",
-        output_path=out_dir.joinpath('regression.png'), 
-        data=fitted.summary(),
+        output_path=regression_plot_path, 
+        data=reg_model.summary(),
     ):
-        sns_plot = sns.regplot(
-            data=results, 
-            x=f"REPORTED", 
-            y=f"PREDICTED", 
-            scatter_kws={"color": "blue"},
-            line_kws={"color": "red"},
+        # Plot reported vs predicted value for each sample
+        if is_using_outer_cv:
+            sns.scatterplot(
+                data=df,
+                x="REPORTED",
+                y="PREDICTED",
+                style="FOLD",
+                hue="FOLD",
+                palette="tab10",
+            )
+        else:
+            sns.scatterplot(
+                data=df,
+                x="REPORTED",
+                y="PREDICTED",
+                palette="tab10",
+            )
+        
+        with open(regression_summary_path, "w") as f:
+            f.write(reg_model.summary().as_csv().replace(",", "\t"))
+        sns.regplot(
+            data=df,
+            x="REPORTED",
+            y="PREDICTED",
+            scatter=False,
+            color="black",
+            label="Best-fit trendline",
         )
+
+        # Add dashed line at y=x
+        ax = plt.gca()
+        lims = [
+            np.min([ax.get_xlim(), ax.get_ylim()]),
+            np.max([ax.get_xlim(), ax.get_ylim()]),
+        ]
+        ax.plot(
+            lims, 
+            lims, 
+            'k--', 
+            alpha=0.5, 
+            zorder=0, 
+            label="Predicted = Reported",
+        )
+
+        pearson_r, _ = pearsonr(df["REPORTED"].values, df["PREDICTED"].values)
+        rmse = np.sqrt(mean_squared_error(df["REPORTED"], df["PREDICTED"]))
         plt.text(
             0.95, 0.05,
-            f"$R^2 = {fitted.rsquared:.3f}$",
-            ha="right", 
+            f"$r = {pearson_r:.3f}$\n$RMSE = {rmse:.2f}$",
+            ha="right",
             va="bottom",
             transform=plt.gca().transAxes,
-            fontsize=18,
+            fontsize=14,
         )
-        sns_plot.set_xlabel(f"Reported", fontsize=16)
-        sns_plot.set_ylabel(f"Predicted", fontsize=16)
 
-        sns_plot.figure.savefig(out_dir.joinpath('regression.png'), dpi=600)
-        with open(out_dir.joinpath('regression_summary.txt'), "w") as f:
-            f.write(fitted.summary().as_csv().replace(",", "\t"))
+        plt.legend(fontsize=8)
+
+        plt.savefig(regression_plot_path, dpi=600)
+        plt.clf()
 
 
-def performance_metrics(out_dir, y_reported, y_predicted):
-    """
-    Evaluate and save performance metrics.
+def additional_sumstats(algorithm_name, y_test, x_test, algorithm, prefix, is_using_outer_cv):
+    if is_using_outer_cv:
+        y_true = []
+        y_pred = []
+        for fold, y_test_fold in enumerate(y_test):
+            y_pred_fold = algorithm[fold].predict(x_test[fold])
+            y_true.append(y_test_fold)
+            y_pred.append(y_pred_fold)
+        y_true = np.concatenate([np.array(y) for y in y_true])
+        y_pred = np.concatenate([np.array(y) for y in y_pred])
+    else:
+        y_true = y_test.copy()
+        y_pred = algorithm.predict(x_test)
+    _additional_sumstats(algorithm_name, y_true, y_pred, prefix)
 
-    Args:
-        out_dir (pathlib.Path): Path to output directory.
-        y_reported (numpy.ndarray): Array of reported phenotypes for each sample.
-        y_predicted (numpy.ndarray): Array of predicted phenotypes for each sample.
-    """
 
-    evs = metrics.explained_variance_score(y_reported, y_predicted)
-    mse = metrics.mean_squared_error(y_reported, y_predicted)
-    mae = metrics.median_absolute_error(y_reported, y_predicted)
-    r2s = metrics.r2_score(y_reported, y_predicted)
-
-    print("")
-    print("#"*70)
-    print(f"Explained variance score: {evs:.4}")
-    print(f"Mean squared error: {mse:.4}")
-    print(f"Median absolute error: {mae:.4}")
-    print(f"R^2 score: {r2s:.4}")
-        
-    log_entry = pd.DataFrame({
-        "Explained_variance_score": [evs],
-        "Mean_squared_error": [mse], 
-        "Median_absolute_error": [mae], 
-        "R2_score": [r2s]
-    })
-
-    log_outfile = out_dir.joinpath('performance_metrics.txt')
-    log_entry.to_csv(log_outfile, index=False, sep="\t")
-
-    print("#"*70)
-    print("")
-    print(f"This table below is also logged as {log_outfile} and is in your current working directory...")
-    print("#"*70)
-    print(log_entry)
-    print("#"*70)
-    print("")
+def _additional_sumstats(algorithm_name, y_test, y_pred, prefix):
+    log_table = pd.DataFrame(
+        data=[[algorithm_name] + list(_calculate_accuracy_scores(y_test, y_pred))], 
+        columns=["Algorithm", "Explained Variance", "Root Mean Squared Error", "Median Absolute Error", "Pearson's R"],
+    )
+    log_outfile = prefix.joinpath(f"performance_metrics.tsv")
+    log_table.to_csv(log_outfile, index=False, sep="\t")
 
 
 def calculate_accuracy_scores(x, y, algorithm):
@@ -162,14 +241,19 @@ def _calculate_accuracy_scores(y, y_pred):
         y (pandas.DataFrame): Reported output features.
         y_pred (pandas.DataFrame): Predicted output features.
 
-    :return: accuracy_metrics *(list)*: \n
-        Accuracy metrics used for the continuous prediction module.
+    :return: evs *(float)*: \n
+        Explained Variance Score.
+    :return: rmse *(float)*: \n
+        Root Mean Squared Error.
+    :return: mae *(float)*: \n
+        Median Absolute Error.
+    :return: pearson_r *(float)*: \n
+        Pearson's R.
     """
 
     evs = metrics.explained_variance_score(y, y_pred)
-    mse = metrics.mean_squared_error(y, y_pred)
+    rmse = np.sqrt(metrics.mean_squared_error(y, y_pred))
     mae = metrics.median_absolute_error(y, y_pred)
-    r2s = metrics.r2_score(y, y_pred)
+    pearson_r, _ = pearsonr(y, y_pred)
 
-    accuracy_metrics = [evs, mse, mae, r2s]
-    return accuracy_metrics
+    return evs, rmse, mae, pearson_r

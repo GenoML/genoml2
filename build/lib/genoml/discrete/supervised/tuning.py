@@ -44,7 +44,6 @@ class Tune:
 
         dict_hyperparams = utils.get_tuning_hyperparams("discrete")
 
-        ### TODO: Can "metric_tune" be anything other than the two listed options?
         if metric_tune == "AUC":
             self._scoring_metric = metrics.make_scorer(metrics.roc_auc_score, needs_proba=True)
         elif metric_tune == "Balanced_Accuracy":

@@ -20,7 +20,6 @@ from genoml.continuous.supervised.testing import Test
 
 
 def train(prefix, metric_max):
-
     trainer = Train(prefix, metric_max)
     trainer.compete()
     trainer.select_best_algorithm()
@@ -28,7 +27,6 @@ def train(prefix, metric_max):
     trainer.export_prediction_data()
 
 
-### TODO: Add variables for loading old results
 def tune(prefix, metric_tune, max_iter, cv_count):
     tuner = Tune(prefix, metric_tune, max_iter, cv_count)
     tuner.tune_model()

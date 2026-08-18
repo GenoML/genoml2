@@ -13,20 +13,25 @@
 # limitations under the License.
 # ==============================================================================
 
+import copy
+import joblib
 import json
+import numpy as np
 import os
+import pandas as pd
+import sys
+import textwrap
 import time
 import traceback
-import sys
-from sklearn import model_selection
 from pathlib import Path
-import pandas as pd
-import joblib
-from scipy import stats
+from sklearn import model_selection
+from skopt import BayesSearchCV
+from skopt.space import Real, Integer, Categorical
+
+# os.environ["PYTHONWARNINGS"] = "ignore"
+# sys.stderr = open(os.devnull, 'w')
 
 __author__ = 'Sayed Hadi Hashemi'
-
-import textwrap
 
 
 class ColoredBox:
@@ -249,9 +254,9 @@ def select_best_algorithm(log_table, metric_max, algorithms):
     """
 
     best_id = log_table[metric_max].idxmax()
-    best_algorithm_name = log_table.iloc[best_id].Algorithm
+    best_algorithm_name = log_table.loc[best_id, "Algorithm"]
     best_algorithm = algorithms[best_algorithm_name]
-    best_algorithm_metrics = log_table.iloc[best_id].to_dict()
+    best_algorithm_metrics = log_table.loc[best_id].to_dict()
 
     DescriptionLoader.print(
         "utils/training/compete/algorithm/best",
@@ -259,10 +264,10 @@ def select_best_algorithm(log_table, metric_max, algorithms):
         metrics=metrics_to_str(best_algorithm_metrics),
     )
 
-    return best_algorithm
+    return best_algorithm, best_algorithm_name
 
 
-def tune_model(estimator, x, y, param_distributions, scoring, n_iter, cv):
+def tune_model(estimator, x, y, param_distributions, scoring, n_iter, cv, random_state, is_using_outer_cv):
     """
     Apply randomized search to fine-tune the selected model.
 
@@ -273,7 +278,8 @@ def tune_model(estimator, x, y, param_distributions, scoring, n_iter, cv):
         param_distributions (dict): Hyperparameters and corresponsing values to be tested.
         scoring (sklearn.metrics._scorer._Scorer): Scoring metric to evaluate accuracy.
         n_iter (int): Maximum number of iterations.
-        cv (int): Number of cross-validations.
+        cv (sklearn.model_selection (Stratified)KFold): Cross-validation generator.
+        random_state (int): Random seed for reproducibility.
     
     :return: cv_results *(dict)*: \n
         Results from hyperparameter tuning.
@@ -281,28 +287,67 @@ def tune_model(estimator, x, y, param_distributions, scoring, n_iter, cv):
         Tuned model.
     """
 
-    rand_search = model_selection.RandomizedSearchCV(
+    if is_using_outer_cv:
+        cv_results = []
+        algo_tuned = []
+        for fold in range(len(estimator)):
+            cv_results_fold, algo_tuned_fold = _tune_model(estimator[fold], x[fold], y[fold], param_distributions, scoring, n_iter, cv, random_state)
+            cv_results.append(cv_results_fold)
+            algo_tuned.append(algo_tuned_fold)
+    else:
+        cv_results, algo_tuned = _tune_model(estimator, x, y, param_distributions, scoring, n_iter, cv, random_state)
+
+    return cv_results, algo_tuned
+
+
+def _tune_model(estimator, x, y, param_distributions, scoring, n_iter, cv, random_state):
+    """
+    Apply randomized search to fine-tune the selected model.
+
+    Args:
+        estimator: Trained baseline model.
+        x (pandas.DataFrame): Model input features.
+        y (pandas.DataFrame): Reported output features.
+        param_distributions (dict): Hyperparameters and corresponsing values to be tested.
+        scoring (sklearn.metrics._scorer._Scorer): Scoring metric to evaluate accuracy.
+        n_iter (int): Maximum number of iterations.
+        cv (sklearn.model_selection (Stratified)KFold): Cross-validation generator.
+        random_state (int): Random seed for reproducibility.
+    
+    :return: cv_results *(dict)*: \n
+        Results from hyperparameter tuning.
+    :return: algo_tuned: \n
+        Tuned model.
+    """
+    rand_search = BayesSearchCV(
         estimator = estimator,
-        param_distributions = param_distributions,
+        search_spaces = param_distributions,
         scoring = scoring,
         n_iter = n_iter,
         cv = cv,
         n_jobs = -1,
-        random_state = 3,
+        random_state = random_state,
         verbose = 0,
+        error_score = np.nan
     )
 
     with Timer() as timer:
-        rand_search.fit(x, y)
-    print(f"RandomizedSearchCV took {timer.elapsed():.2f} seconds for {n_iter:d} "
-          "candidates parameter iterations.")
+        try:
+            rand_search.fit(x, y)
+        except Exception as e:
+            print(f"ERROR during BayesSearchCV fit: {type(e).__name__}")
+            print(f"Error message: {str(e)}")
+            traceback.print_exc()
+            raise
+    print(f"BayesSearchCV took {timer.elapsed():.2f} seconds for {n_iter:d} "
+          "candidate parameter iterations.")
 
     cv_results = rand_search.cv_results_
     algo_tuned = rand_search.best_estimator_
     return cv_results, algo_tuned
 
 
-def sumarize_tune(out_dir, estimator_baseline, estimator_tune, x, y, scoring, cv):
+def summarize_tune(out_dir, estimator_baseline, estimator_tune, x, y, scoring, cv, is_using_outer_cv):
     """
     Use cross-validation to compare the tuned model to the trined 
     baseline model. 
@@ -314,13 +359,50 @@ def sumarize_tune(out_dir, estimator_baseline, estimator_tune, x, y, scoring, cv
         x (pandas.DataFrame): Model input features.
         y (pandas.DataFrame): Reported output features.
         scoring (sklearn.metrics._scorer._Scorer): Scoring metric to evaluate accuracy.
-        cv (int): Number of cross validations.
+        cv (sklearn.model_selection (Stratified)KFold): Cross-validation generator.
 
     :return: cv_baseline *(pandas.DataFrame)*: \n
         Cross-validation results for the trained baseline model.
     :return: cv_tuned *(pandas.DataFrame)*: \n
         Cross-validation results for the tuned model.
     """
+
+    if is_using_outer_cv:
+        cv_baseline = [] 
+        cv_tuned = []
+        for fold in range(len(estimator_baseline)):
+            cv_baseline_fold, cv_tuned_fold = _summarize_tune(out_dir, estimator_baseline[fold], estimator_tune[fold], x[fold], y[fold], scoring, cv, fold=fold)
+            cv_baseline.append(cv_baseline_fold)
+            cv_tuned.append(cv_tuned_fold)
+
+    else:
+        cv_baseline, cv_tuned = _summarize_tune(out_dir, estimator_baseline, estimator_tune, x, y, scoring, cv)
+
+    return cv_baseline, cv_tuned
+
+
+def _summarize_tune(out_dir, estimator_baseline, estimator_tune, x, y, scoring, cv, fold=None):
+    """
+    Use cross-validation to compare the tuned model to the trined 
+    baseline model. 
+
+    Args:
+        out_dir (pathlib.Path): Path to output directory.
+        estimator_baseline: Trained baseline model.
+        estimator_tune: Tuned model.
+        x (pandas.DataFrame): Model input features.
+        y (pandas.DataFrame): Reported output features.
+        scoring (sklearn.metrics._scorer._Scorer): Scoring metric to evaluate accuracy.
+        cv (sklearn.model_selection (Stratified)KFold): Cross-validation generator.
+        fold (int): If using outer cross-validation, fold number corresponding to current data/algorithm (Default: None).
+
+    :return: cv_baseline *(pandas.DataFrame)*: \n
+        Cross-validation results for the trained baseline model.
+    :return: cv_tuned *(pandas.DataFrame)*: \n
+        Cross-validation results for the tuned model.
+    """
+
+    suffix = f"_fold{fold}" if fold not in (None, 0) else ""
 
     cv_baseline = model_selection.cross_val_score(
         estimator = estimator_baseline, 
@@ -350,10 +432,10 @@ def sumarize_tune(out_dir, estimator_baseline, estimator_tune, x, y, scoring, cv
         "Max_CV_Score" : [cv_baseline.max(), cv_tuned.max()],
     })
     df_cv_summary.rename(index={0: "Baseline", 1: "BestTuned"}, inplace=True)
-    log_outfile = out_dir.joinpath('cv_summary.txt')
+    log_outfile = out_dir.joinpath(f"cv_summary{suffix}.tsv")
     df_cv_summary.to_csv(log_outfile, sep="\t")
 
-    print("Here is the cross-validation summary of your best tuned model hyperparameters...")
+    print(f"Here is the cross-validation summary of your best tuned model hyperparameters{'' if fold is None else (' for the full dataset' if fold==0 else f' for fold {fold+1}')}...")
     print(f"{scoring} scores per cross-validation")
     print(cv_tuned)
     print(f"Mean cross-validation score:                        {cv_tuned.mean()}")
@@ -375,7 +457,7 @@ def sumarize_tune(out_dir, estimator_baseline, estimator_tune, x, y, scoring, cv
     return cv_baseline, cv_tuned
 
 
-def report_best_tuning(out_dir, cv_results, n_top):
+def report_best_tuning(out_dir, cv_results, n_top, is_using_outer_cv):
     """
     Find the top-performing tuning iterations and save those to a table.
 
@@ -385,7 +467,27 @@ def report_best_tuning(out_dir, cv_results, n_top):
         n_top (int): Number of iterations to report.
     """
 
-    print("Here is a summary of the top 10 iterations of the hyperparameter tuning...")
+    if is_using_outer_cv:
+        for fold in range(len(cv_results)):
+            _report_best_tuning(out_dir, cv_results[fold], n_top, fold=fold)
+    else:
+        _report_best_tuning(out_dir, cv_results, n_top)
+
+
+def _report_best_tuning(out_dir, cv_results, n_top, fold=None):
+    """
+    Find the top-performing tuning iterations and save those to a table.
+
+    Args:
+        out_dir (pathlib.Path): Path to output directory.
+        cv_results (dict): Results from hyperparameter tuning.
+        n_top (int): Number of iterations to report.
+        fold (int): If using outer cross-validation, fold number corresponding to current data/algorithm (Default: None).
+    """
+
+    suffix = f"_fold{fold}" if fold not in (None, 0) else ""
+
+    print(f"Here is a summary of the top 10 iterations of the hyperparameter tuning{'' if fold is None else (' for the full dataset' if fold==0 else f' for fold {fold+1}')}...")
     cv_results = pd.DataFrame(cv_results)
     cv_results.sort_values(by='rank_test_score', ascending=True, inplace=True)
     cv_results = cv_results.iloc[:n_top,:]
@@ -395,14 +497,14 @@ def report_best_tuning(out_dir, cv_results, n_top):
         print(f"Mean Validation Score: {current_iteration['mean_test_score']:.3f} (std: {current_iteration['std_test_score']:.3f})")
         print(f"Parameters: {current_iteration['params']}")
         print("")
-    log_outfile = out_dir.joinpath('tuning_summary.txt')
+    log_outfile = out_dir.joinpath(f"tuning_summary{suffix}.tsv")
     cv_results.to_csv(log_outfile, index=False, sep="\t")
     print(f"We are exporting a summary table of the top {n_top} iterations of the hyperparameter tuning step and its parameters here {log_outfile}.")
 
 
-def compare_tuning_performance(out_dir, cv_tuned, cv_baseline, algo_tuned, algo_baseline, x=None):
+def compare_tuning_performance(out_dir, cv_tuned, cv_baseline, algo_tuned, algo_baseline, is_using_outer_cv, x=None):
     """
-    Determine whether the fine-tuned model outperformed the baseline model.
+    Determine whether the tuned model outperformed the baseline model.
 
     Args:
         out_dir (pathlib.Path): Path to output directory.
@@ -413,36 +515,69 @@ def compare_tuning_performance(out_dir, cv_tuned, cv_baseline, algo_tuned, algo_
         x (pandas.DataFrame, optional): Model input features (Default: None).
     
     :return: algorithm: \n
-        Better-perorming of the fine-tuned and trained baseline models.
+        Better-perorming of the tuned and trained baseline models.
     :return: y_predicted *(numpy.ndarray)*: \n
         Predicted outputs from the chosen model.
     """
 
-    print("")
+    if is_using_outer_cv:
+        algorithm = []
+        y_predicted = []
+        for fold in range(len(cv_tuned)):
+            algorithm_fold, y_predicted_fold = _compare_tuning_performance(out_dir, cv_tuned[fold], cv_baseline[fold], algo_tuned[fold], algo_baseline[fold], x=x[fold], fold=fold)
+            algorithm.append(algorithm_fold)
+            y_predicted.append(y_predicted_fold)
+    else:
+        algorithm, y_predicted = _compare_tuning_performance(out_dir, cv_tuned, cv_baseline, algo_tuned, algo_baseline, x=x)
 
-    if cv_baseline.mean() >= cv_tuned.mean():
-        print("Based on comparisons of the default parameters to your hyperparameter tuned model, the baseline model actually performed better.")
-        print("Looks like the tune wasn't worth it, we suggest either extending the tune time or just using the baseline model for maximum performance.")
-        print("")
-        print("Let's shut everything down, thanks for trying to tune your model with GenoML.")
-        algorithm = algo_baseline
-        yield algorithm
+    return algorithm, y_predicted
 
-    if cv_baseline.mean() < cv_tuned.mean():
-        print("Based on comparisons of the default parameters to your hyperparameter tuned model, the tuned model actually performed better.")
-        print("Looks like the tune was worth it, we suggest using this model for maximum performance, lets summarize and export this now.")
-        print("In most cases, if opting to use the tuned model, a separate test dataset is a good idea. GenoML has a module to fit models to external data.")
+
+def _compare_tuning_performance(out_dir, cv_tuned, cv_baseline, algo_tuned, algo_baseline, x=None, fold=None):
+    """
+    Determine whether the tuned model outperformed the baseline model.
+
+    Args:
+        out_dir (pathlib.Path): Path to output directory.
+        cv_tuned (pandas.DataFrame): Cross-validation results for the tuned model.
+        cv_baseline (pandas.DataFrame): Cross-validation results for the trained baseline model.
+        algo_tuned: Tuned model.
+        algo_baseline: Trained baseline model.
+        x (pandas.DataFrame, optional): Model input features (Default: None).
+        fold (int): If using outer cross-validation, fold number corresponding to current data/algorithm (Default: None).
+    
+    :return: algorithm: \n
+        Better-perorming of the tuned and trained baseline models.
+    :return: y_predicted *(numpy.ndarray)*: \n
+        Predicted outputs from the chosen model.
+    """
+
+    if fold == 0:
+        if cv_baseline.mean() >= cv_tuned.mean():
+            print("Based on comparisons of the default parameters to your hyperparameter tuned model, the baseline model actually performed better.")
+            print("Looks like the tune wasn't worth it, we suggest either extending the tune time or just using the baseline model for maximum performance.")
+            algorithm = algo_baseline
+            yield algorithm
+
+        if cv_baseline.mean() < cv_tuned.mean():
+            print("Based on comparisons of the default parameters to your hyperparameter tuned model, the tuned model actually performed better.")
+            print("Looks like the tune was worth it, we suggest using this model for maximum performance, lets summarize and export this now.")
+            algorithm = algo_tuned
+            yield algorithm
+    
+    else:
         algorithm = algo_tuned
         yield algorithm
 
-    export_model(out_dir.parent, algorithm)
+    export_model(out_dir.parent, algorithm, fold=fold)
 
+    y_predicted = None
     if x is not None:
         y_predicted = algorithm.predict(x)
-        yield y_predicted
+    yield y_predicted
 
 
-def read_munged_data(out_dir, dataset_type):
+def read_munged_data(file_path):
     """
     Read munged hdf5 file to pandas
 
@@ -453,12 +588,11 @@ def read_munged_data(out_dir, dataset_type):
         Munged dataset.
     """
 
-    infile_h5 = Path(out_dir).joinpath("Munge").joinpath(f"{dataset_type}_dataset.h5")
     with DescriptionLoader.context(
         "read_munge", 
-        path=infile_h5,
+        path=file_path,
     ):
-        df = pd.read_hdf(infile_h5, key="dataForML")
+        df = pd.read_hdf(file_path, key="dataForML")
 
     DescriptionLoader.print(
         "data_summary", 
@@ -468,16 +602,21 @@ def read_munged_data(out_dir, dataset_type):
     return df
 
 
-def export_model(out_dir, algorithm):
+def export_model(out_dir, algorithm, fold=None):
     """
     Export a fitted algorithm to a readable file.
 
     Args:
         out_dir (pathlib.Path): Path to output directory.
         algorithm: Fitted algorithm being exported.
+        fold (int): If using outer cross-validation, fold number corresponding to current data/algorithm (Default: None).
     """
 
-    output_path = out_dir.joinpath('model.joblib')
+    if fold not in (0, None):
+        output_path = out_dir.joinpath(f"model_fold{fold}.joblib")
+    else:
+        output_path = out_dir.joinpath("model.joblib")
+    print(output_path)
     with DescriptionLoader.context(
         "export_model",
         output_path=output_path,
@@ -505,27 +644,20 @@ def fit_algorithms(out_dir, algorithms, x_train, y_train, x_valid, y_valid, colu
     """
 
     log_table = []
+    trained_algorithms = dict()
 
     for algorithm_name, algorithm in algorithms.items():
         with DescriptionLoader.context(
             "utils/training/fit_algorithms/compete/algorithm",
             name=algorithm_name,
         ):
-            with Timer() as timer:
-                algorithm.fit(x_train, y_train)
-
-            row = [algorithm_name, timer.elapsed()] + calculate_accuracy_scores(x_valid, y_valid, algorithm)
-
-            results_str = metrics_to_str(dict(zip(column_names, row)))
-            with DescriptionLoader.context(
-                "utils/training/fit_algorithms/compete/algorithm/results",
-                name=algorithm_name, 
-                results=results_str,
-            ):
-                log_table.append(row)
+            trained_algorithms[algorithm_name] = []
+            algorithm_log, trained_algorithm = _fit_algorithm(algorithm, algorithm_name, x_train, y_train, x_valid, y_valid, column_names, calculate_accuracy_scores)
+            log_table.append(algorithm_log)
+            trained_algorithms[algorithm_name] = trained_algorithm
 
     log_table = pd.DataFrame(data=log_table, columns=column_names)
-    output_path = out_dir.joinpath('withheld_performance_metrics.txt')
+    output_path = out_dir.joinpath('withheld_performance_metrics.tsv')
     with DescriptionLoader.context(
         "utils/training/fit_algorithms/compete/save_algorithm_results",
         output_path=output_path,
@@ -533,188 +665,280 @@ def fit_algorithms(out_dir, algorithms, x_train, y_train, x_valid, y_valid, colu
     ):
         log_table.to_csv(output_path, index=False, sep="\t")
 
-    return log_table
+    return log_table, trained_algorithms
 
 
-def get_tuning_hyperparams(module):
+def get_algorithm_name(algorithm):
+    """
+    Get the name of a provided algorithm.
+
+    Args:
+        algorithm: Initialized algorithm.
+
+    :return: algorithm_name *(str)*: \n
+        Name of the provided algorithm.
+    """
+
+    algorithm_name = algorithm.__class__.__name__
+
+    if algorithm_name in ["AdaBoostRegressor", "AdaBoostClassifier", "BaggingRegressor", "BaggingClassifier"]:
+        algorithm_name += f"_{algorithm.estimator.__class__.__name__}"
+
+    return algorithm_name
+
+
+def get_tuning_hyperparams(module, random_state):
     """
     Get tuning hyperparameters for model tuning for the given module.
 
     Args:
         module (str): GenoML module being used.
+        random_state (int): Random seed for reproducibility.
 
     :return: dict_hyperparams *(dict)*: \n
         Hyperparameters for each model.
     """
 
-    if module == "continuous":
-        dict_hyperparams = {
-            'AdaBoostRegressor' : {
-                "n_estimators": stats.randint(1, 1000),
-                "loss": ["linear", "square", "exponential"],
-                "learning_rate": [0.0001, 0.001, 0.01, 0.1, 1],
+    dict_hyperparams = {
+        "AdaBoostClassifier" : {
+            "n_estimators": Integer(1e1, 1e2, prior="log-uniform"),
+            "learning_rate": Real(1e-4, 1e0, prior="log-uniform"),
+            "random_state": Categorical([random_state]),
+        },
+        "AdaBoostRegressor" : {
+            "n_estimators": Integer(1e1, 1e2, prior="log-uniform"),
+            "loss": Categorical(["linear", "square", "exponential"]),
+            "learning_rate": Real(1e-4, 1e0, prior="log-uniform"),
+            "random_state": Categorical([random_state]),
+        },
+        "BaggingClassifier" : {
+            "n_estimators": Integer(1e1, 1e2, prior="log-uniform"),
+            "max_samples": Real(0.1, 1),
+            "max_features": Real(0.1, 1),
+            "warm_start": Categorical([True, False]),
+            "bootstrap": Categorical([True, False]),
+            'n_jobs': Categorical([-1]),
+            "random_state": Categorical([random_state]),
+        },
+        "BaggingRegressor" : {
+            "n_estimators": Integer(1e1, 1e2, prior="log-uniform"),
+            "max_samples": Real(0.1, 1),
+            "max_features": Real(0.1, 1),
+            "warm_start": Categorical([True, False]),
+            "bootstrap": Categorical([True, False]),
+            'n_jobs': Categorical([-1]),
+            "random_state": Categorical([random_state]),
+        },
+        "RandomForestClassifier" : {
+            "n_estimators": Integer(1e1, 1e2, prior="log-uniform"),
+            "criterion": Categorical(["gini", "entropy", "log_loss"]),
+            "max_depth": Integer(1, 10),
+            "min_weight_fraction_leaf": Real(0, 0.5),
+            "max_features": Real(0.1, 1),
+            "warm_start": Categorical([True, False]),
+            "random_state": Categorical([random_state]),
+        },
+        "RandomForestRegressor" : {
+            "n_estimators": Integer(1e1, 1e2, prior="log-uniform"),
+            "criterion": Categorical(["squared_error", "absolute_error", "friedman_mse", "poisson"]),
+            "max_depth": Integer(1, 10),
+            "min_weight_fraction_leaf": Real(0, 0.5),
+            "max_features": Real(0.1, 1),
+            "warm_start": Categorical([True, False]),
+            "random_state": Categorical([random_state]),
+        },
+        "XGBRegressor" : {
+            "max_depth": Integer(1, 10), 
+            "learning_rate": Real(1e-4, 1e0, prior="log-uniform"), 
+            "n_estimators": Integer(1e1, 1e2, prior="log-uniform"), 
+            "gamma": Real(1e-4, 1e2, prior="log-uniform"),
+            "subsample": Real(0.5, 1.0),
+            "colsample_bytree": Real(0.5, 1.0),
+            "min_child_weight": Integer(1, 10),
+            "random_state": Categorical([random_state]),
+        },
+        "GradientBoostingClassifier" : {
+            "loss": Categorical(["log_loss", "exponential"]),
+            "learning_rate": Real(1e-4, 1e0, prior="log-uniform"),
+            "n_estimators": Integer(1e1, 1e2, prior="log-uniform"),
+            "subsample": Real(0.5, 1),
+            "criterion": Categorical(["friedman_mse", "squared_error"]),
+            "min_samples_split": Real(0.01, 1),
+            "min_samples_leaf": Real(0.01, 0.99),
+            "min_weight_fraction_leaf": Real(0, 0.5),
+            "max_depth": Integer(1, 10),
+            "random_state": Categorical([random_state]),
+            "max_features": Categorical(["sqrt", "log2"]),
+        },
+        "GradientBoostingRegressor" : {
+            "loss": Categorical(["squared_error", "absolute_error", "huber", "quantile"]),
+            "learning_rate": Real(1e-4, 1e0, prior="log-uniform"),
+            "n_estimators": Integer(1e1, 1e2, prior="log-uniform"),
+            "subsample": Real(0.5, 1),
+            "criterion": Categorical(["friedman_mse", "squared_error"]),
+            "min_samples_split": Real(0.01, 1),
+            "min_samples_leaf": Real(0.01, 0.99),
+            "min_weight_fraction_leaf": Real(0, 0.5),
+            "max_depth": Integer(1, 10),
+            "random_state": Categorical([random_state]),
+            "max_features": Categorical(["sqrt", "log2"]),
+        },
+        "ComplementNB" : {
+            "alpha": Real(1e-3, 1e0, prior="log-uniform"),
+        },
+        "ElasticNet" : {
+            "alpha": Real(1e-3, 1e0, prior="log-uniform"),
+            "l1_ratio": Real(0, 1),
+            "selection": Categorical(["cyclic", "random"]),
+            "max_iter": Categorical([5000]),
+        },
+        "KNeighborsClassifier" : {
+            "leaf_size": Integer(1e0, 1e2, prior="log-uniform"),
+            "n_neighbors": Integer(1, 10),
+            "weights": Categorical(["uniform", "distance"]),
+            "algorithm": Categorical(["ball_tree", "kd_tree", "brute"]),
+            "p": Integer(1, 2),
+        },
+        "KNeighborsRegressor" : {
+            "leaf_size": Integer(1e0, 1e2, prior="log-uniform"), 
+            "n_neighbors": Integer(1, 10),
+            "weights": Categorical(["uniform", "distance"]),
+            "algorithm": Categorical(["ball_tree", "kd_tree", "brute"]),
+            "p": Integer(1, 2),
+        },
+        "LinearDiscriminantAnalysis" : [
+            {
+                "solver": Categorical(["svd"]),
+                "tol": Real(1e-6, 1e-2, prior="log-uniform"),
             },
-            'BaggingRegressor' : {
-                "n_estimators": stats.randint(1, 1000),
-            },
-            'GradientBoostingRegressor' : {
-                "n_estimators": stats.randint(1, 1000),
-                "loss": ["squared_error", "absolute_error", "huber", "quantile"],
-                "learning_rate": [0.0001, 0.001, 0.01, 0.1, 1],
-                "subsample": stats.uniform(0, 1),
-                "criterion": ["friedman_mse", "squared_error"],
-                "min_weight_fraction_leaf": stats.uniform(0, 0.5),
-                "max_depth": stats.randint(1, 10),
-            },
-            'RandomForestRegressor' : {
-                "n_estimators": stats.randint(1, 1000),
-                "criterion": ["squared_error", "absolute_error", "friedman_mse", "poisson"],
-                "min_weight_fraction_leaf": stats.uniform(0, 0.5),
-            },
-            'ElasticNet' : {
-                "alpha": stats.uniform(0, 1),
-                "l1_ratio": stats.uniform(0, 1),
-            },
-            'SGDRegressor' : {
-                "loss": ["squared_error", "huber", "epsilon_insensitive", "squared_epsilon_insensitive"],
-                "penalty": ["elasticnet"],
-                "alpha": [1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3], 
-                "l1_ratio": stats.uniform(0, 1),
-                "learning_rate": ["constant", "optimal", "invscaling", "adaptive"],
-            },
-            'KNeighborsRegressor' : {
-                "leaf_size": stats.randint(1, 100), 
-                "n_neighbors": stats.randint(1, 10),
-                "weights": ["uniform", "distance"],
-                "algorithm": ["ball_tree", "kd_tree", "brute"],
-                "p": stats.uniform(1, 4),
-            },
-            'MLPRegressor' : {
-                "activation": ["identity", "logistic", "tanh", "relu"],
-                "solver": ["lbfgs", "sgd", "adam"],
-                "alpha": stats.uniform(0, 1), 
-                "learning_rate": ['constant', 'invscaling', 'adaptive'],
-                "max_iter": [1000],
-            },
-            'SVR' : {
-                "kernel": ["linear", "poly", "rbf", "sigmoid"], 
-                "gamma": ["scale", "auto"],
-                "C": stats.randint(1, 10),
-            },
-            'XGBRegressor' : {
-                "max_depth": stats.randint(1, 100), 
-                "learning_rate": stats.uniform(0, 1), 
-                "n_estimators": stats.randint(1, 100), 
-                "gamma": stats.uniform(0, 1),
-            },
-        }
+            {
+                "solver": Categorical(["lsqr", "eigen"]),
+                "shrinkage": Real(1e-4, 1.0, prior="log-uniform"),
+                "tol": Real(1e-6, 1e-2, prior="log-uniform"),
+            }
+        ],
+        # "MLPClassifier" : {
+        #     "hidden_layer_sizes": Categorical([50, 100, 200]),
+        #     "activation": Categorical(["logistic", "tanh", "relu"]),
+        #     "solver": Categorical(["sgd", "adam"]),
+        #     "alpha": Real(1e-5, 1e0, prior="log-uniform"),
+        #     "learning_rate": Categorical(['constant', 'invscaling', 'adaptive']),
+        #     "learning_rate_init": Real(1e-4, 1e-2, prior="log-uniform"),
+        #     "max_iter": Categorical([500]),
+        # },
+        # "MLPRegressor" : {
+        #     "hidden_layer_sizes": Categorical([50, 100, 200]),
+        #     "activation": Categorical(["logistic", "tanh", "relu"]),
+        #     "solver": Categorical(["sgd", "adam"]),
+        #     "alpha": Real(1e-5, 1e0, prior="log-uniform"), 
+        #     "learning_rate": Categorical(['constant', 'invscaling', 'adaptive']),
+        #     "learning_rate_init": Real(1e-4, 1e-2, prior="log-uniform"),
+        #     "max_iter": Categorical([500]),
+        # },
+        "QuadraticDiscriminantAnalysis" : {
+            "tol": Real(1e-6, 1e-2, prior="log-uniform"),
+        },
+        "SGDClassifier" : {
+            "loss": Categorical(["hinge", "log_loss", "modified_huber", "squared_hinge", "perceptron"]),
+            "penalty": Categorical(["elasticnet"]),
+            "alpha": Real(1e-5, 1e0, prior="log-uniform"),
+            "l1_ratio": Real(0, 1),
+            "n_jobs": Categorical([-1]),
+            "learning_rate": Categorical(["constant", "optimal", "invscaling", "adaptive"]),
+        },
+        "SGDRegressor" : {
+            "loss": Categorical(["squared_error", "huber", "epsilon_insensitive", "squared_epsilon_insensitive"]),
+            "penalty": Categorical(["elasticnet"]),
+            "alpha": Real(1e-5, 1e0, prior="log-uniform"), 
+            "l1_ratio": Real(0, 1),
+            "learning_rate": Categorical(["constant", "optimal", "invscaling", "adaptive"]),
+        },
+        "SVC" : {
+            "C": Integer(1, 10),
+            "kernel": Categorical(["linear", "poly", "rbf", "sigmoid"]),
+            "degree": Integer(1, 4),
+            "gamma": Categorical(["scale", "auto"]),
+            "coef0": Real(0, 1),
+            "probability": Categorical([True]),
+        },
+        "SVR" : {
+            "kernel": Categorical(["linear", "poly", "rbf", "sigmoid"]), 
+            "degree": Integer(1, 4),
+            "gamma": Categorical(["scale", "auto"]),
+            "coef0": Real(0, 1),
+            "C": Integer(1, 10),
+        },
+    }
     
-    elif module == "discrete":
-        dict_hyperparams = {
-            'LogisticRegression' : {
-                "penalty": ["l1", "l2"],
-                "C": stats.randint(1, 10),
-            },
-            'SGDClassifier' : {
-                'alpha': [1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3],
-                'loss': ['log_loss'],
-                'penalty': ['l2'],
-                'n_jobs': [-1],
-            },
-            'RandomForestClassifier' : {
-                "n_estimators": stats.randint(1, 1000),
-            },
-            'AdaBoostClassifier' : {
-                "n_estimators": stats.randint(1, 1000),
-            },
-            'GradientBoostingClassifier' : {
-                "n_estimators": stats.randint(1, 1000),
-            },
-            'BaggingClassifier' : {
-                "n_estimators": stats.randint(1, 1000),
-            },
-            'SVC' : {
-                "kernel": ["linear", "poly", "rbf", "sigmoid"],
-                "C": stats.randint(1, 10),
-            },
-            'ComplementNB' : {
-                "alpha": stats.uniform(0, 1),
-            },
-            'MLPClassifier' : {
-                "alpha": stats.uniform(0, 1),
-                "learning_rate": ['constant', 'invscaling', 'adaptive'],
-                "max_iter": [1000],
-            },
-            'XGBClassifier' : {
-                "max_depth": stats.randint(1, 100),
-                "learning_rate": stats.uniform(0, 1),
-                "n_estimators": stats.randint(1, 100),
-                "gamma": stats.uniform(0, 1),
-            },
-            'KNeighborsClassifier' : {
-                "leaf_size": stats.randint(1, 100),
-                "n_neighbors": stats.randint(1, 10),
-            },
-            'LinearDiscriminantAnalysis' : {
-                "tol": stats.uniform(0, 1),
-            },
-            'QuadraticDiscriminantAnalysis' : {
-                "tol": stats.uniform(0, 1),
-            },
+    if module == "discrete":
+        dict_hyperparams["LogisticRegression"] = {
+            "penalty": Categorical(["l1", "l2"]),
+            "C": Integer(1e0, 1e1),
+            "solver": Categorical(["liblinear", "saga"]),
+            "random_state": Categorical([random_state]),
+        }
+        dict_hyperparams["XGBClassifier"] = {
+            "max_depth": Integer(1, 10),
+            "learning_rate": Real(1e-4, 1e0, prior="log-uniform"), 
+            "n_estimators": Integer(1e1, 1e2, prior="log-uniform"),
+            "gamma": Real(1e-4, 1e2, prior="log-uniform"),
+            "subsample": Real(0.5, 1.0),
+            "colsample_bytree": Real(0.5, 1.0),
+            "min_child_weight": Integer(1, 10),
+            "objective": Categorical(["binary:logistic"]),
+            "random_state": Categorical([random_state]),
         }
 
     elif module == "multiclass":
-        dict_hyperparams = {
-            'LogisticRegression' : {
-                "estimator__penalty": ["l1", "l2"],
-                "estimator__C": stats.randint(1, 10),
-            },
-            'SGDClassifier' : {
-                'estimator__alpha': [1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3],
-                'estimator__loss': ['log_loss'],
-                'estimator__penalty': ['l2'],
-                'n_jobs': [-1],
-            },
-            'RandomForestClassifier' : {
-                "estimator__n_estimators": stats.randint(1, 1000),
-            },
-            'AdaBoostClassifier' : {
-                "estimator__n_estimators": stats.randint(1, 1000),
-            },
-            'GradientBoostingClassifier' : {
-                "estimator__n_estimators": stats.randint(1, 1000),
-            },
-            'BaggingClassifier' : {
-                "estimator__n_estimators": stats.randint(1, 1000),
-            },
-            'SVC' : {
-                "estimator__kernel": ["linear", "poly", "rbf", "sigmoid"],
-                "estimator__C": stats.randint(1, 10),
-            },
-            'ComplementNB' : {
-                "alpha": stats.uniform(0, 1),
-            },
-            'MLPClassifier' : {
-                "estimator__alpha": stats.uniform(0, 1),
-                "estimator__learning_rate": ['constant', 'invscaling', 'adaptive'],
-                "estimator__max_iter": [1000],
-            },
-            'XGBClassifier' : {
-                "estimator__max_depth": stats.randint(1, 100),
-                "estimator__learning_rate": stats.uniform(0, 1),
-                "estimator__n_estimators": stats.randint(1, 100),
-                "estimator__gamma": stats.uniform(0, 1),
-            },
-            'KNeighborsClassifier' : {
-                "estimator__leaf_size": stats.randint(1, 100),
-                "estimator__n_neighbors": stats.randint(1, 10),
-            },
-            'LinearDiscriminantAnalysis' : {
-                "estimator__tol": stats.uniform(0, 1),
-            },
-            'QuadraticDiscriminantAnalysis' : {
-                "estimator__tol": stats.uniform(0, 1),
-            },
+        dict_hyperparams["LogisticRegression"] = {
+            "penalty": Categorical(["l1", "l2"]),
+            "C": Integer(1e0, 1e1),
+            "solver": Categorical(["saga"]),
+            "random_state": Categorical([random_state]),
+        }
+        dict_hyperparams["XGBClassifier"] = {
+            "max_depth": Integer(1, 10),
+            "learning_rate": Real(1e-4, 1e0, prior="log-uniform"), 
+            "n_estimators": Integer(1e1, 1e2, prior="log-uniform"),
+            "gamma": Real(1e-4, 1e2, prior="log-uniform"),
+            "subsample": Real(0.5, 1.0),
+            "colsample_bytree": Real(0.5, 1.0),
+            "min_child_weight": Integer(1, 10),
+            "objective": Categorical(["multi:softprob"]),
+            "random_state": Categorical([random_state]),
         }
     
     return dict_hyperparams
+
+
+def _fit_algorithm(algorithm, algorithm_name, x_train, y_train, x_valid, y_valid, column_names, calculate_accuracy_scores):
+    with Timer() as timer:
+        algorithm = copy.deepcopy(algorithm)
+        algorithm.fit(x_train, y_train)
+
+    row = [algorithm_name, timer.elapsed()] + list(calculate_accuracy_scores(x_valid, y_valid, algorithm))
+
+    results_str = metrics_to_str(dict(zip(column_names, row)))
+    DescriptionLoader.print(
+        "utils/training/fit_algorithms/compete/algorithm/results",
+        name=algorithm_name, 
+        results=results_str,
+    )
+        
+    return row, algorithm
+
+
+def train_valid_split(df, train_split, random_state):
+    if train_split > 1:
+        train_split = train_split / 100
+
+    y = df.PHENO
+    x = df.drop(columns=['PHENO'])
+    x_train, x_valid, y_train, y_valid = model_selection.train_test_split(
+        x, 
+        y, 
+        test_size=1-train_split, 
+        random_state=random_state,
+    )
+
+    return x_train, x_valid, y_train, y_valid

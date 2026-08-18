@@ -24,7 +24,7 @@ from genoml.preprocessing import adjuster
 
 class Harmonize:
     @utils.DescriptionLoader.function_description("info", cmd="Harmonizing")
-    def __init__(self, prefix, geno_path, pheno_path, addit_path, confounders, force_impute, data_type):
+    def __init__(self, prefix, geno_path, pheno_path, addit_path, confounders, force_impute, random_state, data_type):
         # Create subdirectory where all munging-related files will be saved
         self.prefix = utils.create_results_dir(prefix, "Munge")
 
@@ -32,6 +32,7 @@ class Harmonize:
         self.confounders = confounders
         self.data_type = data_type
         self.force_impute = force_impute
+        self._random_state = random_state
         with open(self.prefix.joinpath("params.pkl"), "rb") as file:
             params = pickle.load(file)
         self.adjust_normalize = params["adjust_normalize"]
@@ -40,7 +41,9 @@ class Harmonize:
         self.vif_iter = params["vif_iter"]
         self.target_features = params["target_features"]
         self.cols = params["cols"]
-        self.avg_vals = params["avg_vals"]
+        self.impute_vals = params["impute_vals"]
+        self.mean_vals = params["mean_vals"]
+        self.std_vals = params["std_vals"]
         self.umap_reducer = joblib.load(self.prefix.joinpath("umap_clustering.joblib")) if self.prefix.joinpath("umap_clustering.joblib").exists() else None
 
         utils.DescriptionLoader.print(
@@ -80,7 +83,7 @@ class Harmonize:
     def create_merged_datasets(self):
         """ Merge phenotype, genotype, and additional data. """
         self.df_merged_harmonize = preprocessing_utils.read_pheno_file(self.pheno_path, self.data_type)
-        self.df_merged_harmonize = preprocessing_utils.merge_addit_data(self.df_merged_harmonize, self.addit_path, self.impute_type)
+        self.df_merged_harmonize, _, _ = preprocessing_utils.merge_addit_data(self.df_merged_harmonize, self.addit_path, self.impute_type, normalize_means=self.mean_vals, normalize_stdevs=self.std_vals)
         self.df_merged_harmonize = preprocessing_utils.merge_geno_harmonize_data(
             self.df_merged_harmonize, self.geno_path, self.pheno_path, self.impute_type, self.prefix, self.plink_exec)
 
@@ -117,13 +120,14 @@ class Harmonize:
         elif len(missing_cols) > 0 and self.force_impute:
             with open(self.prefix.joinpath("missing_cols.txt"), 'w') as file:
                 for col in missing_cols:
-                    self.df_merged_harmonize[col] = self.avg_vals[col]
-                    file.write(f'{col}\t{self.avg_vals[col]}\n')
+                    self.df_merged_harmonize[col] = self.impute_vals[col]
+                    file.write(f'{col}\t{self.impute_vals[col]}\n')
+            self.df_merged_harmonize = self.df_merged_harmonize[self.cols]
 
             print_str = f"{len(missing_cols)} of the {len(self.cols)} features that were used to fit the model which are not present in the dataset you're harmonizing! \n"
-            print_str = "You have chosen to impute these values using the average from the training data. \n"
-            print_str = "However, in the future we STRONGLY recommend using the same features that were used to fit your model. \n"
-            print_str = f"A list of missing columns and the values used for imputation has been written to {self.prefix.joinpath('missing_cols.txt')} \n"
+            print_str += "You have chosen to impute these values using the average from the training data. \n"
+            print_str += "However, in the future we STRONGLY recommend using the same features that were used to fit your model. \n"
+            print_str += f"A list of missing columns and the values used for imputation has been written to {self.prefix.joinpath('missing_cols.txt')} \n"
             if len(missing_cols) < 10:
                 print_str += "These are:\n - "
                 print_str += "\n - ".join(missing_cols)
@@ -145,6 +149,8 @@ class Harmonize:
                 self.confounders,
                 self.adjust_normalize,
                 self.umap_reducer is not None,
+                self._random_state,
+                force_impute=self.force_impute,
             )
             _ = harmonize_adjuster.umap_reducer("harmonize", reducer=self.umap_reducer)
             self.df_merged_harmonize, _ = harmonize_adjuster.adjust_confounders(adjustment_models=self.adjustment_models)
